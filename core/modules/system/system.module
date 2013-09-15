@@ -671,7 +671,7 @@ function system_menu() {
     if (!empty($theme->status)) {
       $items['admin/appearance/settings/' . $theme->name] = array(
         'title' => $theme->info['name'],
-        'route_name' => 'system.theme_settings_' . $theme->name,
+        'route_name' => 'system.theme_settings_theme',
         'type' => MENU_LOCAL_TASK,
       );
     }
