@@ -648,34 +648,6 @@ function system_menu() {
     'position' => 'left',
     'weight' => -6,
   );
-  $items['admin/appearance/list'] = array(
-    'title' => 'List',
-    'description' => 'Select and configure your theme',
-    'type' => MENU_DEFAULT_LOCAL_TASK,
-    'file' => 'system.admin.inc',
-  );
-  $items['admin/appearance/settings'] = array(
-    'title' => 'Settings',
-    'description' => 'Configure default and theme specific settings.',
-    'route_name' => 'system.theme_settings',
-    'type' => MENU_LOCAL_TASK,
-    'weight' => 100,
-  );
-  // Theme configuration local tasks.
-  $items['admin/appearance/settings/global'] = array(
-    'title' => 'Global settings',
-    'type' => MENU_DEFAULT_LOCAL_TASK,
-  );
-
-  foreach (list_themes(TRUE) as $theme) {
-    if (!empty($theme->status)) {
-      $items['admin/appearance/settings/' . $theme->name] = array(
-        'title' => $theme->info['name'],
-        'route_name' => 'system.theme_settings_theme',
-        'type' => MENU_LOCAL_TASK,
-      );
-    }
-  }
 
   // Modules.
   $items['admin/modules'] = array(

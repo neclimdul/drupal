@@ -325,7 +325,7 @@ system.theme_settings:
     _permission: 'administer themes'
 
 system.theme_settings_theme:
-  pattern: '/admin/appearance/settings/{theme_name}'
+  path: '/admin/appearance/settings/{theme_name}'
   defaults:
     _form: '\Drupal\system\Form\ThemeSettingsForm'
   requirements:
