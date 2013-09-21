@@ -2,20 +2,15 @@
 
 /**
  * @file
- * Contains \Drupal\system\Plugin\Derivative\SystemMenuBlock.
+ * Contains \Drupal\system\Plugin\Derivative\ThemeLocalTask.
  */
 
 namespace Drupal\system\Plugin\Derivative;
 
 use Drupal\Component\Plugin\Derivative\DerivativeBase;
-use Drupal\Core\Entity\EntityStorageControllerInterface;
-use Drupal\Core\Plugin\Discovery\ContainerDerivativeInterface;
-use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
- * Provides block plugin definitions for custom menus.
- *
- * @see \Drupal\system\Plugin\Block\SystemMenuBlock
+ * Provides dynamic tabs based on active themes.
  */
 class ThemeLocalTask extends DerivativeBase {
 
