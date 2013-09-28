@@ -96,6 +96,12 @@ aggregator.category_view:
     _content: '\Drupal\aggregator\Controller\AggregatorController::viewCategory'
   requirements:
     _permission: 'access news feeds'
+aggregator.category_view2:
+  path: '/aggregator/categories/{cid}/list'
+  defaults:
+    _content: '\Drupal\aggregator\Controller\AggregatorController::viewCategory'
+  requirements:
+    _permission: 'access news feeds'
 
 aggregator.category_edit:
   path: '/aggregator/categories/{cid}/configure'

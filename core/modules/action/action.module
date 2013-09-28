@@ -53,11 +53,6 @@ function action_menu() {
     'description' => 'Manage the actions defined for your site.',
     'route_name' => 'action.admin',
   );
-  $items['admin/config/system/actions/manage'] = array(
-    'title' => 'Manage actions',
-    'description' => 'Manage the actions defined for your site.',
-    'type' => MENU_DEFAULT_LOCAL_TASK,
-  );
   $items['admin/config/system/actions/add'] = array(
     'title' => 'Create an advanced action',
     'type' => MENU_VISIBLE_IN_BREADCRUMB,

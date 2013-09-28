@@ -1,0 +1,24 @@
+aggregator.admin_overview:
+  route_name: aggregator.admin_overview
+  title: 'List'
+  tab_root_id: aggregator.admin_overview
+aggregator.admin_settings:
+  route_name: aggregator.admin_settings
+  title: 'Settings'
+  description: 'Configure the behavior of the feed aggregator, including when to discard feed items and how to present feed items and categories.'
+  weight: 100
+  tab_root_id: aggregator.admin_overview
+
+aggregator.category_view:
+  route_name: aggregator.category_view2
+  title: 'View'
+  tab_root_id: aggregator.category_view
+aggregator.categorize_feed_form:
+  route_name: aggregator.categorize_feed_form
+  title: 'Categorize'
+  tab_root_id: aggregator.category_view
+aggregator.feed_configure:
+  route_name: aggregator.feed_configure
+  title: 'Configure'
+  tab_root_id: aggregator.category_view
+  weight: 10

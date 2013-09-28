@@ -1,0 +1,5 @@
+action.admin:
+  route_name: action.admin
+  title: 'Manage actions'
+  description: 'Manage the actions defined for your site.'
+  tab_root_id: action.admin
