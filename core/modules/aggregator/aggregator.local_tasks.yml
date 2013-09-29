@@ -10,7 +10,7 @@ aggregator.admin_settings:
   tab_root_id: aggregator.admin_overview
 
 aggregator.category_view:
-  route_name: aggregator.category_view2
+  route_name: aggregator.category_view
   title: 'View'
   tab_root_id: aggregator.category_view
 aggregator.categorize_feed_form:
