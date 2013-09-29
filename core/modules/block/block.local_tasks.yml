@@ -1,0 +1,11 @@
+block.admin_edit:
+  route_name: block.admin_edit
+  title: 'Configure block'
+  tab_root_id: block.admin_edit
+
+# Per theme block layout pages.
+block.admin_display_theme:
+  route_name: block.admin_display_theme
+  title: 'Block Layout'
+  tab_root_id: block.admin_display_theme
+  derivative: 'Drupal\block\Plugin\Derivative\ThemeLocalTask'
