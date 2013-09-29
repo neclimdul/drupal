@@ -9,7 +9,9 @@ namespace Drupal\Tests\Core\Menu;
 
 use Drupal\Core\Extension\ModuleHandler;
 use Drupal\Core\Language\Language;
+use Drupal\Core\Plugin\Discovery\ContainerDerivativeDiscoveryDecorator;
 use Drupal\Core\Plugin\Discovery\YamlDiscovery;
+use Drupal\Core\Plugin\Factory\ContainerFactory;
 use Drupal\Tests\UnitTestCase;
 
 /**
@@ -56,6 +58,7 @@ abstract class LocalTaskIntegrationTest extends UnitTestCase {
 
     $module_handler = new ModuleHandler($modules);
     $pluginDiscovery = new YamlDiscovery('local_tasks', $module_handler->getModuleDirectories());
+    $pluginDiscovery = new ContainerDerivativeDiscoveryDecorator($pluginDiscovery);
     $property = new \ReflectionProperty('Drupal\Core\Menu\LocalTaskManager', 'discovery');
     $property->setAccessible(TRUE);
     $property->setValue($manager, $pluginDiscovery);
@@ -95,6 +98,10 @@ abstract class LocalTaskIntegrationTest extends UnitTestCase {
     $tmp_tasks = $manager->getLocalTasksForRoute($route_name);
 
     // At this point we're just testing existence so pull out keys and then compare.
+    //
+    // Deeper testing would require a functioning factory which because we're using
+    // the DefaultPluginManager base means we get into dependency soup because of
+    // its factories create method and pulling services off the \Drupal container.
     $tasks = array();
     foreach ($tmp_tasks as $level => $level_tasks) {
       $tasks[$level] = array_keys($level_tasks);
