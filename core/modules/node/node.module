@@ -1014,35 +1014,15 @@ function node_menu() {
     'description arguments' => array(2),
     'route_name' => 'node.add',
   );
-  $items['node/%node'] = array(
-    'title callback' => 'node_page_title',
-    'title arguments' => array(1),
-    // The controller also sets the #title in case the routes' title is
-    // overridden by a menu link.
-    'route_name' => 'node.view',
-  );
-  $items['node/%node/view'] = array(
-    'title' => 'View',
-    'type' => MENU_DEFAULT_LOCAL_TASK,
-  );
   $items['node/%node/edit'] = array(
     'title' => 'Edit',
     'route_name' => 'node.page_edit',
-    'type' => MENU_LOCAL_TASK,
     'context' => MENU_CONTEXT_PAGE | MENU_CONTEXT_INLINE,
   );
   $items['node/%node/delete'] = array(
     'title' => 'Delete',
     'route_name' => 'node.delete_confirm',
-    'weight' => 10,
-    'type' => MENU_LOCAL_TASK,
     'context' => MENU_CONTEXT_INLINE,
-  );
-  $items['node/%node/revisions'] = array(
-    'title' => 'Revisions',
-    'route_name' => 'node.revision_overview',
-    'weight' => 20,
-    'type' => MENU_LOCAL_TASK,
   );
   $items['node/%node/revisions/%node_revision/view'] = array(
     'title' => 'Revisions',
@@ -1073,21 +1053,6 @@ function node_menu_local_tasks(&$data, $router_item, $root_path) {
       );
     }
   }
-}
-
-/**
- * Title callback: Displays the node's title.
- *
- * @param \Drupal\Core\Entity\EntityInterface $node
- *   The node entity.
- *
- * @return
- *   An unsanitized string that is the title of the node.
- *
- * @see node_menu()
- */
-function node_page_title(EntityInterface $node) {
-  return $node->label();
 }
 
 /**
