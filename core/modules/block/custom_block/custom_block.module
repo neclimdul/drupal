@@ -71,16 +71,7 @@ function custom_block_menu() {
     'title' => 'Custom block library',
     'description' => 'Manage custom blocks.',
     'route_name' => 'custom_block.list',
-    'type' => MENU_LOCAL_TASK | MENU_NORMAL_ITEM,
-  );
-  $items['admin/structure/block/custom-blocks/list'] = array(
-    'title' => 'Blocks',
-    'type' => MENU_DEFAULT_LOCAL_TASK,
-  );
-  $items['admin/structure/block/custom-blocks/types'] = array(
-    'title' => 'Types',
-    'route_name' => 'custom_block.type_list',
-    'type' => MENU_LOCAL_TASK,
+    'type' => MENU_NORMAL_ITEM,
   );
   $items['admin/structure/block/custom-blocks/types/add'] = array(
     'route_name' => 'custom_block.type_add',

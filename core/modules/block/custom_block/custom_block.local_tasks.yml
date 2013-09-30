@@ -1,0 +1,14 @@
+custom_block.list:
+  route_name: custom_block.list
+  tab_root_id: block.admin_display
+  title: 'Manage custom blocks.'
+custom_block.list_sub:
+  route_name: custom_block.list
+  tab_root_id: block.admin_display
+  tab_parent_id: custom_block.list
+  title: Blocks
+custom_block.type_list:
+  route_name: custom_block.type_list
+  tab_root_id: block.admin_display
+  tab_parent_id: custom_block.list
+  title: Types
