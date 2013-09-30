@@ -620,17 +620,6 @@ function system_menu() {
     'weight' => 9,
     'menu_name' => 'admin',
   );
-  $items['admin/tasks'] = array(
-    'title' => 'Tasks',
-    'type' => MENU_DEFAULT_LOCAL_TASK,
-    'weight' => -20,
-  );
-  $items['admin/index'] = array(
-    'title' => 'Index',
-    'route_name' => 'system.admin_index',
-    'type' => MENU_LOCAL_TASK,
-    'weight' => -18,
-  );
 
   // Menu items that are basically just menu blocks.
   $items['admin/structure'] = array(
@@ -656,20 +645,10 @@ function system_menu() {
     'route_name' => 'system.modules_list',
     'weight' => -2,
   );
-  $items['admin/modules/list'] = array(
-    'title' => 'List',
-    'type' => MENU_DEFAULT_LOCAL_TASK,
-  );
   $items['admin/modules/list/confirm'] = array(
     'title' => 'List',
     'route_name' => 'system.modules_list_confirm',
     'type' => MENU_VISIBLE_IN_BREADCRUMB,
-  );
-  $items['admin/modules/uninstall'] = array(
-    'title' => 'Uninstall',
-    'route_name' => 'system.modules_uninstall',
-    'type' => MENU_LOCAL_TASK,
-    'weight' => 20,
   );
   $items['admin/modules/uninstall/confirm'] = array(
     'title' => 'Uninstall',
