@@ -32,7 +32,10 @@ class BookLocalTasksTest extends LocalTaskIntegrationTest {
    * @{inheritdoc}
    */
   public function setUp() {
-    $this->moduleList = array('book' => 'core/modules/book/book.info');
+    $this->moduleList = array(
+      'book' => 'core/modules/book/book.info',
+      'node' => 'core/modules/node/node.info',
+    );
     parent::setUp();
   }
 
@@ -55,6 +58,27 @@ class BookLocalTasksTest extends LocalTaskIntegrationTest {
     return array(
       array('book.admin'),
       array('book.settings'),
+    );
+  }
+
+  /**
+   * Test local task existence.
+   *
+   * @dataProvider getBookNodeRoutes
+   */
+  public function testBookNodeLocalTasks($route) {
+    $this->assertLocalTasks($route, array(
+      0 => array('book.outline', 'node.view', 'node.page_edit', 'node.delete_confirm', 'node.revision_overview',),
+    ));
+  }
+
+  /**
+   * Provide a list of routes to test.
+   */
+  public function getBookNodeRoutes() {
+    return array(
+      array('node.view'),
+      array('book.outline'),
     );
   }
 }

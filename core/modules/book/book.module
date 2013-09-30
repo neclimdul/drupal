@@ -176,12 +176,6 @@ function book_menu() {
     'route_name' => 'book.render',
     'type' => MENU_SUGGESTED_ITEM,
   );
-  $items['node/%node/outline'] = array(
-    'title' => 'Outline',
-    'route_name' => 'book.outline',
-    'type' => MENU_LOCAL_TASK,
-    'weight' => 2,
-  );
   $items['node/%node/outline/remove'] = array(
     'title' => 'Remove from outline',
     'route_name' => 'book.remove',
