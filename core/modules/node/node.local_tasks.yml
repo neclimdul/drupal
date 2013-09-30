@@ -2,7 +2,6 @@ node.view:
   route_name: node.view
   tab_root_id: node.view
   title: 'View'
-  class: 'Drupal\node\Plugin\Menu\NodeViewLocalTask'
 node.page_edit:
   route_name: node.page_edit
   tab_root_id: node.view
