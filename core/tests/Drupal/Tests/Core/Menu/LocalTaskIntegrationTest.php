@@ -11,7 +11,6 @@ use Drupal\Core\Extension\ModuleHandler;
 use Drupal\Core\Language\Language;
 use Drupal\Core\Plugin\Discovery\ContainerDerivativeDiscoveryDecorator;
 use Drupal\Core\Plugin\Discovery\YamlDiscovery;
-use Drupal\Core\Plugin\Factory\ContainerFactory;
 use Drupal\Tests\UnitTestCase;
 
 /**
@@ -63,7 +62,11 @@ abstract class LocalTaskIntegrationTest extends UnitTestCase {
     $property->setAccessible(TRUE);
     $property->setValue($manager, $pluginDiscovery);
 
+    $plugin_stub = $this->getMock('Drupal\Core\Menu\LocalTaskInterface');
     $factory = $this->getMock('Drupal\Component\Plugin\Factory\FactoryInterface');
+    $factory->expects($this->any())
+      ->method('createInstance')
+      ->will($this->returnValue($plugin_stub));
     $property = new \ReflectionProperty('Drupal\Core\Menu\LocalTaskManager', 'factory');
     $property->setAccessible(TRUE);
     $property->setValue($manager, $factory);

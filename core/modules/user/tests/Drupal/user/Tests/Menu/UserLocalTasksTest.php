@@ -69,6 +69,7 @@ class UserLocalTasksTest extends LocalTaskIntegrationTest {
   public function getUserLoginRoutes() {
     return array(
       array('user.page', array('user.login',)),
+      array('user.login', array('user.login',)),
       array('user.register'),
       array('user.pass'),
     );

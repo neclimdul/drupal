@@ -16,7 +16,7 @@ user.pass:
 
 # Other authentication methods may add pages below user/login/.
 user.login:
-  route_name: user.page
+  route_name: user.login
   tab_root_id: user.page
   tab_parent_id: user.page
   title: 'Username and password'
@@ -30,3 +30,4 @@ user.edit:
   route_name: user.edit
   tab_root_id: user.view
   title: Edit
+
