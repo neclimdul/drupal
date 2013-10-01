@@ -106,13 +106,13 @@ function custom_block_menu() {
   $items['block/%custom_block/edit'] = array(
     'title' => 'Edit',
     'weight' => 0,
-    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'type' => MENU_DEFAULT_LOCAL_TASK, // Not a local task. Breadcrumb management.
     'context' => MENU_CONTEXT_PAGE | MENU_CONTEXT_INLINE,
   );
   $items['block/%custom_block/delete'] = array(
     'title' => 'Delete',
     'weight' => 1,
-    'type' => MENU_LOCAL_TASK,
+    'type' => MENU_LOCAL_TASK, // Not a local task. Breadcrumb management.
     'context' => MENU_CONTEXT_INLINE,
     'route_name' => 'custom_block.delete',
   );
