@@ -1001,7 +1001,7 @@ function node_menu() {
   );
   $items['admin/structure/types/manage/%node_type/edit'] = array(
     'title' => 'Edit',
-    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'type' => MENU_DEFAULT_LOCAL_TASK, // Entity base
   );
   $items['node/add'] = array(
     'title' => 'Add content',
