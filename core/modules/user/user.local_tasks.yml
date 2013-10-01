@@ -1,0 +1,32 @@
+user.page:
+  route_name: user.page
+  tab_root_id: user.page
+  title: 'Log in'
+  weight: -10
+
+user.register:
+  route_name: user.register
+  tab_root_id: user.page
+  title: 'Create new account'
+
+user.pass:
+  route_name: user.pass
+  tab_root_id: user.page
+  title: 'Request new password'
+
+# Other authentication methods may add pages below user/login/.
+user.login:
+  route_name: user.page
+  tab_root_id: user.page
+  tab_parent_id: user.page
+  title: 'Username and password'
+
+user.view:
+  route_name: user.view
+  tab_root_id: user.view
+  title: View
+
+user.edit:
+  route_name: user.edit
+  tab_root_id: user.view
+  title: Edit
