@@ -1,3 +1,18 @@
+system.rss_feeds_settings_tab:
+  route_name: system.rss_feeds_settings
+  tab_root_id: system.rss_feeds_settings_tab
+  title: Settings
+
+system.site_maintenance_mode_settings_tab:
+  route_name: system.site_maintenance_mode
+  tab_root_id: system.site_maintenance_mode_settings_tab
+  title: Settings
+
+system.site_information_settings_tab:
+  route_name: system.site_information_settings
+  tab_root_id: system.site_information_settings_tab
+  title: Settings
+
 system.themes_page:
   route_name: system.themes_page
   title: List
@@ -47,4 +62,3 @@ system.admin_index:
   tab_root_id: system.admin
   title: Index
   weight: -18
-

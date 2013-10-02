@@ -1,3 +1,8 @@
+user.role_list_tab:
+  route_name: user.role_list
+  tab_root_id: user.role_list_tab
+  title: 'Roles'
+
 user.page:
   route_name: user.page
   tab_root_id: user.page
@@ -30,4 +35,3 @@ user.edit:
   route_name: user.edit
   tab_root_id: user.view
   title: Edit
-
