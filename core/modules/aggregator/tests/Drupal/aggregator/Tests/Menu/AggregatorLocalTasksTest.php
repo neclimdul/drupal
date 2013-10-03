@@ -42,8 +42,8 @@ class AggregatorLocalTasksTest extends LocalTaskIntegrationTest {
    * @dataProvider getAggregatorAdminRoutes
    */
   public function testAggregatorAdminLocalTasks($route) {
-    $this->assertLocalTasks('aggregator.admin_overview', array(
-      0 => array($route, 'aggregator.admin_settings'),
+    $this->assertLocalTasks($route, array(
+      0 => array('aggregator.admin_overview', 'aggregator.admin_settings'),
     ));
   }
 
@@ -53,6 +53,7 @@ class AggregatorLocalTasksTest extends LocalTaskIntegrationTest {
   public function getAggregatorAdminRoutes() {
     return array(
       array('aggregator.admin_overview'),
+      array('aggregator.admin_settings'),
     );
   }
 
@@ -63,7 +64,7 @@ class AggregatorLocalTasksTest extends LocalTaskIntegrationTest {
    */
   public function testAggregatorCategoryLocalTasks($route) {
     $this->assertLocalTasks($route, array(
-      0 => array('aggregator.category_view', 'aggregator.categorize_feed_form', 'aggregator.feed_configure'),
+      0 => array('aggregator.category_view', 'aggregator.categorize_category_form', 'aggregator.category_edit'),
     ));
     ;
   }
@@ -74,6 +75,30 @@ class AggregatorLocalTasksTest extends LocalTaskIntegrationTest {
   public function getAggregatorCategoryRoutes() {
     return array(
       array('aggregator.category_view'),
+      array('aggregator.categorize_category_form'),
+      array('aggregator.category_edit'),
+    );
+  }
+
+  //
+  /**
+   * Check category aggregator tasks.
+   *
+   * @dataProvider getAggregatorSourceRoutes
+   */
+  public function testAggregatorSourceLocalTasks($route) {
+    $this->assertLocalTasks($route, array(
+      0 => array('aggregator.feed_view', 'aggregator.categorize_feed_form', 'aggregator.feed_configure'),
+    ));
+    ;
+  }
+
+  /**
+   * Provide a list of routes to test.
+   */
+  public function getAggregatorSourceRoutes() {
+    return array(
+      array('aggregator.feed_view'),
       array('aggregator.categorize_feed_form'),
       array('aggregator.feed_configure'),
     );

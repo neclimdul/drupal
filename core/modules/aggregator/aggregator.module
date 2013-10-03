@@ -143,21 +143,6 @@ function aggregator_menu() {
     'title arguments' => array(2),
     'route_name' => 'aggregator.feed_view',
   );
-//  $items['aggregator/sources/%aggregator_feed/view'] = array(
-//    'title' => 'View',
-//    'type' => MENU_DEFAULT_LOCAL_TASK,
-//  );
-//  $items['aggregator/sources/%aggregator_feed/categorize'] = array(
-//    'title' => 'Categorize',
-//    'route_name' => 'aggregator.categorize_feed_form',
-//    'type' => MENU_LOCAL_TASK,
-//  );
-//  $items['aggregator/sources/%aggregator_feed/configure'] = array(
-//    'title' => 'Configure',
-//    'route_name' => 'aggregator.feed_configure',
-//    'type' => MENU_LOCAL_TASK,
-//    'weight' => 10,
-//  );
   $items['admin/config/services/aggregator/edit/feed/%aggregator_feed'] = array(
     'title' => 'Edit feed',
     'route_name' => 'aggregator.feed_edit',
