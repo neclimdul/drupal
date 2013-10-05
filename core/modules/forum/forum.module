@@ -137,18 +137,18 @@ function forum_menu() {
 /**
  * Implements hook_menu_local_tasks().
  */
-function forum_menu_local_tasks(&$data, $router_item, $root_path) {
+function forum_menu_local_tasks(&$data, $route_name) {
   global $user;
 
   // Add action link to 'node/add/forum' on 'forum' sub-pages.
-  if ($root_path == 'forum' || $root_path == 'forum/%') {
+  if (in_array($route_name, array('forum.index', 'forum.page'))) {
     $request = \Drupal::request();
     $forum_term = $request->attributes->get('taxonomy_term');
     $vid = \Drupal::config('forum.settings')->get('vocabulary');
     $links = array();
     // Loop through all bundles for forum taxonomy vocabulary field.
     $field = Field::fieldInfo()->getField('node', 'taxonomy_forums');
-    foreach ($field['bundles'] as $type) {
+    foreach ($field->getBundles() as $type) {
       if (node_access('create', $type)) {
         $links[$type] = array(
           '#theme' => 'menu_local_action',
@@ -569,7 +569,7 @@ function forum_block_view_pre_render($elements) {
 }
 
 /**
- * Implements hook_preprocess_HOOK() for block.html.twig.
+ * Implements hook_preprocess_HOOK() for block templates.
  */
 function forum_preprocess_block(&$variables) {
   if ($variables['configuration']['module'] == 'forum') {

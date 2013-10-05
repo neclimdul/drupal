@@ -88,8 +88,8 @@ class CommentNonNodeTest extends WebTestBase {
     $edit['comment_body[0][value]'] = $comment;
 
     $instance = $this->container->get('field.info')->getInstance('entity_test_render', 'entity_test_render', 'comment');
-    $preview_mode = $instance['settings']['preview'];
-    $subject_mode = $instance['settings']['subject'];
+    $preview_mode = $instance->getFieldSetting('preview');
+    $subject_mode = $instance->getFieldSetting('subject');
 
     // Must get the page before we test for fields.
     if ($entity !== NULL) {
@@ -372,7 +372,7 @@ class CommentNonNodeTest extends WebTestBase {
     $data = array('bundle' => 'entity_test_render', 'name' => $random_label);
     $new_entity = entity_create('entity_test_render', $data);
     $new_entity->save();
-    $this->drupalGet('entity_test_render/manage/' . $new_entity->id() . '/edit');
+    $this->drupalGet('entity_test_render/manage/' . $new_entity->id());
     $this->assertNoFieldChecked('edit-field-foobar-0-status-1');
     $this->assertFieldChecked('edit-field-foobar-0-status-2');
     $this->assertNoField('edit-field-foobar-0-status-0');

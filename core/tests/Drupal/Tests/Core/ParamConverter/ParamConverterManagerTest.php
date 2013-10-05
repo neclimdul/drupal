@@ -151,6 +151,7 @@ class ParamConverterManagerTest extends UnitTestCase {
    * @see \Drupal\Core\ParamConverter\ParamConverterManager::enhance().
    */
   public function testEnhance() {
+    // Create a mock route using a mock parameter converter.
     $converter = $this->getMock('Drupal\Core\ParamConverter\ParamConverterInterface');
     $this->manager->addConverter('test_convert');
 
@@ -181,8 +182,11 @@ class ParamConverterManagerTest extends UnitTestCase {
 
     $defaults = $this->manager->enhance($defaults, $request);
 
+    // The value of 1 should be upcast to the User object for UID 1.
     $this->assertSame($entity, $defaults['id']);
+    // The parameter for the user ID should be stored in the raw variables.
     $this->assertTrue($defaults['_raw_variables']->has('id'));
+    // The raw non-upcasted value for the user should be the UID.
     $this->assertEquals(1, $defaults['_raw_variables']->get('id'));
   }
 

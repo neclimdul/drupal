@@ -297,7 +297,7 @@ function drupal_get_profile() {
  * @deprecated This will be removed in 8.0. Instead, register a new breadcrumb
  *   builder service.
  *
- * @see Drupal\Core\Breadcrumb\BreadcrumbBuilderInterface
+ * @see \Drupal\Core\Breadcrumb\BreadcrumbBuilderInterface
  */
 function drupal_set_breadcrumb($breadcrumb = NULL) {
   $stored_breadcrumb = &drupal_static(__FUNCTION__);
@@ -2930,8 +2930,8 @@ function drupal_get_library($module, $name = NULL) {
  * relationships.
  *
  * Note that this function should be called from the theme layer, such as in a
- * .tpl.php file, theme_ function, or in a template_preprocess function, not in
- * a form declaration. Though the same JavaScript could be added to the page
+ * .html.twig file, theme_ function, or in a template_preprocess function, not
+ * in a form declaration. Though the same JavaScript could be added to the page
  * using drupal_add_js() directly, this function helps keep template files
  * clean and readable. It also prevents tabledrag.js from being added twice
  * accidentally.
@@ -2965,7 +2965,6 @@ function drupal_get_library($module, $name = NULL) {
  *   column should not be hidden.
  * @param $limit
  *   (optional) Limit the maximum amount of parenting in this table.
- * @see block-admin-display-form.tpl.php
  * @see theme_menu_overview_form()
  */
 function drupal_add_tabledrag($table_id, $action, $relationship, $group, $subgroup = NULL, $source = NULL, $hidden = TRUE, $limit = 0) {
@@ -3135,8 +3134,8 @@ function _drupal_bootstrap_code() {
  *
  * DrupalKernel skips this and replicates it via event listeners.
  *
- * @see Drupal\Core\EventSubscriber\PathSubscriber;
- * @see Drupal\Core\EventSubscriber\LegacyRequestSubscriber;
+ * @see \Drupal\Core\EventSubscriber\PathSubscriber;
+ * @see \Drupal\Core\EventSubscriber\LegacyRequestSubscriber;
  */
 function _drupal_bootstrap_full($skip = FALSE) {
   static $called = FALSE;
@@ -3915,7 +3914,7 @@ function drupal_render(&$elements) {
   // children.
   // #states and #attached have to be processed before #theme_wrappers, because
   // the #type 'page' render array from drupal_render_page() would render the
-  // $page and wrap it into the html.tpl.php template without the attached
+  // $page and wrap it into the html.html.twig template without the attached
   // assets otherwise.
   // If the internal #render_children property is set, do not call the
   // #theme_wrappers function(s) to prevent infinite recursion.
@@ -4949,7 +4948,7 @@ function archiver_get_archiver($file) {
  * @return array
  *   The Drupal Updater class registry.
  *
- * @see Drupal\Core\Updater\Updater
+ * @see \Drupal\Core\Updater\Updater
  * @see hook_updater_info()
  * @see hook_updater_info_alter()
  */
@@ -4969,7 +4968,7 @@ function drupal_get_updaters() {
  * @return
  *   The Drupal FileTransfer class registry.
  *
- * @see Drupal\Core\FileTransfer\FileTransfer
+ * @see \Drupal\Core\FileTransfer\FileTransfer
  * @see hook_filetransfer_info()
  * @see hook_filetransfer_info_alter()
  */

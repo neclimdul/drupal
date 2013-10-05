@@ -858,12 +858,10 @@ function hook_menu_alter(&$items) {
  *     associative array as described above.
  *   - tabs: A list of (up to 2) tab levels that contain a list of of tabs keyed
  *     by their href, each one being an associative array as described above.
- * @param array $router_item
- *   The menu system router item of the page.
- * @param string $root_path
- *   The path to the root item for this set of tabs.
+ * @param string $route_name
+ *   The route name of the page.
  */
-function hook_menu_local_tasks(&$data, $router_item, $root_path) {
+function hook_menu_local_tasks(&$data, $route_name) {
   // Add an action linking to node/add to all pages.
   $data['actions']['node/add'] = array(
     '#theme' => 'menu_local_action',
@@ -890,8 +888,6 @@ function hook_menu_local_tasks(&$data, $router_item, $root_path) {
         ),
       ),
     ),
-    // Define whether this link is active. This can usually be omitted.
-    '#active' => ($router_item['path'] == $root_path),
   );
 }
 
@@ -904,14 +900,12 @@ function hook_menu_local_tasks(&$data, $router_item, $root_path) {
  * @param array $data
  *   An associative array containing tabs and actions. See
  *   hook_menu_local_tasks() for details.
- * @param array $router_item
- *   The menu system router item of the page.
- * @param string $root_path
- *   The path to the root item for this set of tabs.
+ * @param string $route_name
+ *   The route name of the page.
  *
  * @see hook_menu_local_tasks()
  */
-function hook_menu_local_tasks_alter(&$data, $router_item, $root_path) {
+function hook_menu_local_tasks_alter(&$data, $route_name) {
 }
 
 /**
@@ -1530,7 +1524,7 @@ function hook_permission() {
  *     path, include it here. This path should be relative to the Drupal root
  *     directory.
  *   - template: If specified, this theme implementation is a template, and
- *     this is the template file without an extension. Do not put .tpl.php on
+ *     this is the template file without an extension. Do not put .html.twig on
  *     this file; that extension will be added automatically by the default
  *     rendering engine (which is Twig). If 'path' above is specified, the
  *     template should also be in this path.
@@ -1560,7 +1554,7 @@ function hook_permission() {
  *   - override preprocess functions: Set to TRUE when a theme does NOT want
  *     the standard preprocess functions to run. This can be used to give a
  *     theme FULL control over how variables are set. For example, if a theme
- *     wants total control over how certain variables in the page.tpl.php are
+ *     wants total control over how certain variables in the page.html.twig are
  *     set, this can be set to true. Please keep in mind that when this is used
  *     by a theme, that theme becomes responsible for making sure necessary
  *     variables are set.
@@ -2528,7 +2522,7 @@ function hook_install() {
  * @param $sandbox
  *   Stores information for multipass updates. See above for more information.
  *
- * @throws Drupal\Core\Utility\UpdateException, PDOException
+ * @throws \Drupal\Core\Utility\UpdateException, PDOException
  *   In case of error, update hooks should throw an instance of
  *   Drupal\Core\Utility\UpdateException with a meaningful message for the user.
  *   If a database query fails for whatever reason, it will throw a
@@ -2584,12 +2578,14 @@ function hook_update_N(&$sandbox) {
 
   $sandbox['#finished'] = empty($sandbox['max']) ? 1 : ($sandbox['progress'] / $sandbox['max']);
 
+  if ($some_error_condition_met) {
+    // In case of an error, simply throw an exception with an error message.
+    throw new UpdateException('Something went wrong; here is what you should do.');
+  }
+
   // To display a message to the user when the update is completed, return it.
   // If you do not want to display a completion message, simply return nothing.
   return t('The update did what it was supposed to do.');
-
-  // In case of an error, simply throw an exception with an error message.
-  throw new UpdateException('Something went wrong; here is what you should do.');
 }
 
 /**
@@ -3354,7 +3350,7 @@ function hook_countries_alter(&$countries) {
  *   - 'weight': Optional. Integer weight used for sorting connection types on
  *     the authorize.php form.
  *
- * @see Drupal\Core\FileTransfer\FileTransfer
+ * @see \Drupal\Core\FileTransfer\FileTransfer
  * @see authorize.php
  * @see hook_filetransfer_info_alter()
  * @see drupal_get_filetransfer_info()

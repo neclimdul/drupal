@@ -415,7 +415,7 @@ function _drupal_rewrite_settings_dump($variable, $variable_name) {
  *
  * Dump the value of a value property and adds the comment if it exists.
  *
- * @param stdClass $variable
+ * @param object $variable
  *   A stdClass object with at least a value property.
  * @param string $prefix
  *   A string to prepend to the variable's value.
@@ -1105,7 +1105,7 @@ function db_run_tasks($driver) {
  *   The name of the driver.
  *
  * @return \Drupal\Core\Database\Install\Tasks
- *    A class defining the requirements and tasks for installing the database.
+ *   A class defining the requirements and tasks for installing the database.
  */
 function db_installer_object($driver) {
   // We cannot use Database::getConnection->getDriverClass() here, because
