@@ -9,6 +9,7 @@
 chdir('..');
 
 require_once __DIR__ . '/vendor/autoload.php';
+define('DRUPAL_ROOT', dirname(__DIR__));
 
 /**
  * Global flag to indicate the site is in installation mode.

@@ -137,7 +137,7 @@ class DbLogTest extends WebTestBase {
       'user'        => $this->big_user,
       'uid'         => $this->big_user->id(),
       'request_uri' => $base_root . request_uri(),
-      'referer'     => $_SERVER['HTTP_REFERER'],
+      'referer'     => \Drupal::request()->server->get('HTTP_REFERER'),
       'ip'          => '127.0.0.1',
       'timestamp'   => REQUEST_TIME,
       );
@@ -420,7 +420,7 @@ class DbLogTest extends WebTestBase {
       'user'        => $this->big_user,
       'uid'         => $this->big_user->id(),
       'request_uri' => $base_root . request_uri(),
-      'referer'     => $_SERVER['HTTP_REFERER'],
+      'referer'     => \Drupal::request()->server->get('HTTP_REFERER'),
       'ip'          => '127.0.0.1',
       'timestamp'   => REQUEST_TIME,
     );

@@ -209,7 +209,10 @@ const CONFIG_STAGING_DIRECTORY = 'staging';
  *
  * This strips two levels of directories off the current directory.
  */
-define('DRUPAL_ROOT', dirname(dirname(__DIR__)));
+// @todo Remove this - only needed so drush si will install for testbot.
+if (!defined('DRUPAL_ROOT')) {
+  define('DRUPAL_ROOT', dirname(dirname(__DIR__)));
+}
 
 /**
  * Returns the appropriate configuration directory.
@@ -227,33 +230,16 @@ define('DRUPAL_ROOT', dirname(dirname(__DIR__)));
  * @param bool $reset
  *   Force a full search for matching directories even if one had been
  *   found previously. Defaults to FALSE.
+ * @param \Symfony\Component\HttpFoundation\Request $request
+ *   The current request.
  *
- * @return
+ * @return false|string
  *   The path of the matching directory.
- *
  * @see default.settings.php
+ * @deprecated see \Drupal\Core\DrupalKernel::confPath()
  */
-function conf_path($require_settings = TRUE, $reset = FALSE) {
-  static $conf_path;
-
-  if (isset($conf_path) && !$reset) {
-    return $conf_path;
-  }
-
-  // Check for a simpletest override.
-  if ($test_prefix = drupal_valid_test_ua()) {
-    $conf_path = 'sites/simpletest/' . substr($test_prefix, 10);
-    return $conf_path;
-  }
-
-  // Otherwise, use the normal $conf_path.
-  $script_name = $_SERVER['SCRIPT_NAME'];
-  if (!$script_name) {
-    $script_name = $_SERVER['SCRIPT_FILENAME'];
-  }
-  $http_host = $_SERVER['HTTP_HOST'];
-  $conf_path = find_conf_path($http_host, $script_name, $require_settings);
-  return $conf_path;
+function conf_path($require_settings = TRUE, $reset = FALSE, Request $request = NULL) {
+  return DrupalKernel::confPath($request, $require_settings, $reset);
 }
 
 /**
@@ -1416,7 +1402,9 @@ function drupal_bootstrap($phase = NULL) {
 
       switch ($current_phase) {
         case DRUPAL_BOOTSTRAP_CONFIGURATION:
-          _drupal_bootstrap_configuration();
+          // @todo This is only called from Legacy CLI scripts like drush.
+          // Remove when they use the Drupal Kernel proper.
+          DrupalKernel::bootConfiguration(Request::createFromGlobals());
           break;
 
         case DRUPAL_BOOTSTRAP_KERNEL:
@@ -1439,54 +1427,6 @@ function drupal_bootstrap($phase = NULL) {
     }
   }
   return $stored_phase;
-}
-
-/**
- * Handles an entire PHP request.
- *
- * This function may be called by PHP scripts (e.g., Drupal's index.php) that
- * want Drupal to take over the entire PHP processing of the request. The only
- * expectation is that PHP's superglobals are initialized as desired (PHP does
- * this automatically, but some scripts might want to alter them) and that the
- * DRUPAL_ROOT constant is defined and set to the absolute server directory of
- * Drupal's codebase.
- *
- * Scripts and applications that want to invoke multiple Drupal requests within
- * a single PHP request, or Drupal request handling within some larger workflow,
- * should not call this function, but instead instantiate and use
- * \Drupal\Core\DrupalKernel as needed.
- *
- * @param boolean $test_only
- *   Whether to restrict handling to only requests invoked by SimpleTest.
- *
- * @see index.php
- */
-function drupal_handle_request($test_only = FALSE) {
-  // Initialize the environment, load settings.php, and activate a PSR-0 class
-  // autoloader with required namespaces registered.
-  drupal_bootstrap(DRUPAL_BOOTSTRAP_CONFIGURATION);
-
-  // Exit if we should be in a test environment but aren't.
-  if ($test_only && !drupal_valid_test_ua()) {
-    header($_SERVER['SERVER_PROTOCOL'] . ' 403 Forbidden');
-    exit;
-  }
-
-  $kernel = new DrupalKernel('prod', drupal_classloader(), !$test_only);
-
-  // @todo Remove this once everything in the bootstrap has been
-  //   converted to services in the DIC.
-  $kernel->boot();
-
-  // Create a request object from the HttpFoundation.
-  $request = Request::createFromGlobals();
-  \Drupal::getContainer()->set('request', $request);
-
-  drupal_bootstrap(DRUPAL_BOOTSTRAP_CODE);
-
-  $response = $kernel->handle($request)->prepare($request)->send();
-
-  $kernel->terminate($request, $response);
 }
 
 /**
@@ -1568,55 +1508,6 @@ function _drupal_exception_handler($exception) {
       print '<h2>Original</h2><p>' . Error::renderExceptionSafe($exception) . '</p>';
       print '<h2>Additional</h2><p>' . Error::renderExceptionSafe($exception2) . '</p><hr />';
     }
-  }
-}
-
-/**
- * Sets up the script environment and loads settings.php.
- */
-function _drupal_bootstrap_configuration() {
-  drupal_environment_initialize();
-
-  // Indicate that code is operating in a test child site.
-  if ($test_prefix = drupal_valid_test_ua()) {
-    // Only code that interfaces directly with tests should rely on this
-    // constant; e.g., the error/exception handler conditionally adds further
-    // error information into HTTP response headers that are consumed by
-    // Simpletest's internal browser.
-    define('DRUPAL_TEST_IN_CHILD_SITE', TRUE);
-
-    // Log fatal errors to the test site directory.
-    ini_set('log_errors', 1);
-    ini_set('error_log', DRUPAL_ROOT . '/sites/simpletest/' . substr($test_prefix, 10) . '/error.log');
-  }
-  else {
-    // Ensure that no other code defines this.
-    define('DRUPAL_TEST_IN_CHILD_SITE', FALSE);
-  }
-
-  // Initialize the configuration, including variables from settings.php.
-  drupal_settings_initialize();
-  _drupal_request_initialize();
-
-  // Activate the class loader.
-  drupal_classloader();
-
-  // Start a page timer:
-  Timer::start('page');
-
-  // Detect string handling method.
-  Unicode::check();
-
-  // Set the Drupal custom error handler. (requires \Drupal::config())
-  set_error_handler('_drupal_error_handler');
-  set_exception_handler('_drupal_exception_handler');
-
-  // Redirect the user to the installation script if Drupal has not been
-  // installed yet (i.e., if no $databases array has been defined in the
-  // settings.php file) and we are not already installing.
-  if (empty($GLOBALS['databases']) && !drupal_installation_attempted() && !drupal_is_cli()) {
-    include_once __DIR__ . '/install.inc';
-    install_goto('core/install.php');
   }
 }
 
@@ -1971,6 +1862,9 @@ function language_default() {
 /**
  * Returns the requested URL path of the page being viewed.
  *
+ * @param \Symfony\Component\HttpFoundation\Request|NULL $request
+ *   (Optional) The request to derive the request path from. Defaults to NULL
+ *
  * Examples:
  * - http://example.com/node/306 returns "node/306".
  * - http://example.com/drupalfolder/node/306 returns "node/306" while
@@ -1983,39 +1877,11 @@ function language_default() {
  * @return
  *   The requested Drupal URL path.
  *
+ * @deprecated use \Drupal\Core\DrupalKernel::requestPath($request).
  * @see current_path()
  */
-function request_path() {
-  static $path;
-
-  if (isset($path)) {
-    return $path;
-  }
-
-  // Get the part of the URI between the base path of the Drupal installation
-  // and the query string, and unescape it.
-  $request_path = request_uri(TRUE);
-  $base_path_len = strlen(rtrim(dirname($_SERVER['SCRIPT_NAME']), '\/'));
-  $path = substr(urldecode($request_path), $base_path_len + 1);
-
-  // Depending on server configuration, the URI might or might not include the
-  // script name. For example, the front page might be accessed as
-  // http://example.com or as http://example.com/index.php, and the "user"
-  // page might be accessed as http://example.com/user or as
-  // http://example.com/index.php/user. Strip the script name from $path.
-  $script = basename($_SERVER['SCRIPT_NAME']);
-  if ($path == $script) {
-    $path = '';
-  }
-  elseif (strpos($path, $script . '/') === 0) {
-    $path = substr($path, strlen($script) + 1);
-  }
-
-  // Extra slashes can appear in URLs or under some conditions, added by Apache,
-  // so normalize.
-  $path = trim($path, '/');
-
-  return $path;
+function request_path(Request $request = NULL) {
+  return DrupalKernel::requestPath($request);
 }
 
 /**
@@ -2023,11 +1889,7 @@ function request_path() {
  *   Symfony's Request object exclusively.
  */
 function _current_path($path = NULL) {
-  static $current_path = '';
-  if (isset($path)) {
-    $current_path = $path;
-  }
-  return $current_path;
+  return DrupalKernel::currentPath($path);
 }
 
 /**

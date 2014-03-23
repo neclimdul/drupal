@@ -309,11 +309,9 @@ require_once __DIR__ . '/includes/file.inc';
 require_once __DIR__ . '/includes/unicode.inc';
 require_once __DIR__ . '/includes/install.inc';
 require_once __DIR__ . '/includes/schema.inc';
-// Bootstrap to configuration.
-drupal_bootstrap(DRUPAL_BOOTSTRAP_CONFIGURATION);
 
-// Bootstrap the database.
-require_once __DIR__ . '/includes/database.inc';
+$request = Request::createFromGlobals();
+DrupalKernel::bootCode($request);
 
 // Updating from a site schema version prior to 8000 should block the update
 // process. Ensure that the site is not attempting to update a database
@@ -339,7 +337,6 @@ $settings = settings()->getAll();
 new Settings($settings);
 $kernel = new DrupalKernel('update', drupal_classloader(), FALSE);
 $kernel->boot();
-$request = Request::createFromGlobals();
 \Drupal::getContainer()->set('request', $request);
 
 // Determine if the current user has access to run update.php.

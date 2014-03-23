@@ -2,6 +2,14 @@
 
 /**
  * @file
+ * Provides statistics update callback.
+ */
+
+use Drupal\Core\DrupalKernel;
+use Symfony\Component\HttpFoundation\Request;
+
+/**
+ * @file
  * Handles counts of node views via AJAX with minimal bootstrap.
  */
 
@@ -11,7 +19,7 @@ chdir('../../..');
 // Load the Drupal bootstrap.
 require_once dirname(dirname(__DIR__)) . '/vendor/autoload.php';
 require_once dirname(dirname(__DIR__)) . '/includes/bootstrap.inc';
-drupal_bootstrap(DRUPAL_BOOTSTRAP_KERNEL);
+$kernel = DrupalKernel::createFromRequest(Request::createFromGlobals());
 
 if (\Drupal::config('statistics.settings')->get('count_content_views')) {
   $nid = filter_input(INPUT_POST, 'nid', FILTER_VALIDATE_INT);
@@ -28,4 +36,3 @@ if (\Drupal::config('statistics.settings')->get('count_content_views')) {
       ->execute();
   }
 }
-

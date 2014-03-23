@@ -5,13 +5,14 @@
  * This script runs Drupal tests from command line.
  */
 
+require_once __DIR__ . '/../vendor/autoload.php';
+define('DRUPAL_ROOT', dirname(dirname(__DIR__)));
+
 use Drupal\Component\Utility\Settings;
 use Drupal\Component\Utility\Timer;
 use Drupal\Core\Database\Database;
 use Drupal\Core\DrupalKernel;
 use Symfony\Component\HttpFoundation\Request;
-
-require_once __DIR__ . '/../vendor/autoload.php';
 
 const SIMPLETEST_SCRIPT_COLOR_PASS = 32; // Green.
 const SIMPLETEST_SCRIPT_COLOR_FAIL = 31; // Red.

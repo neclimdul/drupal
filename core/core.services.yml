@@ -177,6 +177,11 @@ services:
     arguments: ['@access_check.theme']
     calls:
       - [setRequest, ['@request']]
+  theme_negotiator_request_subscriber:
+      class: Drupal\Core\EventSubscriber\ThemeNegotiatorRequestSubscriber
+      tags:
+        - { name: event_subscriber }
+      arguments: ['@theme.negotiator']
   theme.negotiator.default:
     class: Drupal\Core\Theme\DefaultNegotiator
     arguments: ['@config.factory']
