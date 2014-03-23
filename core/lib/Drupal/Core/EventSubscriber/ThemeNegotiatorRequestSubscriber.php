@@ -46,12 +46,13 @@ class ThemeNegotiatorRequestSubscriber implements EventSubscriberInterface {
    */
   public function onKernelRequestThemeNegotiator(GetResponseEvent $event) {
     if ($event->getRequestType() == HttpKernelInterface::MASTER_REQUEST) {
-      $this->themeNegotiator->setRequest($event->getRequest());
+      $request = $event->getRequest();
+      $this->themeNegotiator->setRequest($request);
       // Let all modules take action before the menu system handles the request.
       // We do not want this while running update.php.
       if (!defined('MAINTENANCE_MODE') || MAINTENANCE_MODE != 'update') {
         // @todo Refactor drupal_theme_initialize() into a request subscriber.
-        drupal_theme_initialize($event->getRequest());
+        drupal_theme_initialize($request);
       }
     }
   }
@@ -63,7 +64,7 @@ class ThemeNegotiatorRequestSubscriber implements EventSubscriberInterface {
    *   An array of event listener definitions.
    */
   public static function getSubscribedEvents() {
-    $events[KernelEvents::REQUEST][] = array('onKernelRequestThemeNegotiator', 100);
+    $events[KernelEvents::REQUEST][] = array('onKernelRequestThemeNegotiator', 30);
 
     return $events;
   }
