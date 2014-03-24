@@ -528,12 +528,6 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
     // Override PHP settings required for Drupal to work properly.
     // sites/default/default.settings.php contains more runtime settings.
     // The .htaccess file contains settings that cannot be changed at runtime.
-    // Deny execution with enabled "magic quotes" (both GPC and runtime).
-    if (get_magic_quotes_gpc() || get_magic_quotes_runtime()) {
-      header($request->server->get('SERVER_PROTOCOL') . ' 500 Internal Server Error');
-      print "PHP's 'magic_quotes_gpc' and 'magic_quotes_runtime' settings are not supported and must be disabled.";
-      exit;
-    }
 
     // Use session cookies, not transparent sessions that puts the session id in
     // the query string.
@@ -623,8 +617,9 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
     global $base_url, $base_path, $base_root, $script_path;
 
     // Export these settings.php variables to the global namespace.
-    global $databases, $cookie_domain, $conf, $db_prefix, $drupal_hash_salt, $base_secure_url, $base_insecure_url, $config_directories;
-    $conf = array();
+    global $databases, $cookie_domain, $config, $base_secure_url, $base_insecure_url, $config_directories;
+    $settings = array();
+    $config = array();
 
     // Make conf_path() available as local variable in settings.php.
     $conf_path = static::confPath($request, TRUE, FALSE);
@@ -632,7 +627,7 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
       include_once DRUPAL_ROOT . '/' . $conf_path . '/settings.php';
     }
     require_once DRUPAL_ROOT . '/core/lib/Drupal/Component/Utility/Settings.php';
-    new Settings(isset($settings) ? $settings : array());
+    new Settings($settings);
     $is_https = $request->isSecure();
 
     if (isset($base_url)) {
@@ -759,10 +754,10 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
     static::bootConfiguration($request);
     static::$singleton = new static($environment, drupal_classloader(), TRUE, DRUPAL_TEST_IN_CHILD_SITE);
     static::$singleton->boot();
-    require_once DRUPAL_ROOT . '/core/includes/../../' . settings()->get('path_inc', 'core/includes/path.inc');
+    require_once DRUPAL_ROOT . '/core/includes/../../' . Settings::get('path_inc', 'core/includes/path.inc');
     require_once DRUPAL_ROOT . '/core/includes/theme.inc';
     require_once DRUPAL_ROOT . '/core/includes/pager.inc';
-    require_once DRUPAL_ROOT . '/core/includes/../../' . settings()->get('menu_inc', 'core/includes/menu.inc');
+    require_once DRUPAL_ROOT . '/core/includes/../../' . Settings::get('menu_inc', 'core/includes/menu.inc');
     require_once DRUPAL_ROOT . '/core/includes/tablesort.inc';
     require_once DRUPAL_ROOT . '/core/includes/file.inc';
     require_once DRUPAL_ROOT . '/core/includes/unicode.inc';
@@ -785,14 +780,6 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
     static::$singleton->container->set('request', $request);
     // Make sure all stream wrappers are registered.
     file_get_stream_wrappers();
-
-    // Now that stream wrappers are registered, log fatal errors from a
-    // simpletest child site to a test specific file directory.
-    $test_info = &$GLOBALS['drupal_test_info'];
-    if (!empty($test_info['in_child_site'])) {
-      ini_set('log_errors', 1);
-      ini_set('error_log', 'public://error.log');
-    }
 
     // Set the allowed protocols once we have the config available.
     $allowed_protocols = \Drupal::config('system.filter')->get('protocols');

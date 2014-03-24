@@ -19,9 +19,9 @@ include_once DRUPAL_ROOT . '/core/includes/bootstrap.inc';
 $is_https_mock = empty($_SERVER['HTTPS']);
 $_SERVER['HTTPS'] = 'on';
 // Set a global variable to indicate a mock HTTPS request.
-foreach ($_SERVER as $key => $value) {
-  $_SERVER[$key] = str_replace('core/modules/system/tests/https.php', 'index.php', $value);
-  $_SERVER[$key] = str_replace('http://', 'https://', $value);
+foreach ($_SERVER as &$value) {
+  $value = str_replace('core/modules/system/tests/https.php', 'index.php', $value);
+  $value = str_replace('http://', 'https://', $value);
 }
 $request = Request::createFromGlobals();
 $kernel = DrupalKernel::createFromRequest($request);

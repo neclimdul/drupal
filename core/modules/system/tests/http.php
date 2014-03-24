@@ -17,9 +17,9 @@ include_once DRUPAL_ROOT . '/core/includes/bootstrap.inc';
 $is_http_mock = !empty($_SERVER['HTTPS']);
 // Change to HTTP.
 $_SERVER['HTTPS'] = NULL;
-foreach ($_SERVER as $key => $value) {
-  $_SERVER[$key] = str_replace('core/modules/system/tests/https.php', 'index.php', $value);
-  $_SERVER[$key] = str_replace('http://', 'https://', $value);
+foreach ($_SERVER as &$value) {
+  $value = str_replace('core/modules/system/tests/http.php', 'index.php', $value);
+  $value = str_replace('http://', 'https://', $value);
 }
 ini_set('session.cookie_secure', FALSE);
 $request = Request::createFromGlobals();
