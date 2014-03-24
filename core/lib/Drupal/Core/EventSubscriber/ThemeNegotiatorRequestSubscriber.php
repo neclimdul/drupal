@@ -64,7 +64,7 @@ class ThemeNegotiatorRequestSubscriber implements EventSubscriberInterface {
    *   An array of event listener definitions.
    */
   public static function getSubscribedEvents() {
-    $events[KernelEvents::REQUEST][] = array('onKernelRequestThemeNegotiator', 30);
+    $events[KernelEvents::REQUEST][] = array('onKernelRequestThemeNegotiator', 29);
 
     return $events;
   }
