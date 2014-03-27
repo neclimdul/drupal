@@ -2,16 +2,11 @@
 
 /**
  * @file
- * Provides statistics update callback.
+ * Handles counts of node views via AJAX with minimal bootstrap.
  */
 
 use Drupal\Core\DrupalKernel;
 use Symfony\Component\HttpFoundation\Request;
-
-/**
- * @file
- * Handles counts of node views via AJAX with minimal bootstrap.
- */
 
 // Change the directory to the Drupal root.
 chdir('../../..');

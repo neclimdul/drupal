@@ -272,8 +272,7 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
    * @param \Symfony\Component\HttpFoundation\Request $request
    *   The active request.
    *
-   * @return \Drupal\Core\DrupalKernel
-   *   Returns the built kernel.
+   * @return static
    */
   public static function createFromRequest(Request $request) {
     return static::bootCode($request);
@@ -299,7 +298,7 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
   /**
    * Sets the classloader.
    *
-   * @param \Composer\Autoload\ClassLoader;ClassLoader $class_loader
+   * @param \Composer\Autoload\ClassLoader $class_loader
    *   The class loader.
    */
   public function setClassLoader(ClassLoader $class_loader) {
@@ -334,7 +333,7 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
     $this->initializeContainer();
     $this->booted = TRUE;
     if ($this->containerNeedsDumping && !$this->dumpDrupalContainer($this->container, static::CONTAINER_BASE_CLASS)) {
-      watchdog('DrupalKernel', 'Container cannot be written to disk');
+      throw new \Exception('Container cannot be written to disk');
     }
   }
 
@@ -357,17 +356,7 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
   }
 
   /**
-   * Handle the request.
-   *
-   * @param \Symfony\Component\HttpFoundation\Request; $request
-   *   The request.
-   * @param int $type
-   *   Request type.
-   * @param bool $catch
-   *   Catch errors.
-   *
-   * @return \Symfony\Component\HttpFoundation\Response
-   *   The response.
+   * {@inheritdoc}
    */
   public function handle(Request $request, $type = self::MASTER_REQUEST, $catch = TRUE) {
     // Exit if we should be in a test environment but aren't.
@@ -860,6 +849,11 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
    * {@inheritdoc}
    */
   public function terminate(Request $request, Response $response) {
+    static::$bootLevel = self::BOOTSTRAP_COLD;
+    static::$currentPath = NULL;
+    static::$currentPath = NULL;
+    static::$requestPath = NULL;
+    static::$singleton = NULL;
     if (FALSE === $this->booted) {
       return;
     }

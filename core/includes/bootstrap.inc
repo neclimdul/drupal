@@ -1393,11 +1393,11 @@ function drupal_bootstrap($phase = NULL) {
 
         case DRUPAL_BOOTSTRAP_CODE:
           require_once __DIR__ . '/common.inc';
-          _drupal_bootstrap_code();
+          DrupalKernel::bootCode(Request::createFromGlobals());
           break;
 
         case DRUPAL_BOOTSTRAP_FULL:
-          _drupal_bootstrap_full();
+          DrupalKernel::createFromRequest(Request::createFromGlobals());
           break;
       }
     }

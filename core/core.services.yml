@@ -537,10 +537,6 @@ services:
     tags:
       - { name: event_subscriber }
     arguments: ['@path.alias_manager.cached', '@path_processor_manager']
-  legacy_request_subscriber:
-    class: Drupal\Core\EventSubscriber\LegacyRequestSubscriber
-    tags:
-      - { name: event_subscriber }
   finish_response_subscriber:
     class: Drupal\Core\EventSubscriber\FinishResponseSubscriber
     tags:
