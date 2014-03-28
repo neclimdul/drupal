@@ -21,6 +21,7 @@ use Drupal\Core\DependencyInjection\ServiceProviderInterface;
 use Drupal\Core\DependencyInjection\YamlFileLoader;
 use Drupal\Core\Extension\ExtensionDiscovery;
 use Drupal\Core\Language\Language;
+use Drupal\Core\Session\AnonymousUserSession;
 use Symfony\Component\Config\Loader\LoaderInterface;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBag;
 use Symfony\Component\DependencyInjection\Dumper\PhpDumper;
@@ -333,7 +334,7 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
     $this->initializeContainer();
     $this->booted = TRUE;
     if ($this->containerNeedsDumping && !$this->dumpDrupalContainer($this->container, static::CONTAINER_BASE_CLASS)) {
-      throw new \Exception('Container cannot be written to disk');
+      watchdog('DrupalKernel', 'Container cannot be written to disk');
     }
   }
 
@@ -743,6 +744,15 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
     static::bootConfiguration($request);
     static::$singleton = new static($environment, drupal_classloader(), TRUE, DRUPAL_TEST_IN_CHILD_SITE);
     static::$singleton->boot();
+
+    // Enter the request scope so that current_user service is available for
+    // locale/translation sake.
+    static::$singleton->container->enterScope('request');
+    static::$singleton->container->set('request', $request);
+
+    require_once DRUPAL_ROOT . '/core/includes/database.inc';
+    static::$singleton->bootPageCache($request);
+
     require_once DRUPAL_ROOT . '/core/includes/../../' . Settings::get('path_inc', 'core/includes/path.inc');
     require_once DRUPAL_ROOT . '/core/includes/theme.inc';
     require_once DRUPAL_ROOT . '/core/includes/pager.inc';
@@ -756,17 +766,12 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
     require_once DRUPAL_ROOT . '/core/includes/errors.inc';
     require_once DRUPAL_ROOT . '/core/includes/schema.inc';
     require_once DRUPAL_ROOT . '/core/includes/entity.inc';
-    require_once DRUPAL_ROOT . '/core/includes/database.inc';
     require_once DRUPAL_ROOT . '/core/includes/common.inc';
     require_once DRUPAL_ROOT . '/core/includes/module.inc';
 
     // Load all enabled modules.
     \Drupal::moduleHandler()->loadAll();
 
-    // Enter the request scope so that current_user service is available for
-    // locale/translation sake.
-    static::$singleton->container->enterScope('request');
-    static::$singleton->container->set('request', $request);
     // Make sure all stream wrappers are registered.
     file_get_stream_wrappers();
 
@@ -782,6 +787,52 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
     static::$singleton->container->leaveScope('request');
 
     return static::$singleton;
+  }
+
+  /**
+   * Attempt to serve the page from cache.
+   *
+   * @param \Symfony\Component\HttpFoundation\Request $request
+   *   The current request.
+   */
+  public function bootPageCache(Request $request) {
+    // @todo Use the current_user proxy.
+    global $user;
+
+    // Check for a cache mode force from settings.php.
+    if (Settings::get('page_cache_without_database')) {
+      $cache_enabled = TRUE;
+    }
+    else {
+      $config = $this->container->get('config.factory')->get('system.performance');
+      $cache_enabled = $config->get('cache.page.use_internal');
+    }
+
+    // If there is no session cookie and cache is enabled (or forced), try
+    // to serve a cached page.
+    if (!$request->cookies->has(session_name()) && $cache_enabled) {
+      // Make sure there is a user object because its timestamp will be checked.
+      $user = new AnonymousUserSession();
+      // Get the page from the cache.
+      // @todo Use the services from the container.
+      $cache = drupal_page_get_cache($request);
+      // If there is a cached page, display it.
+      if (is_object($cache)) {
+        $response = new Response();
+        $response->headers->set('X-Drupal-Cache', 'HIT');
+        date_default_timezone_set(drupal_get_user_timezone());
+
+        drupal_serve_page_from_cache($cache, $response, $request);
+
+        // We are done.
+        $response->prepare($request);
+        $response->send();
+        exit;
+      }
+      else {
+        drupal_add_http_header('X-Drupal-Cache', 'MISS');
+      }
+    }
   }
 
   /**
