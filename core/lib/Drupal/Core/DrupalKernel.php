@@ -272,11 +272,15 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
    *
    * @param \Symfony\Component\HttpFoundation\Request $request
    *   The active request.
+   * @param string $environment
+   *   (optional) Environment to boot. Defaults to 'prod'.
+   * @param bool $allow_dumping
+   *   (optional) Whether to allow dumping the container. Defaults to TRUE.
    *
    * @return static
    */
-  public static function createFromRequest(Request $request) {
-    return static::bootCode($request);
+  public static function createFromRequest(Request $request, $environment = 'prod', $allow_dumping = TRUE) {
+    return static::bootCode($request, $environment, $allow_dumping);
   }
 
   /**
@@ -732,17 +736,19 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
    * @param \Symfony\Component\HttpFoundation\Request $request
    *   The current request.
    * @param string $environment
-   *   The environment to bootstrap.
+   *   (optional) The environment to bootstrap. Defaults to 'prod'.
+   * @param bool $allow_dumping
+   *   (optional) Allow dumping the container. Defaults to TRUE.
    *
    * @return \Drupal\Core\DrupalKernel
    *   The bootstapped kernel.
    */
-  public static function bootCode(Request $request, $environment = 'prod') {
+  public static function bootCode(Request $request, $environment = 'prod', $allow_dumping = TRUE) {
     if (static::$bootLevel >= self::BOOTSTRAP_CODE) {
       return static::$singleton;
     }
     static::bootConfiguration($request);
-    static::$singleton = new static($environment, drupal_classloader(), TRUE, DRUPAL_TEST_IN_CHILD_SITE);
+    static::$singleton = new static($environment, drupal_classloader(), $allow_dumping, DRUPAL_TEST_IN_CHILD_SITE);
     static::$singleton->boot();
 
     // Enter the request scope so that current_user service is available for
@@ -751,8 +757,15 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
     static::$singleton->container->set('request', $request);
 
     require_once DRUPAL_ROOT . '/core/includes/database.inc';
-    static::$singleton->bootPageCache($request);
+    return static::$singleton->bootPageCache($request)->finishBoot();
+  }
 
+  /**
+   * Finish booting by loading remaining includes and enabled modules.
+   *
+   * @return $this
+   */
+  public function finishBoot() {
     require_once DRUPAL_ROOT . '/core/includes/../../' . Settings::get('path_inc', 'core/includes/path.inc');
     require_once DRUPAL_ROOT . '/core/includes/theme.inc';
     require_once DRUPAL_ROOT . '/core/includes/pager.inc';
@@ -770,13 +783,13 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
     require_once DRUPAL_ROOT . '/core/includes/module.inc';
 
     // Load all enabled modules.
-    \Drupal::moduleHandler()->loadAll();
+    $this->container->get('module_handler')->loadAll();
 
     // Make sure all stream wrappers are registered.
     file_get_stream_wrappers();
 
     // Set the allowed protocols once we have the config available.
-    $allowed_protocols = \Drupal::config('system.filter')->get('protocols');
+    $allowed_protocols = $this->container->get('config.factory')->get('system.filter')->get('protocols');
     if (!isset($allowed_protocols)) {
       // filter_xss_admin() is called by the installer and update.php, in which
       // case the configuration may not exist (yet). Provide a minimal default
@@ -784,9 +797,11 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
       $allowed_protocols = array('http', 'https');
     }
     UrlHelper::setAllowedProtocols($allowed_protocols);
-    static::$singleton->container->leaveScope('request');
-
-    return static::$singleton;
+    if ($this->container->isScopeActive('request')) {
+      // Back out scope required to initialize the file stream wrappers.
+      $this->container->leaveScope('request');
+    }
+    return $this;
   }
 
   /**
@@ -833,6 +848,7 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
         drupal_add_http_header('X-Drupal-Cache', 'MISS');
       }
     }
+    return $this;
   }
 
   /**

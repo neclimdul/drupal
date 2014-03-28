@@ -309,9 +309,10 @@ require_once __DIR__ . '/includes/file.inc';
 require_once __DIR__ . '/includes/unicode.inc';
 require_once __DIR__ . '/includes/install.inc';
 require_once __DIR__ . '/includes/schema.inc';
-
+require_once __DIR__ . '/includes/database.inc';
+// Bootstrap to configuration.
 $request = Request::createFromGlobals();
-DrupalKernel::bootCode($request);
+DrupalKernel::bootConfiguration($request);
 
 // Updating from a site schema version prior to 8000 should block the update
 // process. Ensure that the site is not attempting to update a database
@@ -340,7 +341,7 @@ $kernel->boot();
 \Drupal::getContainer()->set('request', $request);
 
 // Determine if the current user has access to run update.php.
-drupal_bootstrap(DRUPAL_BOOTSTRAP_PAGE_CACHE);
+$kernel->bootPageCache($request);
 
 require_once DRUPAL_ROOT . '/' . Settings::get('session_inc', 'core/includes/session.inc');
 drupal_session_initialize();
@@ -379,7 +380,7 @@ if (is_null($op) && update_access_allowed()) {
   install_goto('core/update.php?op=info');
 }
 
-drupal_bootstrap(DRUPAL_BOOTSTRAP_FULL);
+$kernel->finishBoot();
 drupal_maintenance_theme();
 
 // Turn error reporting back on. From now on, only fatal errors (which are
