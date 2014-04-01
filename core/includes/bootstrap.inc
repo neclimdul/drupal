@@ -328,64 +328,7 @@ function config_get_config_directory($type = CONFIG_ACTIVE_DIRECTORY) {
  * Initializes the PHP environment.
  */
 function drupal_environment_initialize() {
-  if (!isset($_SERVER['HTTP_REFERER'])) {
-    $_SERVER['HTTP_REFERER'] = '';
-  }
-  if (!isset($_SERVER['SERVER_PROTOCOL']) || ($_SERVER['SERVER_PROTOCOL'] != 'HTTP/1.0' && $_SERVER['SERVER_PROTOCOL'] != 'HTTP/1.1')) {
-    $_SERVER['SERVER_PROTOCOL'] = 'HTTP/1.0';
-  }
-
-  if (isset($_SERVER['HTTP_HOST'])) {
-    // As HTTP_HOST is user input, ensure it only contains characters allowed
-    // in hostnames. See RFC 952 (and RFC 2181).
-    // $_SERVER['HTTP_HOST'] is lowercased here per specifications.
-    $_SERVER['HTTP_HOST'] = strtolower($_SERVER['HTTP_HOST']);
-    if (!drupal_valid_http_host($_SERVER['HTTP_HOST'])) {
-      // HTTP_HOST is invalid, e.g. if containing slashes it may be an attack.
-      header($_SERVER['SERVER_PROTOCOL'] . ' 400 Bad Request');
-      exit;
-    }
-  }
-  else {
-    // Some pre-HTTP/1.1 clients will not send a Host header. Ensure the key is
-    // defined for E_ALL compliance.
-    $_SERVER['HTTP_HOST'] = '';
-  }
-
-  // @todo Refactor with the Symfony Request object.
-  _current_path(request_path());
-
-  // Enforce E_STRICT, but allow users to set levels not part of E_STRICT.
-  error_reporting(E_STRICT | E_ALL | error_reporting());
-
-  // Override PHP settings required for Drupal to work properly.
-  // sites/default/default.settings.php contains more runtime settings.
-  // The .htaccess file contains settings that cannot be changed at runtime.
-
-  // Use session cookies, not transparent sessions that puts the session id in
-  // the query string.
-  ini_set('session.use_cookies', '1');
-  ini_set('session.use_only_cookies', '1');
-  ini_set('session.use_trans_sid', '0');
-  // Don't send HTTP headers using PHP's session handler.
-  // Send an empty string to disable the cache limiter.
-  ini_set('session.cache_limiter', '');
-  // Use httponly session cookies.
-  ini_set('session.cookie_httponly', '1');
-
-  // Set sane locale settings, to ensure consistent string, dates, times and
-  // numbers handling.
-  setlocale(LC_ALL, 'C');
-}
-
-/**
- * Validates that a hostname (for example $_SERVER['HTTP_HOST']) is safe.
- *
- * @return
- *  TRUE if only containing valid characters, or FALSE otherwise.
- */
-function drupal_valid_http_host($host) {
-  return preg_match('/^\[?(?:[a-zA-Z0-9-:\]_]+\.?)+$/', $host);
+  DrupalKernel::bootEnvironment(Request::createFromGlobals());
 }
 
 /**

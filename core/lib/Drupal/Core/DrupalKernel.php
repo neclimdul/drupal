@@ -415,30 +415,27 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
       return;
     }
 
+    // @todo File upstream issue for HeaderBag::getReferer().
     if (!$request->server->has('HTTP_REFERER')) {
       $request->server->set('HTTP_REFERER', '');
     }
+    // @todo File upstream issue to add this validation to Request::create().
     if (!$request->server->has('SERVER_PROTOCOL') || (!in_array($request->server->get('SERVER_PROTOCOL'), array('HTTP/1.0', 'HTTP/1.1')))) {
       $request->server->set('SERVER_PROTOCOL', 'HTTP/1.0');
     }
 
-    // Some pre-HTTP/1.1 clients will not send a Host header. Ensure the key
-    // is defined for E_ALL compliance.
-    $host = '';
-    if ($request->server->has('HTTP_HOST')) {
-      // As HTTP_HOST is user input, ensure it only contains characters allowed
-      // in hostnames. See RFC 952 (and RFC 2181).
-      // $_SERVER['HTTP_HOST'] is lowercased here per specifications.
-      $host = strtolower($request->server->get('HTTP_HOST'));
-      if (!preg_match('/^\[?(?:[a-zA-Z0-9-:\]_]+\.?)+$/', $host)) {
-        // HTTP_HOST is invalid, e.g. if containing slashes it may be an attack.
-        header($request->server->get('SERVER_PROTOCOL') . ' 400 Bad Request');
-        exit;
-      }
+    // As HTTP_HOST is user input, ensure it only contains characters allowed
+    // in hostnames. See RFC 952 (and RFC 2181).
+    try {
+      $request->getHost();
     }
-    $request->server->set('HTTP_HOST', $host);
+    catch (\UnexpectedValueException $e) {
+      // HTTP_HOST is invalid, e.g. if containing slashes it may be an attack.
+      header($request->server->get('SERVER_PROTOCOL') . ' 400 Bad Request');
+      exit;
+    }
 
-    // @todo Refactor with the Symfony Request object.
+    // @todo Remove this legacy/BC construct.
     static::currentPath(static::requestPath($request));
 
     // Enforce E_STRICT, but allow users to set levels not part of E_STRICT.
@@ -462,6 +459,7 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
     // Set sane locale settings, to ensure consistent string, dates, times and
     // numbers handling.
     setlocale(LC_ALL, 'C');
+
     static::$bootLevel = self::BOOTSTRAP_ENVIRONMENT;
   }
 
