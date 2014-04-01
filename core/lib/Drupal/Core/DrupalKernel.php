@@ -118,7 +118,7 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
    *
    * @var string
    */
-  protected static $confPath = '';
+  protected static $confPath;
 
   /**
    * Holds the container instance.
@@ -366,30 +366,31 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
    *   Force a full search for matching directories even if one had been
    *   found previously. Defaults to FALSE.
    *
-   * @return false|string
+   * @return string
    *   The path of the matching directory.
+   *
    * @see default.settings.php
    */
   public static function confPath(Request $request = NULL, $require_settings = TRUE, $reset = FALSE) {
-    if (static::$confPath && !$reset) {
+    if (isset(static::$confPath) && !$reset) {
       return static::$confPath;
     }
-    $container = \Drupal::getContainer();
-    if ($container && $container->has('request')) {
-      $request = $request ?: $container->get('request');
+
+    if (isset($request)) {
+      $request = $request;
     }
+    // @todo This case cannot be possible. Remove?
+    elseif (\Drupal::hasRequest()) {
+      $request = \Drupal::request();
+    }
+    // @todo Remove once external CLI scripts (Drush) are updated.
     else {
-      // CLI or other script that doesn't yet handle creating the kernel from a
-      // request. Build it for them.
-      // @todo Remove once all CLI integration, drush etc uses the static
-      //   createFromRequest() method to build the kernel.
-      $request = $request ?: Request::createFromGlobals();
+      $request = Request::createFromGlobals();
     }
 
     // Check for a simpletest override.
     if ($test_prefix = drupal_valid_test_ua()) {
-      $conf_path = 'sites/simpletest/' . substr($test_prefix, 10);
-      static::$confPath = $conf_path;
+      static::$confPath = 'sites/simpletest/' . substr($test_prefix, 10);
       return static::$confPath;
     }
 
