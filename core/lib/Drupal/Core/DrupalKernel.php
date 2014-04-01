@@ -8,6 +8,7 @@
 namespace Drupal\Core;
 
 use Drupal\Component\PhpStorage\PhpStorageFactory;
+use Drupal\Component\Utility\Crypt;
 use Drupal\Component\Utility\Settings;
 use Drupal\Component\Utility\String;
 use Drupal\Component\Utility\Timer;
@@ -768,6 +769,7 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
    */
   public function finishBoot() {
     require_once DRUPAL_ROOT . '/' . Settings::get('path_inc', 'core/includes/path.inc');
+    require_once DRUPAL_ROOT . '/core/includes/module.inc';
     require_once DRUPAL_ROOT . '/core/includes/theme.inc';
     require_once DRUPAL_ROOT . '/core/includes/pager.inc';
     require_once DRUPAL_ROOT . '/' . Settings::get('menu_inc', 'core/includes/menu.inc');
@@ -780,13 +782,17 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
     require_once DRUPAL_ROOT . '/core/includes/errors.inc';
     require_once DRUPAL_ROOT . '/core/includes/schema.inc';
     require_once DRUPAL_ROOT . '/core/includes/entity.inc';
-    require_once DRUPAL_ROOT . '/core/includes/module.inc';
 
     // Load all enabled modules.
     $this->container->get('module_handler')->loadAll();
 
     // Make sure all stream wrappers are registered.
     file_get_stream_wrappers();
+
+    // Ensure mt_rand() is reseeded to prevent random values from one page load
+    // being exploited to predict random values in subsequent page loads.
+    $seed = unpack("L", Crypt::randomBytes(4));
+    mt_srand($seed[1]);
 
     // Set the allowed protocols once we have the config available.
     $allowed_protocols = $this->container->get('config.factory')->get('system.filter')->get('protocols');
@@ -797,8 +803,9 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
       $allowed_protocols = array('http', 'https');
     }
     UrlHelper::setAllowedProtocols($allowed_protocols);
+
+    // Back out scope required to initialize the file stream wrappers.
     if ($this->container->isScopeActive('request')) {
-      // Back out scope required to initialize the file stream wrappers.
       $this->container->leaveScope('request');
     }
     return $this;
