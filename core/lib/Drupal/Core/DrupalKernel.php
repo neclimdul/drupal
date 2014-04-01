@@ -313,6 +313,20 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
   /**
    * {@inheritdoc}
    */
+  public function boot() {
+    if ($this->booted) {
+      return;
+    }
+    $this->initializeContainer();
+    $this->booted = TRUE;
+    if ($this->containerNeedsDumping && !$this->dumpDrupalContainer($this->container, static::CONTAINER_BASE_CLASS)) {
+      watchdog('DrupalKernel', 'Container cannot be written to disk');
+    }
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function shutdown() {
     if (FALSE === $this->booted) {
       return;
@@ -326,20 +340,6 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
    */
   public function getContainer() {
     return $this->container;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function boot() {
-    if ($this->booted) {
-      return;
-    }
-    $this->initializeContainer();
-    $this->booted = TRUE;
-    if ($this->containerNeedsDumping && !$this->dumpDrupalContainer($this->container, static::CONTAINER_BASE_CLASS)) {
-      watchdog('DrupalKernel', 'Container cannot be written to disk');
-    }
   }
 
   /**
