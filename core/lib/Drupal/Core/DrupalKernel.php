@@ -404,53 +404,6 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
   }
 
   /**
-   * Bootstraps configuration.
-   *
-   * @param \Symfony\Component\HttpFoundation\Request $request
-   *   The current request.
-   */
-  public static function bootConfiguration(Request $request) {
-    if (static::$bootLevel >= self::BOOTSTRAP_CONFIGURATION) {
-      return;
-    }
-    global $config;
-    if ($test_prefix = drupal_valid_test_ua()) {
-      // Only code that interfaces directly with tests should rely on this
-      // constant; e.g., the error/exception handler conditionally adds further
-      // error information into HTTP response headers that are consumed by
-      // Simpletest's internal browser.
-      define('DRUPAL_TEST_IN_CHILD_SITE', TRUE);
-
-      // Log fatal errors to the test site directory.
-      ini_set('log_errors', 1);
-      ini_set('error_log', DRUPAL_ROOT . '/sites/simpletest/' . substr($test_prefix, 10) . '/error.log');
-    }
-    else {
-      // Ensure that no other code defines this.
-      define('DRUPAL_TEST_IN_CHILD_SITE', FALSE);
-    }
-    static::bootSettings($request);
-    // Start a page timer:
-    Timer::start('page');
-
-    // Detect string handling method.
-    Unicode::check();
-
-    // Set the Drupal custom error handler. (requires config())
-    set_error_handler('_drupal_error_handler');
-    set_exception_handler('_drupal_exception_handler');
-
-    // Redirect the user to the installation script if Drupal has not been
-    // installed yet (i.e., if no $databases array has been defined in the
-    // settings.php file) and we are not already installing.
-    if (empty($GLOBALS['databases']) && !drupal_installation_attempted() && !drupal_is_cli()) {
-      include_once __DIR__ . '/install.inc';
-      install_goto('core/install.php');
-    }
-    static::$bootLevel = self::BOOTSTRAP_CONFIGURATION;
-  }
-
-  /**
    * Bootstraps the environment.
    *
    * @param \Symfony\Component\HttpFoundation\Request $request
@@ -646,6 +599,99 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
   }
 
   /**
+   * Bootstraps configuration.
+   *
+   * @param \Symfony\Component\HttpFoundation\Request $request
+   *   The current request.
+   */
+  public static function bootConfiguration(Request $request) {
+    if (static::$bootLevel >= self::BOOTSTRAP_CONFIGURATION) {
+      return;
+    }
+    global $config;
+    if ($test_prefix = drupal_valid_test_ua()) {
+      // Only code that interfaces directly with tests should rely on this
+      // constant; e.g., the error/exception handler conditionally adds further
+      // error information into HTTP response headers that are consumed by
+      // Simpletest's internal browser.
+      define('DRUPAL_TEST_IN_CHILD_SITE', TRUE);
+
+      // Log fatal errors to the test site directory.
+      ini_set('log_errors', 1);
+      ini_set('error_log', DRUPAL_ROOT . '/sites/simpletest/' . substr($test_prefix, 10) . '/error.log');
+    }
+    else {
+      // Ensure that no other code defines this.
+      define('DRUPAL_TEST_IN_CHILD_SITE', FALSE);
+    }
+    static::bootSettings($request);
+    // Start a page timer:
+    Timer::start('page');
+
+    // Detect string handling method.
+    Unicode::check();
+
+    // Set the Drupal custom error handler. (requires config())
+    set_error_handler('_drupal_error_handler');
+    set_exception_handler('_drupal_exception_handler');
+
+    // Redirect the user to the installation script if Drupal has not been
+    // installed yet (i.e., if no $databases array has been defined in the
+    // settings.php file) and we are not already installing.
+    if (empty($GLOBALS['databases']) && !drupal_installation_attempted() && !drupal_is_cli()) {
+      include_once __DIR__ . '/install.inc';
+      install_goto('core/install.php');
+    }
+    static::$bootLevel = self::BOOTSTRAP_CONFIGURATION;
+  }
+
+  /**
+   * Attempts to serve the page from cache.
+   *
+   * @param \Symfony\Component\HttpFoundation\Request $request
+   *   The current request.
+   */
+  public function bootPageCache(Request $request) {
+    // @todo Use the current_user proxy.
+    global $user;
+
+    // Check for a cache mode force from settings.php.
+    if (Settings::get('page_cache_without_database')) {
+      $cache_enabled = TRUE;
+    }
+    else {
+      $config = $this->container->get('config.factory')->get('system.performance');
+      $cache_enabled = $config->get('cache.page.use_internal');
+    }
+
+    // If there is no session cookie and cache is enabled (or forced), try
+    // to serve a cached page.
+    if (!$request->cookies->has(session_name()) && $cache_enabled) {
+      // Make sure there is a user object because its timestamp will be checked.
+      $user = new AnonymousUserSession();
+      // Get the page from the cache.
+      $cache = drupal_page_get_cache($request);
+      // If there is a cached page, display it.
+      if (is_object($cache)) {
+        $response = new Response();
+        $response->headers->set('X-Drupal-Cache', 'HIT');
+        date_default_timezone_set(drupal_get_user_timezone());
+
+        drupal_serve_page_from_cache($cache, $response, $request);
+
+        // We are done.
+        $response->prepare($request);
+        $response->send();
+        exit;
+      }
+      else {
+        drupal_add_http_header('X-Drupal-Cache', 'MISS');
+      }
+    }
+    return $this;
+  }
+
+  /**
    * Bootstraps code from include and module files.
    *
    * @param \Symfony\Component\HttpFoundation\Request $request
@@ -721,52 +767,6 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
     // Back out scope required to initialize the file stream wrappers.
     if ($this->container->isScopeActive('request')) {
       $this->container->leaveScope('request');
-    }
-    return $this;
-  }
-
-  /**
-   * Attempts to serve the page from cache.
-   *
-   * @param \Symfony\Component\HttpFoundation\Request $request
-   *   The current request.
-   */
-  public function bootPageCache(Request $request) {
-    // @todo Use the current_user proxy.
-    global $user;
-
-    // Check for a cache mode force from settings.php.
-    if (Settings::get('page_cache_without_database')) {
-      $cache_enabled = TRUE;
-    }
-    else {
-      $config = $this->container->get('config.factory')->get('system.performance');
-      $cache_enabled = $config->get('cache.page.use_internal');
-    }
-
-    // If there is no session cookie and cache is enabled (or forced), try
-    // to serve a cached page.
-    if (!$request->cookies->has(session_name()) && $cache_enabled) {
-      // Make sure there is a user object because its timestamp will be checked.
-      $user = new AnonymousUserSession();
-      // Get the page from the cache.
-      $cache = drupal_page_get_cache($request);
-      // If there is a cached page, display it.
-      if (is_object($cache)) {
-        $response = new Response();
-        $response->headers->set('X-Drupal-Cache', 'HIT');
-        date_default_timezone_set(drupal_get_user_timezone());
-
-        drupal_serve_page_from_cache($cache, $response, $request);
-
-        // We are done.
-        $response->prepare($request);
-        $response->send();
-        exit;
-      }
-      else {
-        drupal_add_http_header('X-Drupal-Cache', 'MISS');
-      }
     }
     return $this;
   }
