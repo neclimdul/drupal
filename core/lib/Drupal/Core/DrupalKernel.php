@@ -756,6 +756,7 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
     static::$singleton->container->enterScope('request');
     static::$singleton->container->set('request', $request);
 
+    require_once DRUPAL_ROOT . '/core/includes/common.inc';
     require_once DRUPAL_ROOT . '/core/includes/database.inc';
     return static::$singleton->bootPageCache($request)->finishBoot();
   }
@@ -779,7 +780,6 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
     require_once DRUPAL_ROOT . '/core/includes/errors.inc';
     require_once DRUPAL_ROOT . '/core/includes/schema.inc';
     require_once DRUPAL_ROOT . '/core/includes/entity.inc';
-    require_once DRUPAL_ROOT . '/core/includes/common.inc';
     require_once DRUPAL_ROOT . '/core/includes/module.inc';
 
     // Load all enabled modules.

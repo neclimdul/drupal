@@ -1396,7 +1396,6 @@ function drupal_bootstrap($phase = NULL) {
           break;
 
         case DRUPAL_BOOTSTRAP_CODE:
-          require_once __DIR__ . '/common.inc';
           DrupalKernel::bootCode(Request::createFromGlobals());
           break;
 
