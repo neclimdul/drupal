@@ -81,19 +81,14 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
   const BOOTSTRAP_PAGE_CACHE = 2;
 
   /**
-   * Fourth bootstrap phase: initialize the variable system.
+   * Fourth bootstrap phase: load code for subsystems and modules.
    */
-  const BOOTSTRAP_VARIABLES = 3;
-
-  /**
-   * Fifth bootstrap phase: load code for subsystems and modules.
-   */
-  const BOOTSTRAP_CODE = 4;
+  const BOOTSTRAP_CODE = 3;
 
   /**
    * Final bootstrap phase: initialize language, path, theme, and modules.
    */
-  const BOOTSTRAP_FULL = 5;
+  const BOOTSTRAP_FULL = 4;
 
   /**
    * Whether or not configuration has been bootstrapped.
