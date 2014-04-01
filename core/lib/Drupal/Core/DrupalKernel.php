@@ -51,51 +51,46 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
   const CONTAINER_BASE_CLASS = '\Drupal\Core\DependencyInjection\Container';
 
   /**
-   * Pre bootstrap phase: No bootstrap attempted at all.
-   */
-  const BOOTSTRAP_COLD = -3;
-
-  /**
    * Pre bootstrap phase: initialize environment based on incoming Request.
    */
-  const BOOTSTRAP_ENVIRONMENT = -2;
+  const BOOTSTRAP_ENVIRONMENT = 1;
 
   /**
    * Pre bootstrap phase: initialize settings.
    */
-  const BOOTSTRAP_SETTINGS = -1;
+  const BOOTSTRAP_SETTINGS = 2;
 
   /**
    * First bootstrap phase: initialize configuration.
    */
-  const BOOTSTRAP_CONFIGURATION = 0;
+  const BOOTSTRAP_CONFIGURATION = 3;
 
   /**
    * Second bootstrap phase, initalize a kernel.
    */
-  const BOOTSTRAP_KERNEL = 1;
+  const BOOTSTRAP_KERNEL = 4;
 
   /**
    * Third bootstrap phase: try to serve a cached page.
    */
-  const BOOTSTRAP_PAGE_CACHE = 2;
+  const BOOTSTRAP_PAGE_CACHE = 5;
 
   /**
    * Fourth bootstrap phase: load code for subsystems and modules.
    */
-  const BOOTSTRAP_CODE = 3;
+  const BOOTSTRAP_CODE = 6;
 
   /**
    * Final bootstrap phase: initialize language, path, theme, and modules.
    */
-  const BOOTSTRAP_FULL = 4;
+  const BOOTSTRAP_FULL = 7;
 
   /**
    * Whether or not configuration has been bootstrapped.
    *
    * @var bool
    */
-  protected static $bootLevel = self::BOOTSTRAP_COLD;
+  protected static $bootLevel = NULL;
 
   /**
    * The current request path.
@@ -895,7 +890,7 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
    * {@inheritdoc}
    */
   public function terminate(Request $request, Response $response) {
-    static::$bootLevel = self::BOOTSTRAP_COLD;
+    static::$bootLevel = NULL;
     static::$currentPath = NULL;
     static::$requestPath = NULL;
     static::$singleton = NULL;

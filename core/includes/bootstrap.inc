@@ -127,27 +127,27 @@ const WATCHDOG_DEBUG = 7;
 /**
  * First bootstrap phase: initialize configuration.
  */
-const DRUPAL_BOOTSTRAP_CONFIGURATION = 0;
+const DRUPAL_BOOTSTRAP_CONFIGURATION = 3;
 
 /**
  * Second bootstrap phase, initalize a kernel.
  */
-const DRUPAL_BOOTSTRAP_KERNEL = 1;
+const DRUPAL_BOOTSTRAP_KERNEL = 4;
 
 /**
  * Third bootstrap phase: try to serve a cached page.
  */
-const DRUPAL_BOOTSTRAP_PAGE_CACHE = 2;
+const DRUPAL_BOOTSTRAP_PAGE_CACHE = 5;
 
 /**
  * Fourth bootstrap phase: load code for subsystems and modules.
  */
-const DRUPAL_BOOTSTRAP_CODE = 3;
+const DRUPAL_BOOTSTRAP_CODE = 6;
 
 /**
  * Final bootstrap phase: initialize language, path, theme, and modules.
  */
-const DRUPAL_BOOTSTRAP_FULL = 4;
+const DRUPAL_BOOTSTRAP_FULL = 7;
 
 /**
  * Role ID for anonymous users; should match what's in the "role" table.
