@@ -2901,46 +2901,6 @@ function drupal_valid_token($token, $value = '', $skip_anonymous = FALSE) {
 }
 
 /**
- * Loads code for subsystems and modules, and registers stream wrappers.
- */
-function _drupal_bootstrap_code() {
-  require_once __DIR__ . '/../../' . Settings::get('path_inc', 'core/includes/path.inc');
-  require_once __DIR__ . '/module.inc';
-  require_once __DIR__ . '/theme.inc';
-  require_once __DIR__ . '/pager.inc';
-  require_once __DIR__ . '/../../' . Settings::get('menu_inc', 'core/includes/menu.inc');
-  require_once __DIR__ . '/tablesort.inc';
-  require_once __DIR__ . '/file.inc';
-  require_once __DIR__ . '/unicode.inc';
-  require_once __DIR__ . '/form.inc';
-  require_once __DIR__ . '/mail.inc';
-  require_once __DIR__ . '/ajax.inc';
-  require_once __DIR__ . '/errors.inc';
-  require_once __DIR__ . '/schema.inc';
-  require_once __DIR__ . '/entity.inc';
-
-  // Load all enabled modules
-  \Drupal::moduleHandler()->loadAll();
-
-  // Make sure all stream wrappers are registered.
-  file_get_stream_wrappers();
-  // Ensure mt_rand() is reseeded to prevent random values from one page load
-  // being exploited to predict random values in subsequent page loads.
-  $seed = unpack("L", Crypt::randomBytes(4));
-  mt_srand($seed[1]);
-
-  // Set the allowed protocols once we have the config available.
-  $allowed_protocols = \Drupal::config('system.filter')->get('protocols');
-  if (!isset($allowed_protocols)) {
-    // filter_xss_admin() is called by the installer and update.php, in which
-    // case the configuration may not exist (yet). Provide a minimal default set
-    // of allowed protocols for these cases.
-    $allowed_protocols = array('http', 'https');
-  }
-  UrlHelper::setAllowedProtocols($allowed_protocols);
-}
-
-/**
  * Temporary BC function for scripts not using DrupalKernel.
  *
  * DrupalKernel skips this and replicates it via event listeners.
