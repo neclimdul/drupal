@@ -209,10 +209,7 @@ const CONFIG_STAGING_DIRECTORY = 'staging';
  *
  * This strips two levels of directories off the current directory.
  */
-// @todo Remove this - only needed so drush si will install for testbot.
-if (!defined('DRUPAL_ROOT')) {
-  define('DRUPAL_ROOT', dirname(dirname(__DIR__)));
-}
+define('DRUPAL_ROOT', dirname(dirname(__DIR__)));
 
 /**
  * Returns the appropriate configuration directory.

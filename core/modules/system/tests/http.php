@@ -10,10 +10,8 @@ use Symfony\Component\HttpFoundation\Request;
 
 chdir('../../../..');
 
-define('DRUPAL_ROOT', dirname(dirname(dirname(dirname(__DIR__)))));
-
-require_once DRUPAL_ROOT . '/core/vendor/autoload.php';
-include_once DRUPAL_ROOT . '/core/includes/bootstrap.inc';
+require_once './core/vendor/autoload.php';
+require_once './core/includes/bootstrap.inc';
 
 // Set a global variable to indicate a mock HTTP request.
 $is_http_mock = !empty($_SERVER['HTTPS']);

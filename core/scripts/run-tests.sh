@@ -17,8 +17,6 @@ const SIMPLETEST_SCRIPT_COLOR_PASS = 32; // Green.
 const SIMPLETEST_SCRIPT_COLOR_FAIL = 31; // Red.
 const SIMPLETEST_SCRIPT_COLOR_EXCEPTION = 33; // Brown.
 
-define('DRUPAL_ROOT', dirname(dirname(__DIR__)));
-
 // Set defaults and get overrides.
 list($args, $count) = simpletest_script_parse_args();
 

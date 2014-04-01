@@ -413,7 +413,6 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
     if (static::$bootLevel >= self::BOOTSTRAP_ENVIRONMENT) {
       return;
     }
-    require_once DRUPAL_ROOT . '/core/includes/bootstrap.inc';
 
     if (!$request->server->has('HTTP_REFERER')) {
       $request->server->set('HTTP_REFERER', '');
