@@ -750,7 +750,7 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
   }
 
   /**
-   * Finish booting by loading remaining includes and enabled modules.
+   * Finishes booting by loading remaining includes and enabled modules.
    *
    * @return $this
    */
@@ -799,7 +799,7 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
   }
 
   /**
-   * Attempt to serve the page from cache.
+   * Attempts to serve the page from cache.
    *
    * @param \Symfony\Component\HttpFoundation\Request $request
    *   The current request.
@@ -823,7 +823,6 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
       // Make sure there is a user object because its timestamp will be checked.
       $user = new AnonymousUserSession();
       // Get the page from the cache.
-      // @todo Use the services from the container.
       $cache = drupal_page_get_cache($request);
       // If there is a cached page, display it.
       if (is_object($cache)) {
