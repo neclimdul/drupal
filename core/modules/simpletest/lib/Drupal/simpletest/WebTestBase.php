@@ -870,7 +870,7 @@ abstract class WebTestBase extends TestBase {
     // to synchronize all data structures and caches between the test runner and
     // the child site.
     // Affects e.g. file_get_stream_wrappers().
-    // @see \Drupal\Core\DrupalKernel::bootCode()
+    // @see \Drupal\Core\DrupalKernel::bootKernel()
     // @see _drupal_bootstrap_full()
     // @todo Test-specific setUp() methods may set up further fixtures; find a
     //   way to execute this after setUp() is done, or to eliminate it entirely.

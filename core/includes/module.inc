@@ -48,7 +48,7 @@ function system_list($type) {
     // @see http://drupal.org/node/1067408
     $theme_data = \Drupal::state()->get('system.theme.data');
     if (empty($theme_data)) {
-      // @todo: system_list() may be called from DrupalKernel::bootCode(), in
+      // @todo: system_list() may be called from DrupalKernel::bootKernel(), in
       // which case system.module is not loaded yet.
       // Prevent a filesystem scan in drupal_load() and include it directly.
       // @see http://drupal.org/node/1067408

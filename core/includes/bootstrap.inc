@@ -1344,7 +1344,7 @@ function drupal_anonymous_user() {
  *   The most recently completed phase.
  *
  * @deprecated To be removed before 8.0. Use
- *   \Drupal\Core\DrupalKernel::bootCode() et al instead.
+ *   \Drupal\Core\DrupalKernel::bootKernel() et al instead.
  */
 function drupal_bootstrap($phase = NULL) {
   // Not drupal_static(), because does not depend on any run-time information.
@@ -1396,7 +1396,7 @@ function drupal_bootstrap($phase = NULL) {
           break;
 
         case DRUPAL_BOOTSTRAP_CODE:
-          DrupalKernel::bootCode(Request::createFromGlobals());
+          DrupalKernel::bootKernel(Request::createFromGlobals());
           break;
 
         case DRUPAL_BOOTSTRAP_FULL:
@@ -1494,7 +1494,7 @@ function _drupal_exception_handler($exception) {
  * Initialize the kernel / service container.
  *
  * @deprecated To be removed before 8.0. Use
- *   \Drupal\Core\DrupalKernel::bootCode() instead.
+ *   \Drupal\Core\DrupalKernel::bootKernel() instead.
  */
 function _drupal_bootstrap_kernel() {
   // Normally, index.php puts a container in the Drupal class by creating a
@@ -1511,7 +1511,7 @@ function _drupal_bootstrap_kernel() {
  * Attempts to serve a page from the cache.
  *
  * @deprecated To be removed before 8.0. Use
- *   \Drupal\Core\DrupalKernel::bootCode() instead.
+ *   \Drupal\Core\DrupalKernel::bootKernel() instead.
  */
 function _drupal_bootstrap_page_cache() {
   global $user;

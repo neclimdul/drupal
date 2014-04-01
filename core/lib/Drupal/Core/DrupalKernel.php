@@ -266,7 +266,7 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
    * @return static
    */
   public static function createFromRequest(Request $request, $environment = 'prod', $allow_dumping = TRUE) {
-    return static::bootCode($request, $environment, $allow_dumping);
+    return static::bootKernel($request, $environment, $allow_dumping);
   }
 
   /**
@@ -704,7 +704,7 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
    * @return \Drupal\Core\DrupalKernel
    *   The bootstapped kernel.
    */
-  public static function bootCode(Request $request, $environment = 'prod', $allow_dumping = TRUE) {
+  public static function bootKernel(Request $request, $environment = 'prod', $allow_dumping = TRUE) {
     if (static::$bootLevel >= self::BOOTSTRAP_CODE) {
       return static::$singleton;
     }
