@@ -1177,9 +1177,6 @@ function drupal_bootstrap($phase = NULL) {
           break;
 
         case DRUPAL_BOOTSTRAP_PAGE_CACHE:
-          _drupal_bootstrap_page_cache();
-          break;
-
         case DRUPAL_BOOTSTRAP_CODE:
           DrupalKernel::bootKernel(Request::createFromGlobals());
           break;
@@ -1271,52 +1268,6 @@ function _drupal_exception_handler($exception) {
       print '<h1>Additional uncaught exception thrown while handling exception.</h1>';
       print '<h2>Original</h2><p>' . Error::renderExceptionSafe($exception) . '</p>';
       print '<h2>Additional</h2><p>' . Error::renderExceptionSafe($exception2) . '</p><hr />';
-    }
-  }
-}
-
-/**
- * Attempts to serve a page from the cache.
- *
- * @deprecated To be removed before 8.0. Use
- *   \Drupal\Core\DrupalKernel::bootKernel() instead.
- */
-function _drupal_bootstrap_page_cache() {
-  global $user;
-
-  require_once __DIR__ . '/database.inc';
-  // Check for a cache mode force from settings.php.
-  if (Settings::get('page_cache_without_database')) {
-    $cache_enabled = TRUE;
-  }
-  else {
-    $config = \Drupal::config('system.performance');
-    $cache_enabled = $config->get('cache.page.use_internal');
-  }
-
-  $request = Request::createFromGlobals();
-  // If there is no session cookie and cache is enabled (or forced), try
-  // to serve a cached page.
-  if (!$request->cookies->has(session_name()) && $cache_enabled) {
-    // Make sure there is a user object because its timestamp will be checked.
-    $user = new AnonymousUserSession();
-    // Get the page from the cache.
-    $cache = drupal_page_get_cache($request);
-    // If there is a cached page, display it.
-    if (is_object($cache)) {
-      $response = new Response();
-      $response->headers->set('X-Drupal-Cache', 'HIT');
-      date_default_timezone_set(drupal_get_user_timezone());
-
-      drupal_serve_page_from_cache($cache, $response, $request);
-
-      // We are done.
-      $response->prepare($request);
-      $response->send();
-      exit;
-    }
-    else {
-      drupal_add_http_header('X-Drupal-Cache', 'MISS');
     }
   }
 }
