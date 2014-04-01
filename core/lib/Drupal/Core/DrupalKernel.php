@@ -468,7 +468,7 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
   /**
    * Bootstraps the settings() system.
    *
-   * @param \Symfony\Component\HttpFoundation $request
+   * @param \Symfony\Component\HttpFoundation\Request $request
    *   The current request.
    */
   public static function bootSettings(Request $request) {
@@ -650,6 +650,8 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
    *
    * @param \Symfony\Component\HttpFoundation\Request $request
    *   The current request.
+   *
+   * @return $this
    */
   public function bootPageCache(Request $request) {
     // @todo Use the current_user proxy.
