@@ -352,20 +352,6 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
   }
 
   /**
-   * {@inheritdoc}
-   */
-  public function handle(Request $request, $type = self::MASTER_REQUEST, $catch = TRUE) {
-    // Exit if we should be in a test environment but aren't.
-    // @todo Refactor this into a test kernel.
-    if ($this->testOnly && !drupal_valid_test_ua()) {
-      header($request->server->get('SERVER_PROTOCOL') . ' 403 Forbidden');
-      exit;
-    }
-
-    return $this->getHttpKernel()->handle($request, $type, $catch);
-  }
-
-  /**
    * Bootstraps configuration.
    *
    * @param \Symfony\Component\HttpFoundation\Request $request
@@ -920,6 +906,20 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
     if ($this->getHttpKernel() instanceof TerminableInterface) {
       $this->getHttpKernel()->terminate($request, $response);
     }
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function handle(Request $request, $type = self::MASTER_REQUEST, $catch = TRUE) {
+    // Exit if we should be in a test environment but aren't.
+    // @todo Refactor this into a test kernel.
+    if ($this->testOnly && !drupal_valid_test_ua()) {
+      header($request->server->get('SERVER_PROTOCOL') . ' 403 Forbidden');
+      exit;
+    }
+
+    return $this->getHttpKernel()->handle($request, $type, $catch);
   }
 
   /**
