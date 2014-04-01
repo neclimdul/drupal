@@ -801,7 +801,7 @@ abstract class WebTestBase extends TestBase {
     $this->writeSettings($settings);
 
     // Since Drupal is bootstrapped already, install_begin_request() will not
-    // bootstrap into DRUPAL_BOOTSTRAP_CONFIGURATION (again). Hence, we have to
+    // invoke DrupalKernel::bootConfiguration() (again). Hence, we have to
     // reload the newly written custom settings.php manually.
     DrupalKernel::initializeSettings($this->container->get('request'));
 
@@ -864,14 +864,13 @@ abstract class WebTestBase extends TestBase {
       $this->rebuildContainer();
     }
 
-    // Like DRUPAL_BOOTSTRAP_CONFIGURATION above, any further bootstrap phases
+    // Like DrupalKernel::bootConfiguration() above, any further bootstrap phases
     // are not re-executed by the installer, as Drupal is bootstrapped already.
     // Reset/rebuild all data structures after enabling the modules, primarily
     // to synchronize all data structures and caches between the test runner and
     // the child site.
     // Affects e.g. file_get_stream_wrappers().
     // @see \Drupal\Core\DrupalKernel::bootKernel()
-    // @see _drupal_bootstrap_full()
     // @todo Test-specific setUp() methods may set up further fixtures; find a
     //   way to execute this after setUp() is done, or to eliminate it entirely.
     $this->resetAll();
@@ -1331,7 +1330,7 @@ abstract class WebTestBase extends TestBase {
    *   TRUE if this test was instantiated in a request within the test site,
    *   FALSE otherwise.
    *
-   * @see _drupal_bootstrap_configuration()
+   * @see \Drupal\Core\DrupalKernel::bootConfiguration()
    */
   protected function isInChildSite() {
     return DRUPAL_TEST_IN_CHILD_SITE;

@@ -656,7 +656,7 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
   }
 
   /**
-   * Attempts to serve the page from cache.
+   * Attempts to serve a page from the cache.
    *
    * @param \Symfony\Component\HttpFoundation\Request $request
    *   The current request.

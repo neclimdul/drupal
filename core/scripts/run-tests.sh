@@ -365,7 +365,8 @@ function simpletest_script_bootstrap() {
   // Replace services with in-memory and null implementations.
   $GLOBALS['conf']['container_service_providers']['InstallerServiceProvider'] = 'Drupal\Core\Installer\InstallerServiceProvider';
 
-  drupal_bootstrap(DRUPAL_BOOTSTRAP_CONFIGURATION);
+  $request = Request::createFromGlobals();
+  DrupalKernel::bootConfiguration($request);
 
   // Remove Drupal's error/exception handlers; they are designed for HTML
   // and there is no storage nor a (watchdog) logger here.
@@ -382,10 +383,8 @@ function simpletest_script_bootstrap() {
     ));
   }
 
-  $kernel = new DrupalKernel('testing', drupal_classloader(), FALSE);
-  $kernel->boot();
+  $kernel = DrupalKernel::bootKernel($request, 'testing', FALSE);
 
-  $request = Request::createFromGlobals();
   $container = $kernel->getContainer();
   $container->enterScope('request');
   $container->set('request', $request, 'request');

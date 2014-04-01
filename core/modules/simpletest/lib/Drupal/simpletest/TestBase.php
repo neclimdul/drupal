@@ -653,7 +653,7 @@ abstract class TestBase {
    *   TRUE if the assertion succeeded, FALSE otherwise.
    *
    * @see TestBase::prepareEnvironment()
-   * @see _drupal_bootstrap_configuration()
+   * @see \Drupal\Core\DrupalKernel::bootConfiguration()
    */
   protected function assertNoErrorsLogged() {
     // Since PHP only creates the error.log file when an actual error is
