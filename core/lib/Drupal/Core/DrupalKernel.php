@@ -347,6 +347,63 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
   }
 
   /**
+   * Returns the appropriate configuration directory.
+   *
+   * Returns the configuration path based on the site's hostname, port, and
+   * pathname. Uses find_conf_path() to find the current configuration
+   * directory. See default.settings.php for examples on how the URL is
+   * converted to a directory.
+   *
+   * @param \Symfony\Component\HttpFoundation\Request $request
+   *   (optional) The current request. If not passed, defaults to request as
+   *   stored in the container at \Drupal::request().
+   * @param bool $require_settings
+   *   Only configuration directories with an existing settings.php file
+   *   will be recognized. Defaults to TRUE. During initial installation,
+   *   this is set to FALSE so that Drupal can detect a matching directory,
+   *   then create a new settings.php file in it.
+   * @param bool $reset
+   *   Force a full search for matching directories even if one had been
+   *   found previously. Defaults to FALSE.
+   *
+   * @return false|string
+   *   The path of the matching directory.
+   * @see default.settings.php
+   */
+  public static function confPath(Request $request = NULL, $require_settings = TRUE, $reset = FALSE) {
+    if (static::$confPath && !$reset) {
+      return static::$confPath;
+    }
+    $container = \Drupal::getContainer();
+    if ($container && $container->has('request')) {
+      $request = $request ?: $container->get('request');
+    }
+    else {
+      // CLI or other script that doesn't yet handle creating the kernel from a
+      // request. Build it for them.
+      // @todo Remove once all CLI integration, drush etc uses the static
+      //   createFromRequest() method to build the kernel.
+      $request = $request ?: Request::createFromGlobals();
+    }
+
+    // Check for a simpletest override.
+    if ($test_prefix = drupal_valid_test_ua()) {
+      $conf_path = 'sites/simpletest/' . substr($test_prefix, 10);
+      static::$confPath = $conf_path;
+      return static::$confPath;
+    }
+
+    // Otherwise, use the normal $conf_path.
+    $script_name = $request->server->get('SCRIPT_NAME');
+    if (!$script_name) {
+      $script_name = $request->server->get('SCRIPT_FILENAME');
+    }
+    $http_host = $request->server->get('HTTP_HOST');
+    static::$confPath = find_conf_path($http_host, $script_name, $require_settings);
+    return static::$confPath;
+  }
+
+  /**
    * Bootstraps configuration.
    *
    * @param \Symfony\Component\HttpFoundation\Request $request
@@ -391,60 +448,6 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
       install_goto('core/install.php');
     }
     static::$bootLevel = self::BOOTSTRAP_CONFIGURATION;
-  }
-
-  /**
-   * Returns the requested URL path of the page being viewed.
-   *
-   * @param \Symfony\Component\HttpFoundation\Request|NULL $request
-   *   (Optional) The request to derive the request path from. Defaults to NULL
-   *
-   * Examples:
-   * - http://example.com/node/306 returns "node/306".
-   * - http://example.com/drupalfolder/node/306 returns "node/306" while
-   *   base_path() returns "/drupalfolder/".
-   * - http://example.com/path/alias (which is a path alias for node/306)
-   *   returns "path/alias" as opposed to the internal path.
-   * - http://example.com/index.php returns an empty string (meaning: front
-   *   page).
-   * - http://example.com/index.php?page=1 returns an empty string.
-   *
-   * @return string
-   *   The requested Drupal URL path.
-   */
-  public static function requestPath(Request $request = NULL) {
-    if (!$request) {
-      // @todo Do we even need this?
-      $request = \Drupal::request();
-    }
-    if (static::$requestPath) {
-      return static::$requestPath;
-    }
-
-    // Get the part of the URI between the base path of the Drupal installation
-    // and the query string, and unescape it.
-    $request_path = request_uri(TRUE);
-    $base_path_len = strlen(rtrim(dirname($request->server->get('SCRIPT_NAME')), '\/'));
-    static::$requestPath = substr(urldecode($request_path), $base_path_len + 1);
-
-    // Depending on server configuration, the URI might or might not include the
-    // script name. For example, the front page might be accessed as
-    // http://example.com or as http://example.com/index.php, and the "user"
-    // page might be accessed as http://example.com/user or as
-    // http://example.com/index.php/user. Strip the script name from $path.
-    $script = basename($request->server->get('SCRIPT_NAME'));
-    if (static::$requestPath == $script) {
-      static::$requestPath = '';
-    }
-    elseif (strpos(static::$requestPath, $script . '/') === 0) {
-      static::$requestPath = substr(static::$requestPath, strlen($script) + 1);
-    }
-
-    // Extra slashes can appear in URLs or under some conditions, added by
-    // Apache so normalize.
-    static::$requestPath = trim(static::$requestPath, '/');
-
-    return static::$requestPath;
   }
 
   /**
@@ -507,63 +510,6 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
     // numbers handling.
     setlocale(LC_ALL, 'C');
     static::$bootLevel = self::BOOTSTRAP_ENVIRONMENT;
-  }
-
-  /**
-   * Returns the appropriate configuration directory.
-   *
-   * Returns the configuration path based on the site's hostname, port, and
-   * pathname. Uses find_conf_path() to find the current configuration
-   * directory. See default.settings.php for examples on how the URL is
-   * converted to a directory.
-   *
-   * @param \Symfony\Component\HttpFoundation\Request $request
-   *   (optional) The current request. If not passed, defaults to request as
-   *   stored in the container at \Drupal::request().
-   * @param bool $require_settings
-   *   Only configuration directories with an existing settings.php file
-   *   will be recognized. Defaults to TRUE. During initial installation,
-   *   this is set to FALSE so that Drupal can detect a matching directory,
-   *   then create a new settings.php file in it.
-   * @param bool $reset
-   *   Force a full search for matching directories even if one had been
-   *   found previously. Defaults to FALSE.
-   *
-   * @return false|string
-   *   The path of the matching directory.
-   * @see default.settings.php
-   */
-  public static function confPath(Request $request = NULL, $require_settings = TRUE, $reset = FALSE) {
-    if (static::$confPath && !$reset) {
-      return static::$confPath;
-    }
-    $container = \Drupal::getContainer();
-    if ($container && $container->has('request')) {
-      $request = $request ?: $container->get('request');
-    }
-    else {
-      // CLI or other script that doesn't yet handle creating the kernel from a
-      // request. Build it for them.
-      // @todo Remove once all CLI integration, drush etc uses the static
-      //   createFromRequest() method to build the kernel.
-      $request = $request ?: Request::createFromGlobals();
-    }
-
-    // Check for a simpletest override.
-    if ($test_prefix = drupal_valid_test_ua()) {
-      $conf_path = 'sites/simpletest/' . substr($test_prefix, 10);
-      static::$confPath = $conf_path;
-      return static::$confPath;
-    }
-
-    // Otherwise, use the normal $conf_path.
-    $script_name = $request->server->get('SCRIPT_NAME');
-    if (!$script_name) {
-      $script_name = $request->server->get('SCRIPT_FILENAME');
-    }
-    $http_host = $request->server->get('HTTP_HOST');
-    static::$confPath = find_conf_path($http_host, $script_name, $require_settings);
-    return static::$confPath;
   }
 
   /**
@@ -915,6 +861,60 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
     }
 
     return $this->getHttpKernel()->handle($request, $type, $catch);
+  }
+
+  /**
+   * Returns the requested URL path of the page being viewed.
+   *
+   * @param \Symfony\Component\HttpFoundation\Request|NULL $request
+   *   (Optional) The request to derive the request path from. Defaults to NULL
+   *
+   * Examples:
+   * - http://example.com/node/306 returns "node/306".
+   * - http://example.com/drupalfolder/node/306 returns "node/306" while
+   *   base_path() returns "/drupalfolder/".
+   * - http://example.com/path/alias (which is a path alias for node/306)
+   *   returns "path/alias" as opposed to the internal path.
+   * - http://example.com/index.php returns an empty string (meaning: front
+   *   page).
+   * - http://example.com/index.php?page=1 returns an empty string.
+   *
+   * @return string
+   *   The requested Drupal URL path.
+   */
+  public static function requestPath(Request $request = NULL) {
+    if (!$request) {
+      // @todo Do we even need this?
+      $request = \Drupal::request();
+    }
+    if (static::$requestPath) {
+      return static::$requestPath;
+    }
+
+    // Get the part of the URI between the base path of the Drupal installation
+    // and the query string, and unescape it.
+    $request_path = request_uri(TRUE);
+    $base_path_len = strlen(rtrim(dirname($request->server->get('SCRIPT_NAME')), '\/'));
+    static::$requestPath = substr(urldecode($request_path), $base_path_len + 1);
+
+    // Depending on server configuration, the URI might or might not include the
+    // script name. For example, the front page might be accessed as
+    // http://example.com or as http://example.com/index.php, and the "user"
+    // page might be accessed as http://example.com/user or as
+    // http://example.com/index.php/user. Strip the script name from $path.
+    $script = basename($request->server->get('SCRIPT_NAME'));
+    if (static::$requestPath == $script) {
+      static::$requestPath = '';
+    }
+    elseif (strpos(static::$requestPath, $script . '/') === 0) {
+      static::$requestPath = substr(static::$requestPath, strlen($script) + 1);
+    }
+
+    // Extra slashes can appear in URLs or under some conditions, added by
+    // Apache so normalize.
+    static::$requestPath = trim(static::$requestPath, '/');
+
+    return static::$requestPath;
   }
 
   /**
