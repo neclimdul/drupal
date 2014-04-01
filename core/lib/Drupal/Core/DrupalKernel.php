@@ -767,10 +767,10 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
    * @return $this
    */
   public function finishBoot() {
-    require_once DRUPAL_ROOT . '/core/includes/../../' . Settings::get('path_inc', 'core/includes/path.inc');
+    require_once DRUPAL_ROOT . '/' . Settings::get('path_inc', 'core/includes/path.inc');
     require_once DRUPAL_ROOT . '/core/includes/theme.inc';
     require_once DRUPAL_ROOT . '/core/includes/pager.inc';
-    require_once DRUPAL_ROOT . '/core/includes/../../' . Settings::get('menu_inc', 'core/includes/menu.inc');
+    require_once DRUPAL_ROOT . '/' . Settings::get('menu_inc', 'core/includes/menu.inc');
     require_once DRUPAL_ROOT . '/core/includes/tablesort.inc';
     require_once DRUPAL_ROOT . '/core/includes/file.inc';
     require_once DRUPAL_ROOT . '/core/includes/unicode.inc';
