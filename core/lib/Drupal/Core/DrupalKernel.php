@@ -61,29 +61,34 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
   const BOOTSTRAP_SETTINGS = 2;
 
   /**
+   * Pre bootstrap phase: initialize request.
+   */
+  const BOOTSTRAP_REQUEST = 3;
+
+  /**
    * First bootstrap phase: initialize configuration.
    */
-  const BOOTSTRAP_CONFIGURATION = 3;
+  const BOOTSTRAP_CONFIGURATION = 4;
 
   /**
    * Second bootstrap phase, initalize a kernel.
    */
-  const BOOTSTRAP_KERNEL = 4;
+  const BOOTSTRAP_KERNEL = 5;
 
   /**
    * Third bootstrap phase: try to serve a cached page.
    */
-  const BOOTSTRAP_PAGE_CACHE = 5;
+  const BOOTSTRAP_PAGE_CACHE = 6;
 
   /**
    * Fourth bootstrap phase: load code for subsystems and modules.
    */
-  const BOOTSTRAP_CODE = 6;
+  const BOOTSTRAP_CODE = 7;
 
   /**
    * Final bootstrap phase: initialize language, path, theme, and modules.
    */
-  const BOOTSTRAP_FULL = 7;
+  const BOOTSTRAP_FULL = 8;
 
   /**
    * Whether or not configuration has been bootstrapped.
@@ -464,7 +469,7 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
   }
 
   /**
-   * Bootstraps the settings() system.
+   * Bootstraps settings.php and the Settings singleton.
    *
    * @param \Symfony\Component\HttpFoundation\Request $request
    *   The current request.
@@ -474,20 +479,44 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
       return;
     }
     static::bootEnvironment($request);
-    global $base_url, $base_path, $base_root, $script_path;
 
     // Export these settings.php variables to the global namespace.
-    global $databases, $cookie_domain, $config, $base_secure_url, $base_insecure_url, $config_directories;
+    global $base_url, $databases, $cookie_domain, $config_directories, $config;
     $settings = array();
     $config = array();
 
     // Make conf_path() available as local variable in settings.php.
-    $conf_path = static::confPath($request, TRUE, FALSE);
+    $conf_path = static::confPath($request);
     if (is_readable(DRUPAL_ROOT . '/' . $conf_path . '/settings.php')) {
-      include_once DRUPAL_ROOT . '/' . $conf_path . '/settings.php';
+      require DRUPAL_ROOT . '/' . $conf_path . '/settings.php';
     }
-    require_once DRUPAL_ROOT . '/core/lib/Drupal/Component/Utility/Settings.php';
+    // Initialize Settings.
     new Settings($settings);
+
+    static::$bootLevel = self::BOOTSTRAP_SETTINGS;
+  }
+
+  /**
+   * Bootstraps the legacy global request variables.
+   *
+   * @param \Symfony\Component\HttpFoundation\Request $request
+   *   The current request.
+   *
+   * @todo D8: Eliminate this entirely in favor of Request object.
+   */
+  public static function bootRequest(Request $request) {
+    if (static::$bootLevel >= self::BOOTSTRAP_REQUEST) {
+      return;
+    }
+    static::bootSettings($request);
+
+    // Provided by settings.php.
+    // @see drupal_settings_initialize()
+    global $base_url, $cookie_domain;
+    // Set and derived from $base_url by this function.
+    global $base_path, $base_root, $script_path;
+    global $base_secure_url, $base_insecure_url;
+
     $is_https = $request->isSecure();
 
     if (isset($base_url)) {
@@ -593,7 +622,8 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
     }
     $prefix = ini_get('session.cookie_secure') ? 'SSESS' : 'SESS';
     session_name($prefix . substr(hash('sha256', $session_name), 0, 32));
-    static::$bootLevel = self::BOOTSTRAP_SETTINGS;
+
+    static::$bootLevel = self::BOOTSTRAP_REQUEST;
   }
 
   /**
@@ -622,7 +652,7 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
       // Ensure that no other code defines this.
       define('DRUPAL_TEST_IN_CHILD_SITE', FALSE);
     }
-    static::bootSettings($request);
+    static::bootRequest($request);
     // Start a page timer:
     Timer::start('page');
 

@@ -127,27 +127,27 @@ const WATCHDOG_DEBUG = 7;
 /**
  * First bootstrap phase: initialize configuration.
  */
-const DRUPAL_BOOTSTRAP_CONFIGURATION = 3;
+const DRUPAL_BOOTSTRAP_CONFIGURATION = 4;
 
 /**
  * Second bootstrap phase, initalize a kernel.
  */
-const DRUPAL_BOOTSTRAP_KERNEL = 4;
+const DRUPAL_BOOTSTRAP_KERNEL = 5;
 
 /**
  * Third bootstrap phase: try to serve a cached page.
  */
-const DRUPAL_BOOTSTRAP_PAGE_CACHE = 5;
+const DRUPAL_BOOTSTRAP_PAGE_CACHE = 6;
 
 /**
  * Fourth bootstrap phase: load code for subsystems and modules.
  */
-const DRUPAL_BOOTSTRAP_CODE = 6;
+const DRUPAL_BOOTSTRAP_CODE = 7;
 
 /**
  * Final bootstrap phase: initialize language, path, theme, and modules.
  */
-const DRUPAL_BOOTSTRAP_FULL = 7;
+const DRUPAL_BOOTSTRAP_FULL = 8;
 
 /**
  * Role ID for anonymous users; should match what's in the "role" table.
@@ -351,121 +351,9 @@ function drupal_settings_initialize() {
 
 /**
  * Initializes global request variables.
- *
- * @todo D8: Eliminate this entirely in favor of Request object.
  */
 function _drupal_request_initialize() {
-  // Provided by settings.php.
-  // @see drupal_settings_initialize()
-  global $base_url, $cookie_domain;
-  // Set and derived from $base_url by this function.
-  global $base_path, $base_root, $script_path;
-  global $base_secure_url, $base_insecure_url;
-
-  $is_https = isset($_SERVER['HTTPS']) && strtolower($_SERVER['HTTPS']) == 'on';
-
-  if (isset($base_url)) {
-    // Parse fixed base URL from settings.php.
-    $parts = parse_url($base_url);
-    if (!isset($parts['path'])) {
-      $parts['path'] = '';
-    }
-    $base_path = $parts['path'] . '/';
-    // Build $base_root (everything until first slash after "scheme://").
-    $base_root = substr($base_url, 0, strlen($base_url) - strlen($parts['path']));
-  }
-  else {
-    // Create base URL
-    $http_protocol = $is_https ? 'https' : 'http';
-    $base_root = $http_protocol . '://' . $_SERVER['HTTP_HOST'];
-
-    $base_url = $base_root;
-
-    // For a request URI of '/index.php/foo', $_SERVER['SCRIPT_NAME'] is
-    // '/index.php', whereas $_SERVER['PHP_SELF'] is '/index.php/foo'.
-    if ($dir = rtrim(dirname($_SERVER['SCRIPT_NAME']), '\/')) {
-      // Remove "core" directory if present, allowing install.php, update.php,
-      // and others to auto-detect a base path.
-      $core_position = strrpos($dir, '/core');
-      if ($core_position !== FALSE && strlen($dir) - 5 == $core_position) {
-        $base_path = substr($dir, 0, $core_position);
-      }
-      else {
-        $base_path = $dir;
-      }
-      $base_url .= $base_path;
-      $base_path .= '/';
-    }
-    else {
-      $base_path = '/';
-    }
-  }
-  $base_secure_url = str_replace('http://', 'https://', $base_url);
-  $base_insecure_url = str_replace('https://', 'http://', $base_url);
-
-  // Determine the path of the script relative to the base path, and add a
-  // trailing slash. This is needed for creating URLs to Drupal pages.
-  if (!isset($script_path)) {
-    $script_path = '';
-    // We don't expect scripts outside of the base path, but sanity check
-    // anyway.
-    if (strpos($_SERVER['SCRIPT_NAME'], $base_path) === 0) {
-      $script_path = substr($_SERVER['SCRIPT_NAME'], strlen($base_path)) . '/';
-      // If the request URI does not contain the script name, then clean URLs
-      // are in effect and the script path can be similarly dropped from URL
-      // generation. For servers that don't provide $_SERVER['REQUEST_URI'], we
-      // do not know the actual URI requested by the client, and request_uri()
-      // returns a URI with the script name, resulting in non-clean URLs unless
-      // there's other code that intervenes.
-      if (strpos(request_uri(TRUE) . '/', $base_path . $script_path) !== 0) {
-        $script_path = '';
-      }
-      // @todo Temporary BC for install.php, update.php, and other scripts.
-      //   - http://drupal.org/node/1547184
-      //   - http://drupal.org/node/1546082
-      if ($script_path !== 'index.php/') {
-        $script_path = '';
-      }
-    }
-  }
-
-  if ($cookie_domain) {
-    // If the user specifies the cookie domain, also use it for session name.
-    $session_name = $cookie_domain;
-  }
-  else {
-    // Otherwise use $base_url as session name, without the protocol
-    // to use the same session identifiers across HTTP and HTTPS.
-    list( , $session_name) = explode('://', $base_url, 2);
-    // HTTP_HOST can be modified by a visitor, but we already sanitized it
-    // in drupal_settings_initialize().
-    if (!empty($_SERVER['HTTP_HOST'])) {
-      $cookie_domain = $_SERVER['HTTP_HOST'];
-      // Strip leading periods, www., and port numbers from cookie domain.
-      $cookie_domain = ltrim($cookie_domain, '.');
-      if (strpos($cookie_domain, 'www.') === 0) {
-        $cookie_domain = substr($cookie_domain, 4);
-      }
-      $cookie_domain = explode(':', $cookie_domain);
-      $cookie_domain = '.' . $cookie_domain[0];
-    }
-  }
-  // Per RFC 2109, cookie domains must contain at least one dot other than the
-  // first. For hosts such as 'localhost' or IP Addresses we don't set a cookie domain.
-  if (count(explode('.', $cookie_domain)) > 2 && !is_numeric(str_replace('.', '', $cookie_domain))) {
-    ini_set('session.cookie_domain', $cookie_domain);
-  }
-  // To prevent session cookies from being hijacked, a user can configure the
-  // SSL version of their website to only transfer session cookies via SSL by
-  // using PHP's session.cookie_secure setting. The browser will then use two
-  // separate session cookies for the HTTPS and HTTP versions of the site. So we
-  // must use different session identifiers for HTTPS and HTTP to prevent a
-  // cookie collision.
-  if ($is_https) {
-    ini_set('session.cookie_secure', TRUE);
-  }
-  $prefix = ini_get('session.cookie_secure') ? 'SSESS' : 'SESS';
-  session_name($prefix . substr(hash('sha256', $session_name), 0, 32));
+  DrupalKernel::bootRequest(Request::createFromGlobals());
 }
 
 /**
