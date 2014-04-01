@@ -130,24 +130,19 @@ const WATCHDOG_DEBUG = 7;
 const DRUPAL_BOOTSTRAP_CONFIGURATION = 2;
 
 /**
- * Second bootstrap phase, initalize a kernel.
- */
-const DRUPAL_BOOTSTRAP_KERNEL = 3;
-
-/**
  * Third bootstrap phase: try to serve a cached page.
  */
-const DRUPAL_BOOTSTRAP_PAGE_CACHE = 4;
+const DRUPAL_BOOTSTRAP_PAGE_CACHE = 3;
 
 /**
  * Fourth bootstrap phase: load code for subsystems and modules.
  */
-const DRUPAL_BOOTSTRAP_CODE = 5;
+const DRUPAL_BOOTSTRAP_CODE = 4;
 
 /**
  * Final bootstrap phase: initialize language, path, theme, and modules.
  */
-const DRUPAL_BOOTSTRAP_FULL = 6;
+const DRUPAL_BOOTSTRAP_FULL = 5;
 
 /**
  * Role ID for anonymous users; should match what's in the "role" table.
@@ -1130,7 +1125,6 @@ function drupal_anonymous_user() {
  *   particular phase, all earlier phases are run automatically. Possible
  *   values:
  *   - DRUPAL_BOOTSTRAP_CONFIGURATION: Initializes configuration.
- *   - DRUPAL_BOOTSTRAP_KERNEL: Initalizes a kernel.
  *   - DRUPAL_BOOTSTRAP_PAGE_CACHE: Tries to serve a cached page.
  *   - DRUPAL_BOOTSTRAP_CODE: Loads code for subsystems and modules.
  *   - DRUPAL_BOOTSTRAP_FULL: Fully loads Drupal. Validates and fixes input
@@ -1146,7 +1140,6 @@ function drupal_bootstrap($phase = NULL) {
   // Not drupal_static(), because does not depend on any run-time information.
   static $phases = array(
     DRUPAL_BOOTSTRAP_CONFIGURATION,
-    DRUPAL_BOOTSTRAP_KERNEL,
     DRUPAL_BOOTSTRAP_PAGE_CACHE,
     DRUPAL_BOOTSTRAP_CODE,
     DRUPAL_BOOTSTRAP_FULL,
@@ -1181,10 +1174,6 @@ function drupal_bootstrap($phase = NULL) {
           // @todo This is only called from legacy CLI scripts like Drush.
           //   Remove when they properly use the DrupalKernel.
           DrupalKernel::bootConfiguration(Request::createFromGlobals());
-          break;
-
-        case DRUPAL_BOOTSTRAP_KERNEL:
-          _drupal_bootstrap_kernel();
           break;
 
         case DRUPAL_BOOTSTRAP_PAGE_CACHE:
@@ -1283,23 +1272,6 @@ function _drupal_exception_handler($exception) {
       print '<h2>Original</h2><p>' . Error::renderExceptionSafe($exception) . '</p>';
       print '<h2>Additional</h2><p>' . Error::renderExceptionSafe($exception2) . '</p><hr />';
     }
-  }
-}
-
-/**
- * Initialize the kernel / service container.
- *
- * @deprecated To be removed before 8.0. Use
- *   \Drupal\Core\DrupalKernel::bootKernel() instead.
- */
-function _drupal_bootstrap_kernel() {
-  // Normally, index.php puts a container in the Drupal class by creating a
-  // kernel. If there is no container yet, create one.
-  if (!\Drupal::getContainer()) {
-    $kernel = new DrupalKernel('prod', drupal_classloader());
-    $kernel->boot();
-    $request = Request::createFromGlobals();
-    \Drupal::getContainer()->set('request', $request);
   }
 }
 
