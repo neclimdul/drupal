@@ -236,6 +236,7 @@ if (!defined('DRUPAL_ROOT')) {
  * @return false|string
  *   The path of the matching directory.
  * @see default.settings.php
+ *
  * @deprecated see \Drupal\Core\DrupalKernel::confPath()
  */
 function conf_path($require_settings = TRUE, $reset = FALSE, Request $request = NULL) {
@@ -1381,8 +1382,8 @@ function drupal_bootstrap($phase = NULL) {
 
       switch ($current_phase) {
         case DRUPAL_BOOTSTRAP_CONFIGURATION:
-          // @todo This is only called from Legacy CLI scripts like drush.
-          // Remove when they use the Drupal Kernel proper.
+          // @todo This is only called from legacy CLI scripts like Drush.
+          //   Remove when they properly use the DrupalKernel.
           DrupalKernel::bootConfiguration(Request::createFromGlobals());
           break;
 
@@ -1847,8 +1848,8 @@ function language_default() {
 /**
  * Returns the requested URL path of the page being viewed.
  *
- * @param \Symfony\Component\HttpFoundation\Request|NULL $request
- *   (Optional) The request to derive the request path from. Defaults to NULL
+ * @param \Symfony\Component\HttpFoundation\Request|null $request
+ *   (optional) The request to derive the request path from. Defaults to NULL
  *
  * Examples:
  * - http://example.com/node/306 returns "node/306".
@@ -1862,8 +1863,9 @@ function language_default() {
  * @return
  *   The requested Drupal URL path.
  *
- * @deprecated use \Drupal\Core\DrupalKernel::requestPath($request).
  * @see current_path()
+ *
+ * @deprecated use \Drupal\Core\DrupalKernel::requestPath($request).
  */
 function request_path(Request $request = NULL) {
   return DrupalKernel::requestPath($request);

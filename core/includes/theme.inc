@@ -93,13 +93,15 @@ function drupal_theme_access($theme) {
  */
 function drupal_theme_initialize(Request $request = NULL) {
   global $theme, $theme_key;
-  // If $theme is already set, assume the others are set, too, and do nothing.
+
+  // If $theme is already set, assume the others are set, too, and do nothing
   if (isset($theme)) {
     return;
   }
 
   $themes = list_themes();
 
+  // @todo Let the theme.negotiator listen to the kernel request event.
   // Determine the active theme for the theme negotiator service. This includes
   // the default theme as well as really specific ones like the ajax base theme.
   if (!$request) {

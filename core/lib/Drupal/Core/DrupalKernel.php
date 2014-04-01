@@ -862,7 +862,7 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
       'CoreServiceProvider' => new CoreServiceProvider(),
     );
     $this->serviceYamls = array(
-      'core/core.services.yml',
+      'core/core.services.yml'
     );
     $this->serviceProviderClasses = array('Drupal\Core\CoreServiceProvider');
 
@@ -917,7 +917,6 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
    */
   public function terminate(Request $request, Response $response) {
     static::$bootLevel = self::BOOTSTRAP_COLD;
-    static::$currentPath = NULL;
     static::$currentPath = NULL;
     static::$requestPath = NULL;
     static::$singleton = NULL;

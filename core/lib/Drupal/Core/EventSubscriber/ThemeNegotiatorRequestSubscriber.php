@@ -17,7 +17,7 @@ use Symfony\Component\HttpKernel\Event\GetResponseEvent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
- * Sets the $request property on the theme negotiation service.
+ * Initializes the theme for the current request.
  */
 class ThemeNegotiatorRequestSubscriber implements EventSubscriberInterface {
 
@@ -39,15 +39,13 @@ class ThemeNegotiatorRequestSubscriber implements EventSubscriberInterface {
   }
 
   /**
-   * Sets the request on the language manager.
+   * Initializes the theme system after the routing system.
    *
    * @param \Symfony\Component\HttpKernel\Event\GetResponseEvent $event
    *   The Event to process.
    */
   public function onKernelRequestThemeNegotiator(GetResponseEvent $event) {
     if ($event->getRequestType() == HttpKernelInterface::MASTER_REQUEST) {
-      // Let all modules take action before the menu system handles the request.
-      // We do not want this while running update.php.
       if (!defined('MAINTENANCE_MODE') || MAINTENANCE_MODE != 'update') {
         // @todo Refactor drupal_theme_initialize() into a request subscriber.
         drupal_theme_initialize($event->getRequest());
@@ -63,7 +61,6 @@ class ThemeNegotiatorRequestSubscriber implements EventSubscriberInterface {
    */
   public static function getSubscribedEvents() {
     $events[KernelEvents::REQUEST][] = array('onKernelRequestThemeNegotiator', 29);
-
     return $events;
   }
 

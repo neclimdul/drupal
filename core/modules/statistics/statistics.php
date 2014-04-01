@@ -8,12 +8,11 @@
 use Drupal\Core\DrupalKernel;
 use Symfony\Component\HttpFoundation\Request;
 
-// Change the directory to the Drupal root.
 chdir('../../..');
 
-// Load the Drupal bootstrap.
 require_once dirname(dirname(__DIR__)) . '/vendor/autoload.php';
 require_once dirname(dirname(__DIR__)) . '/includes/bootstrap.inc';
+
 $kernel = DrupalKernel::createFromRequest(Request::createFromGlobals());
 
 if (\Drupal::config('statistics.settings')->get('count_content_views')) {
@@ -31,3 +30,4 @@ if (\Drupal::config('statistics.settings')->get('count_content_views')) {
       ->execute();
   }
 }
+

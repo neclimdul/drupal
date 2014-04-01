@@ -310,7 +310,7 @@ require_once __DIR__ . '/includes/unicode.inc';
 require_once __DIR__ . '/includes/install.inc';
 require_once __DIR__ . '/includes/schema.inc';
 require_once __DIR__ . '/includes/database.inc';
-// Bootstrap to configuration.
+
 $request = Request::createFromGlobals();
 DrupalKernel::bootConfiguration($request);
 
