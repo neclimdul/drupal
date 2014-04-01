@@ -325,13 +325,6 @@ function config_get_config_directory($type = CONFIG_ACTIVE_DIRECTORY) {
 }
 
 /**
- * Initializes the PHP environment.
- */
-function drupal_environment_initialize() {
-  DrupalKernel::bootEnvironment(Request::createFromGlobals());
-}
-
-/**
  * Returns and optionally sets the filename for a system resource.
  *
  * The filename, whether provided, cached, or retrieved from the database, is
