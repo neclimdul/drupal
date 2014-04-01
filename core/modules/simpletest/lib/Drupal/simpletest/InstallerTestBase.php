@@ -7,6 +7,7 @@
 
 namespace Drupal\simpletest;
 
+use Drupal\Core\DrupalKernel;
 use Drupal\Core\Session\UserSession;
 
 /**
@@ -109,7 +110,7 @@ abstract class InstallerTestBase extends WebTestBase {
     $this->setUpSite();
 
     // Import new settings.php written by the installer.
-    drupal_settings_initialize();
+    DrupalKernel::initializeSettings($this->container->get('request'));
     foreach ($GLOBALS['config_directories'] as $type => $path) {
       $this->configDirectories[$type] = $path;
     }

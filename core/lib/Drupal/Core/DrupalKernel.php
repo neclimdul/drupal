@@ -56,39 +56,29 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
   const BOOTSTRAP_ENVIRONMENT = 1;
 
   /**
-   * Pre bootstrap phase: initialize settings.
-   */
-  const BOOTSTRAP_SETTINGS = 2;
-
-  /**
-   * Pre bootstrap phase: initialize request.
-   */
-  const BOOTSTRAP_REQUEST = 3;
-
-  /**
    * First bootstrap phase: initialize configuration.
    */
-  const BOOTSTRAP_CONFIGURATION = 4;
+  const BOOTSTRAP_CONFIGURATION = 2;
 
   /**
    * Second bootstrap phase, initalize a kernel.
    */
-  const BOOTSTRAP_KERNEL = 5;
+  const BOOTSTRAP_KERNEL = 3;
 
   /**
    * Third bootstrap phase: try to serve a cached page.
    */
-  const BOOTSTRAP_PAGE_CACHE = 6;
+  const BOOTSTRAP_PAGE_CACHE = 4;
 
   /**
    * Fourth bootstrap phase: load code for subsystems and modules.
    */
-  const BOOTSTRAP_CODE = 7;
+  const BOOTSTRAP_CODE = 5;
 
   /**
    * Final bootstrap phase: initialize language, path, theme, and modules.
    */
-  const BOOTSTRAP_FULL = 8;
+  const BOOTSTRAP_FULL = 6;
 
   /**
    * Whether or not configuration has been bootstrapped.
@@ -474,12 +464,7 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
    * @param \Symfony\Component\HttpFoundation\Request $request
    *   The current request.
    */
-  public static function bootSettings(Request $request) {
-    if (static::$bootLevel >= self::BOOTSTRAP_SETTINGS) {
-      return;
-    }
-    static::bootEnvironment($request);
-
+  public static function initializeSettings(Request $request) {
     // Export these settings.php variables to the global namespace.
     global $base_url, $databases, $cookie_domain, $config_directories, $config;
     $settings = array();
@@ -492,8 +477,6 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
     }
     // Initialize Settings.
     new Settings($settings);
-
-    static::$bootLevel = self::BOOTSTRAP_SETTINGS;
   }
 
   /**
@@ -504,12 +487,7 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
    *
    * @todo D8: Eliminate this entirely in favor of Request object.
    */
-  public static function bootRequest(Request $request) {
-    if (static::$bootLevel >= self::BOOTSTRAP_REQUEST) {
-      return;
-    }
-    static::bootSettings($request);
-
+  public static function initializeRequest(Request $request) {
     // Provided by settings.php.
     global $base_url, $cookie_domain;
     // Set and derived from $base_url by this function.
@@ -621,8 +599,6 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
     }
     $prefix = ini_get('session.cookie_secure') ? 'SSESS' : 'SESS';
     session_name($prefix . substr(hash('sha256', $session_name), 0, 32));
-
-    static::$bootLevel = self::BOOTSTRAP_REQUEST;
   }
 
   /**
@@ -635,7 +611,9 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
     if (static::$bootLevel >= self::BOOTSTRAP_CONFIGURATION) {
       return;
     }
-    global $config;
+    static::bootEnvironment($request);
+
+    // Indicate that code is operating in a test child site.
     if ($test_prefix = drupal_valid_test_ua()) {
       // Only code that interfaces directly with tests should rely on this
       // constant; e.g., the error/exception handler conditionally adds further
@@ -651,14 +629,18 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
       // Ensure that no other code defines this.
       define('DRUPAL_TEST_IN_CHILD_SITE', FALSE);
     }
-    static::bootRequest($request);
+
+    // Initialize the configuration, including variables from settings.php.
+    static::initializeSettings($request);
+    static::initializeRequest($request);
+
     // Start a page timer:
     Timer::start('page');
 
     // Detect string handling method.
     Unicode::check();
 
-    // Set the Drupal custom error handler. (requires config())
+    // Set the Drupal custom error handler. (requires \Drupal::config())
     set_error_handler('_drupal_error_handler');
     set_exception_handler('_drupal_exception_handler');
 
@@ -666,9 +648,10 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
     // installed yet (i.e., if no $databases array has been defined in the
     // settings.php file) and we are not already installing.
     if (empty($GLOBALS['databases']) && !drupal_installation_attempted() && !drupal_is_cli()) {
-      include_once __DIR__ . '/install.inc';
+      include_once DRUPAL_ROOT . '/core/includes/install.inc';
       install_goto('core/install.php');
     }
+
     static::$bootLevel = self::BOOTSTRAP_CONFIGURATION;
   }
 

@@ -127,27 +127,27 @@ const WATCHDOG_DEBUG = 7;
 /**
  * First bootstrap phase: initialize configuration.
  */
-const DRUPAL_BOOTSTRAP_CONFIGURATION = 4;
+const DRUPAL_BOOTSTRAP_CONFIGURATION = 2;
 
 /**
  * Second bootstrap phase, initalize a kernel.
  */
-const DRUPAL_BOOTSTRAP_KERNEL = 5;
+const DRUPAL_BOOTSTRAP_KERNEL = 3;
 
 /**
  * Third bootstrap phase: try to serve a cached page.
  */
-const DRUPAL_BOOTSTRAP_PAGE_CACHE = 6;
+const DRUPAL_BOOTSTRAP_PAGE_CACHE = 4;
 
 /**
  * Fourth bootstrap phase: load code for subsystems and modules.
  */
-const DRUPAL_BOOTSTRAP_CODE = 7;
+const DRUPAL_BOOTSTRAP_CODE = 5;
 
 /**
  * Final bootstrap phase: initialize language, path, theme, and modules.
  */
-const DRUPAL_BOOTSTRAP_FULL = 8;
+const DRUPAL_BOOTSTRAP_FULL = 6;
 
 /**
  * Role ID for anonymous users; should match what's in the "role" table.
@@ -329,31 +329,6 @@ function config_get_config_directory($type = CONFIG_ACTIVE_DIRECTORY) {
  */
 function drupal_environment_initialize() {
   DrupalKernel::bootEnvironment(Request::createFromGlobals());
-}
-
-/**
- * Sets the base URL, cookie domain, and session name from configuration.
- */
-function drupal_settings_initialize() {
-  // Export these settings.php variables to the global namespace.
-  global $base_url, $databases, $cookie_domain, $config_directories, $config;
-  $settings = array();
-  $config = array();
-
-  // Make conf_path() available as local variable in settings.php.
-  $conf_path = conf_path();
-  if (is_readable(DRUPAL_ROOT . '/' . $conf_path . '/settings.php')) {
-    require DRUPAL_ROOT . '/' . $conf_path . '/settings.php';
-  }
-  // Initialize Settings.
-  new Settings($settings);
-}
-
-/**
- * Initializes global request variables.
- */
-function _drupal_request_initialize() {
-  DrupalKernel::bootRequest(Request::createFromGlobals());
 }
 
 /**
