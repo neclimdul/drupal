@@ -382,7 +382,7 @@ if (is_null($op) && update_access_allowed()) {
   install_goto('core/update.php?op=info');
 }
 
-$kernel->finishBoot();
+$kernel->bootCode();
 drupal_maintenance_theme();
 
 // Turn error reporting back on. From now on, only fatal errors (which are

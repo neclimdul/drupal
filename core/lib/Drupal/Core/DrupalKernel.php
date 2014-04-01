@@ -721,7 +721,7 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
 
     require_once DRUPAL_ROOT . '/core/includes/common.inc';
     require_once DRUPAL_ROOT . '/core/includes/database.inc';
-    return static::$singleton->bootPageCache($request)->finishBoot();
+    return static::$singleton->bootPageCache($request)->bootCode();
   }
 
   /**
@@ -729,7 +729,7 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
    *
    * @return $this
    */
-  public function finishBoot() {
+  public function bootCode() {
     require_once DRUPAL_ROOT . '/' . Settings::get('path_inc', 'core/includes/path.inc');
     require_once DRUPAL_ROOT . '/core/includes/module.inc';
     require_once DRUPAL_ROOT . '/core/includes/theme.inc';
