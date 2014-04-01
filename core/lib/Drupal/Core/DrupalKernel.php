@@ -511,7 +511,6 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
     static::bootSettings($request);
 
     // Provided by settings.php.
-    // @see drupal_settings_initialize()
     global $base_url, $cookie_domain;
     // Set and derived from $base_url by this function.
     global $base_path, $base_root, $script_path;
@@ -593,8 +592,8 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
       // Otherwise use $base_url as session name, without the protocol
       // to use the same session identifiers across HTTP and HTTPS.
       list(, $session_name) = explode('://', $base_url, 2);
-      // HTTP_HOST can be modified by a visitor, but we already sanitized it
-      // in drupal_settings_initialize().
+      // HTTP_HOST can be modified by a visitor, but has been sanitized already
+      // in DrupalKernel::bootEnvironment().
       if ($cookie_domain = $request->server->get('HTTP_HOST')) {
         // Strip leading periods, www., and port numbers from cookie domain.
         $cookie_domain = ltrim($cookie_domain, '.');
