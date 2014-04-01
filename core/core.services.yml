@@ -161,11 +161,11 @@ services:
   theme.negotiator:
     class: Drupal\Core\Theme\ThemeNegotiator
     arguments: ['@access_check.theme', '@request_stack']
-  theme_negotiator_request_subscriber:
-      class: Drupal\Core\EventSubscriber\ThemeNegotiatorRequestSubscriber
-      tags:
-        - { name: event_subscriber }
-      arguments: ['@theme.negotiator']
+  theme.negotiator.request_subscriber:
+    class: Drupal\Core\EventSubscriber\ThemeNegotiatorRequestSubscriber
+    arguments: ['@theme.negotiator']
+    tags:
+      - { name: event_subscriber }
   theme.negotiator.default:
     class: Drupal\Core\Theme\DefaultNegotiator
     arguments: ['@config.factory']
