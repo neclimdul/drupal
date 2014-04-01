@@ -477,9 +477,6 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
       return;
     }
     require_once DRUPAL_ROOT . '/core/includes/bootstrap.inc';
-    // Make sure the \Drupal class is available.
-    // @todo Remove this if not needed.
-    // require_once DRUPAL_ROOT . '/core/lib/Drupal.php';
 
     if (!$request->server->has('HTTP_REFERER')) {
       $request->server->set('HTTP_REFERER', '');
