@@ -81,10 +81,9 @@ while ($param = array_shift($_SERVER['argv'])) {
   }
 }
 
-chdir('../..');
-
-require_once './core/vendor/autoload.php';
-require_once './core/includes/bootstrap.inc';
+$core = dirname(__DIR__);
+require_once $core . '/vendor/autoload.php';
+require_once $core . '/includes/bootstrap.inc';
 
 $request = Request::createFromGlobals();
 $kernel = DrupalKernel::bootKernel($request);
