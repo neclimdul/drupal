@@ -135,6 +135,13 @@ const DRUPAL_BOOTSTRAP_CONFIGURATION = DrupalKernel::BOOTSTRAP_CONFIGURATION;
 const DRUPAL_BOOTSTRAP_PAGE_CACHE = DrupalKernel::BOOTSTRAP_PAGE_CACHE;
 
 /**
+ * Third bootstrap phase: try to serve a cached page.
+ *
+ * @todo Remove when drush no longer relies on it.
+ */
+const DRUPAL_BOOTSTRAP_KERNEL = DrupalKernel::BOOTSTRAP_PAGE_CACHE;
+
+/**
  * Fourth bootstrap phase: load code for subsystems and modules.
  */
 const DRUPAL_BOOTSTRAP_CODE = DrupalKernel::BOOTSTRAP_CODE;
