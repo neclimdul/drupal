@@ -358,15 +358,8 @@ function install_begin_request(&$install_state) {
     $environment = 'prod';
   }
 
-  $kernel = new DrupalKernel($environment, drupal_classloader(), FALSE);
-  $kernel->boot();
-
-  // Enter the request scope and add the Request.
-  // @todo Remove this after converting all installer screens into controllers.
+  $kernel = DrupalKernel::bootKernel($request, $environment, FALSE);
   $container = $kernel->getContainer();
-  $container->enterScope('request');
-  $container->set('request', $request, 'request');
-  $container->get('request_stack')->push($request);
 
   // Register the file translation service.
   if (isset($GLOBALS['config']['locale.settings']['translation.path'])) {
@@ -1779,7 +1772,6 @@ function install_load_profile(&$install_state) {
  *   An array of information about the current installation state.
  */
 function install_bootstrap_full() {
-  drupal_bootstrap(DRUPAL_BOOTSTRAP_FULL);
   require_once DRUPAL_ROOT . '/' . Settings::get('session_inc', 'core/includes/session.inc');
   drupal_session_initialize();
 }

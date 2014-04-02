@@ -330,21 +330,9 @@ if (db_table_exists('system')) {
 $GLOBALS['conf']['container_service_providers']['UpdateServiceProvider'] = 'Drupal\Core\DependencyInjection\UpdateServiceProvider';
 $GLOBALS['conf']['update_service_provider_overrides'] = TRUE;
 
-// module.inc is not yet loaded but there are calls to module_config_sort()
-// below.
-require_once __DIR__ . '/includes/module.inc';
-
-$settings = Settings::getAll();
-new Settings($settings);
-$kernel = new DrupalKernel('update', drupal_classloader(), FALSE);
-$kernel->boot();
-$container = \Drupal::getContainer();
-$container->set('request', $request);
-$container->get('request_stack')->push($request);
+$kernel = DrupalKernel::bootKernel($request, 'update', FALSE);
 
 // Determine if the current user has access to run update.php.
-$kernel->bootPageCache($request);
-
 require_once DRUPAL_ROOT . '/' . Settings::get('session_inc', 'core/includes/session.inc');
 drupal_session_initialize();
 
@@ -382,7 +370,6 @@ if (is_null($op) && update_access_allowed()) {
   install_goto('core/update.php?op=info');
 }
 
-$kernel->bootCode();
 drupal_maintenance_theme();
 
 // Turn error reporting back on. From now on, only fatal errors (which are

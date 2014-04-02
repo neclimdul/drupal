@@ -82,7 +82,7 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
    *
    * @var string
    */
-  protected static $requestPath = FALSE;
+  protected static $requestPath;
 
   /**
    * Global DrupalKernel singleton.
@@ -304,6 +304,16 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
     }
     $this->booted = FALSE;
     $this->container = NULL;
+    static::resetSingleton();
+  }
+
+  public static function resetSingleton() {
+    // static::$currentPath and static::$requestPath cannot be reset, since
+    // BOOTSTRAP_ENVIRONMENT as well as DrupalKernel::initializeRequest() are
+    // changing global parameters of the PHP process (affecting session handling
+    // and other global state).
+    static::$bootLevel = self::BOOTSTRAP_CONFIGURATION;
+    static::$singleton = NULL;
   }
 
   /**
@@ -711,17 +721,41 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
       return static::$singleton;
     }
     static::bootConfiguration($request);
-    static::$singleton = new static($environment, drupal_classloader(), $allow_dumping, DRUPAL_TEST_IN_CHILD_SITE);
-    static::$singleton->boot();
-
-    // Enter the request scope so that current_user service is available for
-    // locale/translation sake.
-    static::$singleton->container->enterScope('request');
-    static::$singleton->container->set('request', $request);
 
     require_once DRUPAL_ROOT . '/core/includes/common.inc';
     require_once DRUPAL_ROOT . '/core/includes/database.inc';
-    return static::$singleton->bootPageCache($request)->bootCode();
+
+    static::doBootKernel($request, $environment, $allow_dumping);
+
+    return static::$singleton;
+  }
+
+  protected static function doBootKernel(Request $request, $environment = 'prod', $allow_dumping = TRUE) {
+    // @todo DRUPAL_TEST_IN_CHILD_SITE must not be passed here.
+    //   DrupalKernel::bootConfiguration() negotiates a test request via
+    //   drupal_valid_test_ua() already. This parameter here only exists for the
+    //   http[s].php test front-controllers.
+    $kernel = new static($environment, drupal_classloader(), $allow_dumping, DRUPAL_TEST_IN_CHILD_SITE);
+    static::$singleton = $kernel;
+    $kernel->boot();
+
+    // Enter the request scope so that current_user service is available for
+    // locale/translation sake.
+    $kernel->container->enterScope('request');
+    $kernel->container->set('request', $request);
+    $kernel->container->get('request_stack')->push($request);
+
+    $kernel->bootPageCache($request);
+    static::$bootLevel = self::BOOTSTRAP_PAGE_CACHE;
+
+    $kernel->bootCode();
+    static::$bootLevel = self::BOOTSTRAP_CODE;
+  }
+
+  public function reboot(Request $request, $environment = 'prod', $allow_dumping = TRUE) {
+    $this->shutdown();
+    static::doBootKernel($request, $environment, $allow_dumping);
+    return static::$singleton;
   }
 
   /**
@@ -838,10 +872,6 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
    * {@inheritdoc}
    */
   public function terminate(Request $request, Response $response) {
-    static::$bootLevel = NULL;
-    static::$currentPath = NULL;
-    static::$requestPath = NULL;
-    static::$singleton = NULL;
     if (FALSE === $this->booted) {
       return;
     }
@@ -885,12 +915,12 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
    *   The requested Drupal URL path.
    */
   public static function requestPath(Request $request = NULL) {
+    if (isset(static::$requestPath)) {
+      return static::$requestPath;
+    }
     if (!$request) {
       // @todo Do we even need this?
       $request = \Drupal::request();
-    }
-    if (static::$requestPath) {
-      return static::$requestPath;
     }
 
     // Get the part of the URI between the base path of the Drupal installation

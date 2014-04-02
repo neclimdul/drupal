@@ -140,8 +140,10 @@ abstract class DrupalUnitTestBase extends UnitTestBase {
 
     // Bootstrap the kernel.
     // No need to dump it; this test runs in-memory.
-    $this->kernel = new DrupalKernel('unit_testing', drupal_classloader(), FALSE);
-    $this->kernel->boot();
+    #$this->kernel = new DrupalKernel('unit_testing', drupal_classloader(), FALSE);
+    DrupalKernel::resetSingleton();
+    $request = Request::create('/');
+    $this->kernel = DrupalKernel::bootKernel($request, 'unit_testing', FALSE);
 
     // Create a minimal system.module configuration object so that the list of
     // enabled modules can be maintained allowing

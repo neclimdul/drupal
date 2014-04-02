@@ -637,17 +637,11 @@ function drupal_install_system($install_state) {
   drupal_install_schema('system');
 
   // Immediately boot a new kernel into the regular production environment.
-  $request = \Drupal::hasRequest() ? \Drupal::request() : FALSE;
+  $request = \Drupal::request();
 
   unset($GLOBALS['conf']['container_service_providers']['InstallerServiceProvider']);
-  $kernel = new DrupalKernel('prod', drupal_classloader(), FALSE);
-  $kernel->boot();
 
-  if ($request) {
-    $kernel->getContainer()->enterScope('request');
-    $kernel->getContainer()->set('request', $request, 'request');
-    $kernel->getContainer()->get('request_stack')->push($request);
-  }
+  $kernel = \Drupal::service('kernel')->reboot($request, 'prod', FALSE);
 
   $system_path = drupal_get_path('module', 'system');
   require_once DRUPAL_ROOT . '/' . $system_path . '/system.install';
@@ -673,6 +667,14 @@ function drupal_install_system($install_state) {
   \Drupal::moduleHandler()->addModule('system', 'core/modules/system');
   $module_list = \Drupal::moduleHandler()->getModuleList();
   $kernel->updateModules($module_list);
+
+  // DrupalKernel::bootKernel() above calls into DrupalKernel::bootCode(), which
+  // primes file_get_stream_wrappers()'s static list of custom stream wrappers
+  // that are based on the currently enabled list of modules (none).
+  // @todo Custom stream wrappers of a new module have to be registered as soon
+  //   as the module is installed/enabled. Fix either ModuleHandler::install()
+  //   and/or DrupalKernel::updateModules().
+  drupal_static_reset('file_get_stream_wrappers');
 
   \Drupal::service('config.installer')->installDefaultConfig('module', 'system');
 
