@@ -2901,29 +2901,6 @@ function drupal_valid_token($token, $value = '', $skip_anonymous = FALSE) {
 }
 
 /**
- * Temporary BC function for scripts not using DrupalKernel.
- *
- * DrupalKernel skips this and replicates it via event listeners.
- *
- * @see \Drupal\Core\EventSubscriber\PathSubscriber;
- * @see \Drupal\Core\EventSubscriber\LegacyRequestSubscriber;
- */
-function _drupal_bootstrap_full($skip = FALSE) {
-  static $called = FALSE;
-
-  if ($called || $skip) {
-    $called = TRUE;
-    return;
-  }
-
-  // Let all modules take action before the menu system handles the request.
-  // We do not want this while running update.php.
-  if (!defined('MAINTENANCE_MODE') || MAINTENANCE_MODE != 'update') {
-    drupal_theme_initialize();
-  }
-}
-
-/**
  * Stores the current page in the cache.
  *
  * If page_compression is enabled, a gzipped version of the page is stored in

@@ -279,8 +279,6 @@ function install_begin_request(&$install_state) {
   // which will be used for installing Drupal.
   conf_path(FALSE, FALSE, $request);
 
-  DrupalKernel::bootConfiguration($request);
-
   // If the hash salt leaks, it becomes possible to forge a valid testing user
   // agent, install a new copy of Drupal, and take over the original site.
   // The user agent header is used to pass a database prefix in the request when

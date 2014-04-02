@@ -5,6 +5,7 @@
  * Functions for error handling.
  */
 
+use Drupal\Core\DrupalKernel;
 use Drupal\Core\Utility\Error;
 use Drupal\Component\Utility\String;
 use Symfony\Component\HttpFoundation\Response;
@@ -122,7 +123,7 @@ function _drupal_log_error($error, $fatal = FALSE) {
   $is_installer = drupal_installation_attempted();
   // Initialize a maintenance theme if the bootstrap was not complete.
   // Do it early because drupal_set_message() triggers a drupal_theme_initialize().
-  if ($fatal && (drupal_get_bootstrap_phase() != DRUPAL_BOOTSTRAP_FULL)) {
+  if ($fatal && (drupal_get_bootstrap_phase() != DrupalKernel::BOOTSTRAP_CODE)) {
     // The installer initializes a maintenance theme at the earliest possible
     // point in time already. Do not unset that.
     if (!$is_installer) {

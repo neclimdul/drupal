@@ -71,11 +71,6 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
   const BOOTSTRAP_CODE = 4;
 
   /**
-   * Final bootstrap phase: initialize language, path, theme, and modules.
-   */
-  const BOOTSTRAP_FULL = 5;
-
-  /**
    * Whether or not configuration has been bootstrapped.
    *
    * @var bool

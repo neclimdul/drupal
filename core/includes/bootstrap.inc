@@ -140,9 +140,9 @@ const DRUPAL_BOOTSTRAP_PAGE_CACHE = DrupalKernel::BOOTSTRAP_PAGE_CACHE;
 const DRUPAL_BOOTSTRAP_CODE = DrupalKernel::BOOTSTRAP_CODE;
 
 /**
- * Final bootstrap phase: initialize language, path, theme, and modules.
+ * @todo Obsolete. Remove once Drush has been updated.
  */
-const DRUPAL_BOOTSTRAP_FULL = DrupalKernel::BOOTSTRAP_FULL;
+const DRUPAL_BOOTSTRAP_FULL = DrupalKernel::BOOTSTRAP_CODE;
 
 /**
  * Role ID for anonymous users; should match what's in the "role" table.
@@ -1117,7 +1117,7 @@ function drupal_anonymous_user() {
  * @code
  *   require_once '/path/to/drupal/core/vendor/autoload.php';
  *   require_once '/path/to/drupal/core/includes/bootstrap.inc';
- *   drupal_bootstrap(DRUPAL_BOOTSTRAP_FULL);
+ *   drupal_bootstrap(DRUPAL_BOOTSTRAP_CODE);
  * @endcode
  *
  * @param $phase
@@ -1127,7 +1127,7 @@ function drupal_anonymous_user() {
  *   - DRUPAL_BOOTSTRAP_CONFIGURATION: Initializes configuration.
  *   - DRUPAL_BOOTSTRAP_PAGE_CACHE: Tries to serve a cached page.
  *   - DRUPAL_BOOTSTRAP_CODE: Loads code for subsystems and modules.
- *   - DRUPAL_BOOTSTRAP_FULL: Fully loads Drupal. Validates and fixes input
+ *   - DRUPAL_BOOTSTRAP_FULL: Same as DRUPAL_BOOTSTRAP_CODE.
  *     data.
  *
  * @return
@@ -1142,7 +1142,6 @@ function drupal_bootstrap($phase = NULL) {
     DRUPAL_BOOTSTRAP_CONFIGURATION,
     DRUPAL_BOOTSTRAP_PAGE_CACHE,
     DRUPAL_BOOTSTRAP_CODE,
-    DRUPAL_BOOTSTRAP_FULL,
   );
   // Not drupal_static(), because the only legitimate API to control this is to
   // call drupal_bootstrap() with a new phase parameter.
@@ -1178,11 +1177,8 @@ function drupal_bootstrap($phase = NULL) {
 
         case DRUPAL_BOOTSTRAP_PAGE_CACHE:
         case DRUPAL_BOOTSTRAP_CODE:
-          DrupalKernel::bootKernel(Request::createFromGlobals());
-          break;
-
         case DRUPAL_BOOTSTRAP_FULL:
-          DrupalKernel::createFromRequest(Request::createFromGlobals());
+          DrupalKernel::bootKernel(Request::createFromGlobals());
           break;
       }
     }

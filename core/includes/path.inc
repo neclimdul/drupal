@@ -74,7 +74,7 @@ function drupal_match_path($path, $patterns) {
  * - http://example.com/path/alias (which is a path alias for node/306) returns
  *   "node/306" as opposed to the path alias.
  *
- * This function is available only after DRUPAL_BOOTSTRAP_FULL.
+ * This function is available only after DrupalKernel::BOOTSTRAP_CODE.
  *
  * @return
  *   The current Drupal URL path.
