@@ -371,6 +371,7 @@ function install_begin_request(&$install_state) {
   $container->set('string_translator.file_translation', new FileTranslation($directory));
   $container->get('string_translation')
     ->addTranslator($container->get('string_translator.file_translation'));
+  \Drupal::setContainer($container);
 
   // Add in installation language if present.
   if (isset($install_state['parameters']['langcode'])) {
