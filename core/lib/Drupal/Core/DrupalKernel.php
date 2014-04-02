@@ -71,9 +71,9 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
   const BOOTSTRAP_CODE = 4;
 
   /**
-   * Whether or not configuration has been bootstrapped.
+   * Current boot level.
    *
-   * @var bool
+   * @var int
    */
   protected static $bootLevel = NULL;
 
@@ -307,6 +307,9 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
     static::resetSingleton();
   }
 
+  /**
+   * Resets kernel singleton.
+   */
   public static function resetSingleton() {
     // static::$currentPath and static::$requestPath cannot be reset, since
     // BOOTSTRAP_ENVIRONMENT as well as DrupalKernel::initializeRequest() are
@@ -730,6 +733,16 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
     return static::$singleton;
   }
 
+  /**
+   * Performs the actual kernel bootstrap.
+   *
+   * @param \Symfony\Component\HttpFoundation\Request $request
+   *   The current request.
+   * @param string $environment
+   *   (optional) The environment to bootstrap. Defaults to 'prod'.
+   * @param bool $allow_dumping
+   *   (optional) Allow dumping the container. Defaults to TRUE.
+   */
   protected static function doBootKernel(Request $request, $environment = 'prod', $allow_dumping = TRUE) {
     // @todo DRUPAL_TEST_IN_CHILD_SITE must not be passed here.
     //   DrupalKernel::bootConfiguration() negotiates a test request via
@@ -752,6 +765,19 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
     static::$bootLevel = self::BOOTSTRAP_CODE;
   }
 
+  /**
+   * Reboots the kernel.
+   *
+   * @param \Symfony\Component\HttpFoundation\Request $request
+   *   The current request.
+   * @param string $environment
+   *   (optional) The environment to bootstrap. Defaults to 'prod'.
+   * @param bool $allow_dumping
+   *   (optional) Allow dumping the container. Defaults to TRUE.
+   *
+   * @return \Drupal\Core\DrupalKernel
+   *   The bootstapped kernel.
+   */
   public function reboot(Request $request, $environment = 'prod', $allow_dumping = TRUE) {
     $this->shutdown();
     static::doBootKernel($request, $environment, $allow_dumping);
