@@ -728,9 +728,7 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
     require_once DRUPAL_ROOT . '/core/includes/common.inc';
     require_once DRUPAL_ROOT . '/core/includes/database.inc';
 
-    static::doBootKernel($request, $environment, $allow_dumping);
-
-    return static::$singleton;
+    return static::createKernel($request, $environment, $allow_dumping);
   }
 
   /**
@@ -742,8 +740,10 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
    *   (optional) The environment to bootstrap. Defaults to 'prod'.
    * @param bool $allow_dumping
    *   (optional) Allow dumping the container. Defaults to TRUE.
+   *
+   * @return static
    */
-  protected static function doBootKernel(Request $request, $environment = 'prod', $allow_dumping = TRUE) {
+  public static function createKernel(Request $request, $environment = 'prod', $allow_dumping = TRUE) {
     // @todo DRUPAL_TEST_IN_CHILD_SITE must not be passed here.
     //   DrupalKernel::bootConfiguration() negotiates a test request via
     //   drupal_valid_test_ua() already. This parameter here only exists for the
@@ -763,6 +763,7 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
 
     $kernel->bootCode();
     static::$bootLevel = self::BOOTSTRAP_CODE;
+    return $kernel;
   }
 
   /**
@@ -780,7 +781,7 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
    */
   public function reboot(Request $request, $environment = 'prod', $allow_dumping = TRUE) {
     $this->shutdown();
-    static::doBootKernel($request, $environment, $allow_dumping);
+    static::createKernel($request, $environment, $allow_dumping);
     return static::$singleton;
   }
 

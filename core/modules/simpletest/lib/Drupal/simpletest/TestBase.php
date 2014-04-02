@@ -1140,8 +1140,7 @@ abstract class TestBase {
   protected function rebuildContainer($environment = 'testing') {
     // Preserve the request object after the container rebuild.
     $request = \Drupal::request();
-
-    $this->kernel->reboot($request, $environment, FALSE);
+    $this->kernel = DrupalKernel::createKernel($request, $environment, FALSE);
 
     // DrupalKernel replaces the container in \Drupal::getContainer() with a
     // different object, so we need to replace the instance on this test class.

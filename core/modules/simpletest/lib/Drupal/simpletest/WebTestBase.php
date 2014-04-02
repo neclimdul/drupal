@@ -170,6 +170,8 @@ abstract class WebTestBase extends TestBase {
 
   /**
    * The kernel used in this test.
+   *
+   * @var \Drupal\Core\DrupalKernel
    */
   protected $kernel;
 
