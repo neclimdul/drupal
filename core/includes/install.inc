@@ -633,9 +633,6 @@ function drupal_verify_profile($install_state) {
  *   to set the default language.
  */
 function drupal_install_system($install_state) {
-  // Create tables.
-  drupal_install_schema('system');
-
   // Immediately boot a new kernel into the regular production environment.
   $request = \Drupal::request();
 
@@ -643,30 +640,11 @@ function drupal_install_system($install_state) {
 
   $kernel = \Drupal::service('kernel')->reboot($request, 'prod', FALSE);
 
-  $system_path = drupal_get_path('module', 'system');
-  require_once DRUPAL_ROOT . '/' . $system_path . '/system.install';
+  // Install base system configuration.
+  \Drupal::service('config.installer')->installDefaultConfig('core', 'core');
 
-  // Set the schema version to the number of the last update provided by the
-  // module, or the minimum core schema version.
-  $system_version = \Drupal::CORE_MINIMUM_SCHEMA_VERSION;
-  $system_versions = drupal_get_schema_versions('system');
-  if ($system_versions) {
-    $system_version = max(max($system_versions), $system_version);
-  }
-  \Drupal::keyValue('system.schema')->set('system', $system_version);
-
-  // System module needs to be enabled and the system/module lists need to be
-  // reset first in order to allow installation of default configuration to
-  // invoke config import callbacks.
-  // @todo Installation profiles may override the system.module config object.
-  \Drupal::config('system.module')
-    ->set('enabled.system', 0)
-    ->save();
-
-  // Update the module list to include it. Reboot the kernel too.
-  \Drupal::moduleHandler()->addModule('system', 'core/modules/system');
-  $module_list = \Drupal::moduleHandler()->getModuleList();
-  $kernel->updateModules($module_list);
+  // Install System module.
+  \Drupal::moduleHandler()->install(array('system'), FALSE);
 
   // DrupalKernel::bootKernel() above calls into DrupalKernel::bootCode(), which
   // primes file_get_stream_wrappers()'s static list of custom stream wrappers
@@ -676,16 +654,12 @@ function drupal_install_system($install_state) {
   //   and/or DrupalKernel::updateModules().
   drupal_static_reset('file_get_stream_wrappers');
 
-  \Drupal::service('config.installer')->installDefaultConfig('module', 'system');
-
   // Ensure default language is saved.
   if (isset($install_state['parameters']['langcode'])) {
     \Drupal::config('system.site')
       ->set('langcode', $install_state['parameters']['langcode'])
       ->save();
   }
-
-  \Drupal::moduleHandler()->invoke('system', 'install');
 }
 
 /**
