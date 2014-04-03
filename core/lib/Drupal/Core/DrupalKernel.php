@@ -977,6 +977,18 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
   }
 
   /**
+   * Returns the current bootstrap phase for this Drupal Kernel.
+   *
+   * @return int
+   *   The current bootstrap phase
+   *
+   * @see \Drupal\Core\DrupalKernel::$bootLevel
+   */
+  public static function getBootLevel() {
+    return static::$bootLevel;
+  }
+
+  /**
    * Returns module data on the filesystem.
    *
    * @param $module

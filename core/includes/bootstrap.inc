@@ -1291,9 +1291,12 @@ function _drupal_exception_handler($exception) {
  * The current phase is the one most recently completed by drupal_bootstrap().
  *
  * @see drupal_bootstrap()
+ *
+ * @deprecated To be removed in 8.0. Use
+ *   \Drupal\Core\DrupalKernel::getBootLevel().
  */
 function drupal_get_bootstrap_phase() {
-  return drupal_bootstrap();
+  return DrupalKernel::getBootLevel();
 }
 
 /**
