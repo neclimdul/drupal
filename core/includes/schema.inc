@@ -87,7 +87,7 @@ function drupal_get_complete_schema($rebuild = FALSE) {
 
       // If the schema is empty, avoid saving it: some database engines require
       // the schema to perform queries, and this could lead to infinite loops.
-      if (!empty($schema) && (drupal_get_bootstrap_phase() == DrupalKernel::BOOTSTRAP_CODE)) {
+      if (!empty($schema) && DrupalKernel::isBootLevelReached(DrupalKernel::BOOTSTRAP_CODE)) {
         \Drupal::cache()->set('schema', $schema, Cache::PERMANENT);
       }
     }
