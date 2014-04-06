@@ -258,14 +258,19 @@ class TermTest extends TaxonomyTestBase {
     $third_term->save();
 
     // Try to autocomplete a term name that matches both terms.
-    // We should get both term in a json encoded string.
+    // We should get both terms in a json encoded string.
     $input = '10/';
     $path = 'taxonomy/autocomplete/node/taxonomy_' . $this->vocabulary->id();
     // The result order is not guaranteed, so check each term separately.
     $result = $this->drupalGet($path, array('query' => array('q' => $input)));
+    // Pull the label properties from the array of arrays.
     $data = Json::decode($result);
-    $this->assertEqual($data[0]['label'], String::checkPlain($first_term->getName()), 'Autocomplete returned the first matching term');
-    $this->assertEqual($data[1]['label'], String::checkPlain($second_term->getName()), 'Autocomplete returned the second matching term');
+    $data = array_map(function ($item) {
+      return $item['label'];
+    }, $data);
+
+    $this->assertTrue(in_array(String::checkPlain($first_term->getName()), $data), 'Autocomplete returned the first matching term');
+    $this->assertTrue(in_array(String::checkPlain($second_term->getName()), $data), 'Autocomplete returned the second matching term');
 
     // Try to autocomplete a term name that matches first term.
     // We should only get the first term in a json encoded string.
@@ -316,7 +321,7 @@ class TermTest extends TaxonomyTestBase {
     // Test edit link as accessed from Taxonomy administration pages.
     // Because Simpletest creates its own database when running tests, we know
     // the first edit link found on the listing page is to our term.
-    $this->clickLink(t('edit'));
+    $this->clickLink(t('Edit'), 1);
 
     $this->assertRaw($edit['name[0][value]'], 'The randomly generated term name is present.');
     $this->assertText($edit['description[0][value]'], 'The randomly generated term description is present.');
@@ -332,7 +337,7 @@ class TermTest extends TaxonomyTestBase {
     // Check that the term is still present at admin UI after edit.
     $this->drupalGet('admin/structure/taxonomy/manage/' . $this->vocabulary->id() . '/overview');
     $this->assertText($edit['name[0][value]'], 'The randomly generated term name is present.');
-    $this->assertLink(t('edit'));
+    $this->assertLink(t('Edit'));
 
     // Check the term link can be clicked through to the term page.
     $this->clickLink($edit['name[0][value]']);

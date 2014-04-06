@@ -396,10 +396,13 @@ function list_themes($refresh = FALSE) {
  */
 function _theme($hook, $variables = array()) {
   static $default_attributes;
+
+  $module_handler = \Drupal::moduleHandler();
+
   // If called before all modules are loaded, we do not necessarily have a full
   // theme registry to work with, and therefore cannot process the theme
   // request properly. See also \Drupal\Core\Theme\Registry::get().
-  if (!\Drupal::moduleHandler()->isLoaded() && !defined('MAINTENANCE_MODE')) {
+  if (!$module_handler->isLoaded() && !defined('MAINTENANCE_MODE')) {
     throw new Exception(t('_theme() may not be called until all modules are loaded.'));
   }
 
@@ -494,7 +497,7 @@ function _theme($hook, $variables = array()) {
   }
 
   // Invoke hook_theme_suggestions_HOOK().
-  $suggestions = Drupal::moduleHandler()->invokeAll('theme_suggestions_' . $base_theme_hook, array($variables));
+  $suggestions = $module_handler->invokeAll('theme_suggestions_' . $base_theme_hook, array($variables));
   // If _theme() was invoked with a direct theme suggestion like
   // '#theme' => 'node__article', add it to the suggestions array before
   // invoking suggestion alter hooks.
@@ -508,7 +511,7 @@ function _theme($hook, $variables = array()) {
     'theme_suggestions',
     'theme_suggestions_' . $base_theme_hook,
   );
-  \Drupal::moduleHandler()->alter($hooks, $suggestions, $variables, $base_theme_hook);
+  $module_handler->alter($hooks, $suggestions, $variables, $base_theme_hook);
 
   // Check if each suggestion exists in the theme registry, and if so,
   // use it instead of the hook that _theme() was called with. For example, a
@@ -1928,6 +1931,22 @@ function drupal_pre_render_html(array $element) {
 
   return $element;
 }
+
+/**
+ * #pre_render callback for the page element type.
+ *
+ * @param array $element
+ *   A structured array containing the page element type build properties.
+ *
+ * @see system_element_info()
+ */
+function drupal_pre_render_page(array $element) {
+  global $theme;
+  $element['#cache']['tags']['theme'] = $theme;
+  $element['#cache']['tags']['theme_global_settings'] = TRUE;
+  return $element;
+}
+
 /**
  * Prepares variables for HTML document templates.
  *

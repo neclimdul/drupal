@@ -146,15 +146,20 @@ services:
     class: Drupal\Core\Path\AliasWhitelist
     tags:
       - { name: needs_destruction }
-    arguments: [path_alias_whitelist, '@cache.default', '@lock', '@state', '@database']
+    arguments: [path_alias_whitelist, '@cache.default', '@lock', '@state', '@path.alias_storage']
   path.alias_manager:
     class: Drupal\Core\Path\AliasManager
-    arguments: ['@path.crud', '@path.alias_whitelist', '@language_manager']
+    arguments: ['@path.alias_storage', '@path.alias_whitelist', '@language_manager']
   http_client_simpletest_subscriber:
     class: Drupal\Core\Http\Plugin\SimpletestHttpRequestSubscriber
   http_default_client:
     class: Guzzle\Http\Client
-    arguments: [null, { curl.CURLOPT_TIMEOUT: 30, curl.CURLOPT_MAXREDIRS: 3 }]
+    # Security consideration: we must not use the certificate authority file
+    # shipped with Guzzle because it can easily get outdated if a certificate
+    # authority is hacked. Instead, we rely on the certificate authority file
+    # provided by the operating system which is more likely going to be updated
+    # in a timely fashion.
+    arguments: [null, { curl.CURLOPT_TIMEOUT: 30, curl.CURLOPT_MAXREDIRS: 3, ssl.certificate_authority: system }]
     calls:
       - [addSubscriber, ['@http_client_simpletest_subscriber']]
       - [setUserAgent, ['Drupal (+http://drupal.org/)']]
@@ -353,8 +358,8 @@ services:
   path.alias_manager.cached:
     class: Drupal\Core\CacheDecorator\AliasManagerCacheDecorator
     arguments: ['@path.alias_manager', '@cache.data']
-  path.crud:
-    class: Drupal\Core\Path\Path
+  path.alias_storage:
+    class: Drupal\Core\Path\AliasStorage
     arguments: ['@database', '@module_handler']
 # The argument to the hashing service defined in services.yml, to the
 # constructor of PhpassHashedPassword is the log2 number of iterations for
