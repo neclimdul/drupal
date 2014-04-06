@@ -1139,9 +1139,11 @@ abstract class TestBase {
    */
   protected function rebuildContainer($environment = 'testing') {
     // Preserve the request object after the container rebuild.
+    // @todo SessionManager requires the request stack to persist, too.
+    // @see https://drupal.org/node/2228341
     $request = \Drupal::request();
-    $this->kernel = DrupalKernel::createKernel($request, $environment, FALSE);
 
+    $this->kernel = DrupalKernel::createKernel($request, $environment, FALSE);
     // DrupalKernel replaces the container in \Drupal::getContainer() with a
     // different object, so we need to replace the instance on this test class.
     $this->container = \Drupal::getContainer();

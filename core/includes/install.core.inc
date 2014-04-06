@@ -371,6 +371,13 @@ function install_begin_request(&$install_state) {
   $container->set('string_translator.file_translation', new FileTranslation($directory));
   $container->get('string_translation')
     ->addTranslator($container->get('string_translator.file_translation'));
+
+  // @todo Above call to bootKernel() essentially performs nothing and just
+  //   returns the existing DrupalKernel singleton when the non-interactive
+  //   installer is invoked from WebTestBase.
+  //   Remove this and make WebTestBase::setUp() (or
+  //   TestBase::prepareEnvironment()?) call DrupalKernel::resetSingleton()
+  //   (or even shutdown()?).
   \Drupal::setContainer($container);
 
   // Add in installation language if present.

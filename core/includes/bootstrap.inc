@@ -130,16 +130,14 @@ const WATCHDOG_DEBUG = 7;
 const DRUPAL_BOOTSTRAP_CONFIGURATION = DrupalKernel::BOOTSTRAP_CONFIGURATION;
 
 /**
- * Third bootstrap phase: try to serve a cached page.
+ * @todo Obsolete. Remove once Drush has been updated.
  */
-const DRUPAL_BOOTSTRAP_PAGE_CACHE = DrupalKernel::BOOTSTRAP_PAGE_CACHE;
+const DRUPAL_BOOTSTRAP_KERNEL = DrupalKernel::BOOTSTRAP_PAGE_CACHE;
 
 /**
  * Third bootstrap phase: try to serve a cached page.
- *
- * @todo Remove when drush no longer relies on it.
  */
-const DRUPAL_BOOTSTRAP_KERNEL = DrupalKernel::BOOTSTRAP_PAGE_CACHE;
+const DRUPAL_BOOTSTRAP_PAGE_CACHE = DrupalKernel::BOOTSTRAP_PAGE_CACHE;
 
 /**
  * Fourth bootstrap phase: load code for subsystems and modules.
@@ -232,7 +230,7 @@ define('DRUPAL_ROOT', dirname(dirname(__DIR__)));
  * @param \Symfony\Component\HttpFoundation\Request $request
  *   The current request.
  *
- * @return false|string
+ * @return string
  *   The path of the matching directory.
  * @see default.settings.php
  *
@@ -1128,79 +1126,37 @@ function drupal_anonymous_user() {
 }
 
 /**
- * Ensures Drupal is bootstrapped to the specified phase.
+ * Bootstraps DrupalKernel to a given boot level.
  *
- * In order to bootstrap Drupal from another PHP script, you can use this code:
- * @code
- *   require_once '/path/to/drupal/core/vendor/autoload.php';
- *   require_once '/path/to/drupal/core/includes/bootstrap.inc';
- *   drupal_bootstrap(DRUPAL_BOOTSTRAP_CODE);
- * @endcode
- *
- * @param $phase
- *   A constant telling which phase to bootstrap to. When you bootstrap to a
- *   particular phase, all earlier phases are run automatically. Possible
- *   values:
+ * @param int $phase
+ *   The boot level to bootstrap to. Possible values:
  *   - DRUPAL_BOOTSTRAP_CONFIGURATION: Initializes configuration.
  *   - DRUPAL_BOOTSTRAP_PAGE_CACHE: Tries to serve a cached page.
  *   - DRUPAL_BOOTSTRAP_CODE: Loads code for subsystems and modules.
- *   - DRUPAL_BOOTSTRAP_FULL: Same as DRUPAL_BOOTSTRAP_CODE.
  *     data.
  *
- * @return
- *   The most recently completed phase.
+ * @return int
+ *   The current bootstrap level.
  *
- * @deprecated To be removed before 8.0. Use
- *   \Drupal\Core\DrupalKernel::bootKernel() et al instead.
+ * @deprecated 8.x
+ *   Use \Drupal\Core\DrupalKernel::bootKernel() et al instead.
+ *
+ * @todo Obsolete. Remove once Drush has been updated.
  */
 function drupal_bootstrap($phase = NULL) {
-  // Not drupal_static(), because does not depend on any run-time information.
-  static $phases = array(
-    DRUPAL_BOOTSTRAP_CONFIGURATION,
-    DRUPAL_BOOTSTRAP_PAGE_CACHE,
-    DRUPAL_BOOTSTRAP_CODE,
-  );
-  // Not drupal_static(), because the only legitimate API to control this is to
-  // call drupal_bootstrap() with a new phase parameter.
-  static $final_phase = -1;
-  // Not drupal_static(), because it's impossible to roll back to an earlier
-  // bootstrap state.
-  static $stored_phase = -1;
+  switch ($phase) {
+    case DRUPAL_BOOTSTRAP_CONFIGURATION:
+      DrupalKernel::bootConfiguration(Request::createFromGlobals());
+      break;
 
-  // Store the phase name so it's not forgotten during recursion. Additionally,
-  // ensure that $final_phase is never rolled back to an earlier bootstrap
-  // state.
-  if ($phase > $final_phase) {
-    $final_phase = $phase;
+    case DRUPAL_BOOTSTRAP_KERNEL:
+    case DRUPAL_BOOTSTRAP_PAGE_CACHE:
+    case DRUPAL_BOOTSTRAP_CODE:
+    case DRUPAL_BOOTSTRAP_FULL:
+      DrupalKernel::bootKernel(Request::createFromGlobals());
+      break;
   }
-  if (isset($phase)) {
-    // Call a phase if it has not been called before and is below the requested
-    // phase.
-    while ($phases && $phase > $stored_phase && $final_phase > $stored_phase) {
-      $current_phase = array_shift($phases);
-
-      // This function is re-entrant. Only update the completed phase when the
-      // current call actually resulted in a progress in the bootstrap process.
-      if ($current_phase > $stored_phase) {
-        $stored_phase = $current_phase;
-      }
-
-      switch ($current_phase) {
-        case DRUPAL_BOOTSTRAP_CONFIGURATION:
-          // @todo This is only called from legacy CLI scripts like Drush.
-          //   Remove when they properly use the DrupalKernel.
-          DrupalKernel::bootConfiguration(Request::createFromGlobals());
-          break;
-
-        case DRUPAL_BOOTSTRAP_PAGE_CACHE:
-        case DRUPAL_BOOTSTRAP_CODE:
-        case DRUPAL_BOOTSTRAP_FULL:
-          DrupalKernel::bootKernel(Request::createFromGlobals());
-          break;
-      }
-    }
-  }
-  return $stored_phase;
+  return DrupalKernel::getBootLevel();
 }
 
 /**

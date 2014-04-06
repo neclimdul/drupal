@@ -875,6 +875,9 @@ abstract class WebTestBase extends TestBase {
     // @see \Drupal\Core\DrupalKernel::bootKernel()
     // @todo Test-specific setUp() methods may set up further fixtures; find a
     //   way to execute this after setUp() is done, or to eliminate it entirely.
+    // @todo All of the above is no longer true; the kernel's boot level can be
+    //   reset now, enabling the non-interactive installer to properly reboot;
+    //   Change the boot*() methods to remove these workarounds.
     $this->resetAll();
 
     // Temporary fix so that when running from run-tests.sh we don't get an

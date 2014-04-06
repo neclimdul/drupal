@@ -335,8 +335,6 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
    * @see core/modules/system/tests/https.php
    * @see core/modules/system/tests/http.php
    *
-   * @todo Drop this and use a Request attribute instead.
-   *
    * @return $this
    */
   public function setTestOnly($test_only) {
@@ -758,6 +756,8 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
     $kernel->container->set('request', $request);
     $kernel->container->get('request_stack')->push($request);
 
+    // The page cache may prematurely end the request on a cache hit.
+    // @todo Invoke proper request/response/terminate events.
     $kernel->bootPageCache($request);
     static::$bootLevel = self::BOOTSTRAP_PAGE_CACHE;
 
