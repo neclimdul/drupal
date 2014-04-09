@@ -27,7 +27,7 @@ foreach ($_SERVER as &$value) {
 }
 
 $request = Request::createFromGlobals();
-$kernel = DrupalKernel::createFromRequest($request);
+$kernel = DrupalKernel::bootKernel($request);
 $kernel->setTestOnly(TRUE);
 $response = $kernel->handle($request)->prepare($request)->send();
 $kernel->terminate($request, $response);

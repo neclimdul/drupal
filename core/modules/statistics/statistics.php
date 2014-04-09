@@ -13,7 +13,7 @@ chdir('../../..');
 require_once dirname(dirname(__DIR__)) . '/vendor/autoload.php';
 require_once dirname(dirname(__DIR__)) . '/includes/bootstrap.inc';
 
-$kernel = DrupalKernel::createFromRequest(Request::createFromGlobals());
+DrupalKernel::bootKernel(Request::createFromGlobals());
 
 if (\Drupal::config('statistics.settings')->get('count_content_views')) {
   $nid = filter_input(INPUT_POST, 'nid', FILTER_VALIDATE_INT);

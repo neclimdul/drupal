@@ -16,7 +16,7 @@ require_once __DIR__ . '/core/includes/bootstrap.inc';
 
 try {
   $request = Request::createFromGlobals();
-  $kernel = DrupalKernel::createFromRequest($request);
+  $kernel = DrupalKernel::bootKernel($request);
   $response = $kernel->handle($request)->prepare($request)->send();
   $kernel->terminate($request, $response);
 }

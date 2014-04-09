@@ -54,7 +54,7 @@ function drupal_rebuild(Request $request) {
   drupal_page_is_cacheable(FALSE);
 
   // Bootstrap up to where caches exist and clear them.
-  $kernel = DrupalKernel::bootKernel($request);
+  DrupalKernel::bootKernel($request);
   foreach (Cache::getBins() as $bin) {
     $bin->deleteAll();
   }

@@ -646,7 +646,7 @@ function drupal_install_system($install_state) {
   // Install System module.
   \Drupal::moduleHandler()->install(array('system'), FALSE);
 
-  // DrupalKernel::bootKernel() above calls into DrupalKernel::bootCode(), which
+  // DrupalKernel::reboot() above calls into DrupalKernel::bootCode(), which
   // primes file_get_stream_wrappers()'s static list of custom stream wrappers
   // that are based on the currently enabled list of modules (none).
   // @todo Custom stream wrappers of a new module have to be registered as soon

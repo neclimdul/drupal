@@ -239,22 +239,6 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
   }
 
   /**
-   * Builds the kernel based on the current request.
-   *
-   * @param \Symfony\Component\HttpFoundation\Request $request
-   *   The active request.
-   * @param string $environment
-   *   (optional) Environment to boot. Defaults to 'prod'.
-   * @param bool $allow_dumping
-   *   (optional) Whether to allow dumping the container. Defaults to TRUE.
-   *
-   * @return static
-   */
-  public static function createFromRequest(Request $request, $environment = 'prod', $allow_dumping = TRUE) {
-    return static::bootKernel($request, $environment, $allow_dumping);
-  }
-
-  /**
    * Sets or returns the current request path.
    *
    * @param string $path
