@@ -31,7 +31,6 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\HttpKernelInterface;
 use Symfony\Component\HttpKernel\TerminableInterface;
 use Composer\Autoload\ClassLoader;
-use Symfony\Component\HttpKernel\Kernel;
 
 /**
  * The DrupalKernel class is the core of Drupal itself.
@@ -220,9 +219,7 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
    * Constructs a DrupalKernel object.
    *
    * @param string $environment
-   *   String indicating the environment, e.g. 'prod' or 'dev'. Used by
-   *   Symfony\Component\HttpKernel\Kernel::__construct(). Drupal does not use
-   *   this value currently. Pass 'prod'.
+   *   String indicating the environment, e.g. 'prod' or 'dev'.
    * @param \Composer\Autoload\ClassLoader $class_loader
    *   (optional) The classloader is only used if $storage is not given or
    *   the load from storage fails and a container rebuild is required. In
@@ -1346,7 +1343,7 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
   /**
    * Gets a http kernel from the container
    *
-   * @return HttpKernel
+   * @return \Symfony\Component\HttpKernel\HttpKernelInterface
    */
   protected function getHttpKernel() {
     return $this->container->get('http_kernel');
