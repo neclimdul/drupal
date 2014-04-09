@@ -1109,6 +1109,7 @@ abstract class TestBase {
 
     // After preparing the environment and changing the database prefix, we are
     // in a valid test environment.
+    DrupalKernel::resetSingleton();
     drupal_valid_test_ua($this->databasePrefix);
     conf_path(FALSE, TRUE);
 

@@ -78,13 +78,6 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
   protected static $bootLevel = NULL;
 
   /**
-   * The current request path.
-   *
-   * @var string
-   */
-  protected static $requestPath;
-
-  /**
    * Global DrupalKernel singleton.
    *
    * @var self
@@ -96,7 +89,23 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
    *
    * @var string
    */
+  protected static $requestPath;
+
+  /**
+   * The current request path.
+   *
+   * @var string
+   */
   protected static $currentPath = '';
+
+  /**
+   * Whether the environment has been initialized for the request.
+   *
+   * @todo Refactor/remove initializeRequest().
+   *
+   * @var bool
+   */
+  protected static $isRequestInitialized = FALSE;
 
   /**
    * The conf path for the given request.
@@ -282,7 +291,7 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
     // BOOTSTRAP_ENVIRONMENT as well as DrupalKernel::initializeRequest() are
     // changing global parameters of the PHP process (affecting session handling
     // and other global state).
-    static::$bootLevel = self::BOOTSTRAP_CONFIGURATION;
+    static::$bootLevel = self::BOOTSTRAP_ENVIRONMENT;
     static::$singleton = NULL;
   }
 
@@ -422,6 +431,26 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
     // Set sane locale settings, to ensure consistent string, dates, times and
     // numbers handling.
     setlocale(LC_ALL, 'C');
+
+    // Indicate that code is operating in a test child site.
+    if ($test_prefix = drupal_valid_test_ua()) {
+      // Only code that interfaces directly with tests should rely on this
+      // constant; e.g., the error/exception handler conditionally adds further
+      // error information into HTTP response headers that are consumed by
+      // Simpletest's internal browser.
+      define('DRUPAL_TEST_IN_CHILD_SITE', TRUE);
+
+      // Log fatal errors to the test site directory.
+      ini_set('log_errors', 1);
+      ini_set('error_log', DRUPAL_ROOT . '/sites/simpletest/' . substr($test_prefix, 10) . '/error.log');
+    }
+    else {
+      // Ensure that no other code defines this.
+      define('DRUPAL_TEST_IN_CHILD_SITE', FALSE);
+    }
+
+    // Detect string handling method.
+    Unicode::check();
 
     static::$bootLevel = self::BOOTSTRAP_ENVIRONMENT;
   }
@@ -581,36 +610,24 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
     }
     static::bootEnvironment($request);
 
-    // Indicate that code is operating in a test child site.
-    if ($test_prefix = drupal_valid_test_ua()) {
-      // Only code that interfaces directly with tests should rely on this
-      // constant; e.g., the error/exception handler conditionally adds further
-      // error information into HTTP response headers that are consumed by
-      // Simpletest's internal browser.
-      define('DRUPAL_TEST_IN_CHILD_SITE', TRUE);
-
-      // Log fatal errors to the test site directory.
-      ini_set('log_errors', 1);
-      ini_set('error_log', DRUPAL_ROOT . '/sites/simpletest/' . substr($test_prefix, 10) . '/error.log');
-    }
-    else {
-      // Ensure that no other code defines this.
-      define('DRUPAL_TEST_IN_CHILD_SITE', FALSE);
-    }
-
     // Initialize the configuration, including variables from settings.php.
     static::initializeSettings($request);
-    static::initializeRequest($request);
 
-    // Start a page timer:
-    Timer::start('page');
+    // @todo Refactor initializeRequest() to remove this condition. Note:
+    //   All of the globals are legacy and obsolete, but the cookie domain and
+    //   session name setup depends on settings.php and can only be run once.
+    if (!static::$isRequestInitialized) {
+      static::$isRequestInitialized = TRUE;
+      static::initializeRequest($request);
 
-    // Detect string handling method.
-    Unicode::check();
+      // Start a page timer:
+      Timer::start('page');
 
-    // Set the Drupal custom error handler. (requires \Drupal::config())
-    set_error_handler('_drupal_error_handler');
-    set_exception_handler('_drupal_exception_handler');
+      // Set the Drupal custom error handler.
+      // @todo Move into bootKernel() or remove entirely.
+      set_error_handler('_drupal_error_handler');
+      set_exception_handler('_drupal_exception_handler');
+    }
 
     // Redirect the user to the installation script if Drupal has not been
     // installed yet (i.e., if no $databases array has been defined in the
@@ -812,6 +829,20 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
    */
   public static function getBootLevel() {
     return static::$bootLevel;
+  }
+
+  /**
+   * Sets the current boot level of the kernel.
+   *
+   * Internal use only.
+   *
+   * @param int $level
+   *   The boot level to set.
+   *
+   * @internal
+   */
+  public static function setBootLevel($level) {
+    static::$bootLevel = $level;
   }
 
   /**

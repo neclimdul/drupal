@@ -803,17 +803,11 @@ abstract class WebTestBase extends TestBase {
     );
     $this->writeSettings($settings);
 
-    // Since Drupal is bootstrapped already, install_begin_request() will not
-    // invoke DrupalKernel::bootConfiguration() (again). Hence, we have to
-    // reload the newly written custom settings.php manually.
-    DrupalKernel::initializeSettings($this->container->get('request'));
-
     // Execute the non-interactive installer.
     require_once DRUPAL_ROOT . '/core/includes/install.core.inc';
     install_drupal($parameters);
 
     // Import new settings.php written by the installer.
-    DrupalKernel::initializeSettings($this->container->get('request'));
     foreach ($GLOBALS['config_directories'] as $type => $path) {
       $this->configDirectories[$type] = $path;
     }
@@ -866,20 +860,6 @@ abstract class WebTestBase extends TestBase {
       $this->assertTrue($success, String::format('Enabled modules: %modules', array('%modules' => implode(', ', $modules))));
       $this->rebuildContainer();
     }
-
-    // Like DrupalKernel::bootConfiguration() above, any further bootstrap phases
-    // are not re-executed by the installer, as Drupal is bootstrapped already.
-    // Reset/rebuild all data structures after enabling the modules, primarily
-    // to synchronize all data structures and caches between the test runner and
-    // the child site.
-    // Affects e.g. file_get_stream_wrappers().
-    // @see \Drupal\Core\DrupalKernel::bootKernel()
-    // @todo Test-specific setUp() methods may set up further fixtures; find a
-    //   way to execute this after setUp() is done, or to eliminate it entirely.
-    // @todo All of the above is no longer true; the kernel's boot level can be
-    //   reset now, enabling the non-interactive installer to properly reboot;
-    //   Change the boot*() methods to remove these workarounds.
-    $this->resetAll();
 
     // Temporary fix so that when running from run-tests.sh we don't get an
     // empty current path which would indicate we're on the home page.

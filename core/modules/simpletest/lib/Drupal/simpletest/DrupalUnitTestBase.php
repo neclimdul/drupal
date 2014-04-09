@@ -139,10 +139,11 @@ abstract class DrupalUnitTestBase extends UnitTestBase {
     \Drupal::state()->set('system.theme.files', $this->themeFiles);
 
     // Bootstrap the kernel.
-    // No need to dump it; this test runs in-memory.
-    DrupalKernel::resetSingleton();
+    // Since there is no settings.php, the BOOTSTRAP_CONFIGURATION phase has to
+    // be skipped, since Settings would be reset to be empty otherwise.
+    DrupalKernel::setBootLevel(DrupalKernel::BOOTSTRAP_CONFIGURATION);
     $request = Request::create('/');
-    $this->kernel = DrupalKernel::bootKernel($request, 'unit_testing', FALSE);
+    $this->kernel = DrupalKernel::bootKernel($request, 'testing', FALSE);
 
     // Create a minimal core.extension configuration object so that the list of
     // enabled modules can be maintained allowing
