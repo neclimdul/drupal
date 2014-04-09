@@ -7,7 +7,6 @@
 
 namespace Drupal\Core;
 
-use Drupal\Component\PhpStorage\PhpStorageFactory;
 use Drupal\Component\Utility\Crypt;
 use Drupal\Component\Utility\Settings;
 use Drupal\Component\Utility\String;
@@ -22,6 +21,7 @@ use Drupal\Core\DependencyInjection\ServiceProviderInterface;
 use Drupal\Core\DependencyInjection\YamlFileLoader;
 use Drupal\Core\Extension\ExtensionDiscovery;
 use Drupal\Core\Language\Language;
+use Drupal\Core\PhpStorage\PhpStorageFactory;
 use Drupal\Core\Session\AnonymousUserSession;
 use Symfony\Component\Config\Loader\LoaderInterface;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBag;

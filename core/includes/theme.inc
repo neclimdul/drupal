@@ -10,7 +10,9 @@
 
 use Drupal\Component\Utility\String;
 use Drupal\Component\Utility\UrlHelper;
+use Drupal\Component\Utility\Xss;
 use Drupal\Core\Config\Config;
+use Drupal\Core\Config\StorageException;
 use Drupal\Core\Language\Language;
 use Drupal\Core\Extension\Extension;
 use Drupal\Core\Extension\ExtensionNameLengthException;
@@ -867,6 +869,7 @@ function theme_get_setting($setting_name, $theme = NULL) {
       else {
         $theme_keys = array($theme);
       }
+      // Read hard-coded default settings from the theme info files.
       foreach ($theme_keys as $theme_key) {
         if (!empty($themes[$theme_key]->info['settings'])) {
           $cache[$theme]->merge($themes[$theme_key]->info['settings']);
@@ -878,12 +881,17 @@ function theme_get_setting($setting_name, $theme = NULL) {
     $cache[$theme]->merge(\Drupal::config('system.theme.global')->get());
 
     if ($theme) {
-      // Get the saved theme-specific settings from the configuration system.
-      $cache[$theme]->merge(\Drupal::config($theme . '.settings')->get());
+      // Retrieve configured theme-specific settings, if any.
+      try {
+        if ($theme_settings = \Drupal::config($theme . '.settings')->get()) {
+          $cache[$theme]->merge($theme_settings);
+        }
+      }
+      catch (StorageException $e) {
+      }
 
       // If the theme does not support a particular feature, override the global
       // setting and set the value to NULL.
-      //$supports = $cache[$theme]->get('supports');
       if (!empty($theme_object->info['features'])) {
         foreach (_system_default_theme_features() as $feature) {
           if (!in_array($feature, $theme_object->info['features'])) {
@@ -2007,7 +2015,7 @@ function template_preprocess_html(&$variables) {
   else {
     $head_title = array('name' => String::checkPlain($site_config->get('name')));
     if ($site_config->get('slogan')) {
-      $head_title['slogan'] = strip_tags(filter_xss_admin($site_config->get('slogan')));
+      $head_title['slogan'] = strip_tags(Xss::filterAdmin($site_config->get('slogan')));
     }
   }
 
@@ -2103,7 +2111,7 @@ function template_preprocess_page(&$variables) {
   $variables['secondary_menu']    = theme_get_setting('features.secondary_menu') ? menu_secondary_menu() : array();
   $variables['action_links']      = menu_get_local_actions();
   $variables['site_name']         = (theme_get_setting('features.name') ? String::checkPlain($site_config->get('name')) : '');
-  $variables['site_slogan']       = (theme_get_setting('features.slogan') ? filter_xss_admin($site_config->get('slogan')) : '');
+  $variables['site_slogan']       = (theme_get_setting('features.slogan') ? Xss::filterAdmin($site_config->get('slogan')) : '');
   $variables['tabs']              = menu_local_tabs();
 
   // Pass the main menu and secondary menu to the template as render arrays.
@@ -2293,7 +2301,7 @@ function template_preprocess_maintenance_page(&$variables) {
   else {
     $head_title = array('name' => String::checkPlain($site_name));
     if ($site_slogan) {
-      $head_title['slogan'] = strip_tags(filter_xss_admin($site_slogan));
+      $head_title['slogan'] = strip_tags(Xss::filterAdmin($site_slogan));
     }
   }
 
@@ -2315,7 +2323,7 @@ function template_preprocess_maintenance_page(&$variables) {
   $variables['language']          = $language_interface;
   $variables['logo']              = theme_get_setting('logo.url');
   $variables['site_name']         = (theme_get_setting('features.name') ? String::checkPlain($site_name) : '');
-  $variables['site_slogan']       = (theme_get_setting('features.slogan') ? filter_xss_admin($site_slogan) : '');
+  $variables['site_slogan']       = (theme_get_setting('features.slogan') ? Xss::filterAdmin($site_slogan) : '');
 
   // Compile a list of classes that are going to be applied to the body element.
   $variables['attributes']['class'][] = 'maintenance-page';

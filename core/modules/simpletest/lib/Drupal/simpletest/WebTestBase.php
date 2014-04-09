@@ -11,6 +11,7 @@ use Drupal\Component\Utility\Crypt;
 use Drupal\Component\Utility\Json;
 use Drupal\Component\Utility\NestedArray;
 use Drupal\Component\Utility\String;
+use Drupal\Component\Utility\Xss;
 use Drupal\Core\DrupalKernel;
 use Drupal\Core\Database\Database;
 use Drupal\Core\Database\ConnectionNotDefinedException;
@@ -2770,7 +2771,7 @@ abstract class WebTestBase extends TestBase {
    */
   protected function assertTextHelper($text, $message = '', $group, $not_exists) {
     if ($this->plainTextContent === FALSE) {
-      $this->plainTextContent = filter_xss($this->drupalGetContent(), array());
+      $this->plainTextContent = Xss::filter($this->drupalGetContent(), array());
     }
     if (!$message) {
       $message = !$not_exists ? String::format('"@text" found', array('@text' => $text)) : String::format('"@text" not found', array('@text' => $text));
@@ -2855,7 +2856,7 @@ abstract class WebTestBase extends TestBase {
    */
   protected function assertUniqueTextHelper($text, $message = '', $group, $be_unique) {
     if ($this->plainTextContent === FALSE) {
-      $this->plainTextContent = filter_xss($this->drupalGetContent(), array());
+      $this->plainTextContent = Xss::filter($this->drupalGetContent(), array());
     }
     if (!$message) {
       $message = '"' . $text . '"' . ($be_unique ? ' found only once' : ' found more than once');
