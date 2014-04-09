@@ -96,7 +96,7 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
    *
    * @var string
    */
-  protected static $currentPath;
+  protected static $currentPath = '';
 
   /**
    * The conf path for the given request.
@@ -236,23 +236,6 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
     else {
       $this->classLoader = drupal_classloader();
     }
-  }
-
-  /**
-   * Sets or returns the current request path.
-   *
-   * @param string $path
-   *   (optional) Path to set as the current path. If NULL, returns the current
-   *   path. Defaults to NULL.
-   *
-   * @return string
-   *   The current path.
-   */
-  public static function currentPath($path = NULL) {
-    if (isset($path)) {
-      self::$currentPath = $path;
-    }
-    return self::$currentPath;
   }
 
   /**
@@ -845,6 +828,77 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
   }
 
   /**
+   * Returns the requested URL path of the page being viewed.
+   *
+   * @param \Symfony\Component\HttpFoundation\Request|NULL $request
+   *   (Optional) The request to derive the request path from. Defaults to NULL
+   *
+   * Examples:
+   * - http://example.com/node/306 returns "node/306".
+   * - http://example.com/drupalfolder/node/306 returns "node/306" while
+   *   base_path() returns "/drupalfolder/".
+   * - http://example.com/path/alias (which is a path alias for node/306)
+   *   returns "path/alias" as opposed to the internal path.
+   * - http://example.com/index.php returns an empty string (meaning: front
+   *   page).
+   * - http://example.com/index.php?page=1 returns an empty string.
+   *
+   * @return string
+   *   The requested Drupal URL path.
+   */
+  public static function requestPath(Request $request = NULL) {
+    if (isset(static::$requestPath)) {
+      return static::$requestPath;
+    }
+    if (!$request) {
+      // @todo Do we even need this?
+      $request = \Drupal::request();
+    }
+
+    // Get the part of the URI between the base path of the Drupal installation
+    // and the query string, and unescape it.
+    $request_path = request_uri(TRUE);
+    $base_path_len = strlen(rtrim(dirname($request->server->get('SCRIPT_NAME')), '\/'));
+    static::$requestPath = substr(urldecode($request_path), $base_path_len + 1);
+
+    // Depending on server configuration, the URI might or might not include the
+    // script name. For example, the front page might be accessed as
+    // http://example.com or as http://example.com/index.php, and the "user"
+    // page might be accessed as http://example.com/user or as
+    // http://example.com/index.php/user. Strip the script name from $path.
+    $script = basename($request->server->get('SCRIPT_NAME'));
+    if (static::$requestPath == $script) {
+      static::$requestPath = '';
+    }
+    elseif (strpos(static::$requestPath, $script . '/') === 0) {
+      static::$requestPath = substr(static::$requestPath, strlen($script) + 1);
+    }
+
+    // Extra slashes can appear in URLs or under some conditions, added by
+    // Apache so normalize.
+    static::$requestPath = trim(static::$requestPath, '/');
+
+    return static::$requestPath;
+  }
+
+  /**
+   * Sets or returns the current request path.
+   *
+   * @param string $path
+   *   (optional) Path to set as the current path. If NULL, returns the current
+   *   path. Defaults to NULL.
+   *
+   * @return string
+   *   The current path.
+   */
+  public static function currentPath($path = NULL) {
+    if (isset($path)) {
+      self::$currentPath = $path;
+    }
+    return self::$currentPath;
+  }
+
+  /**
    * Returns an array of available bundles.
    *
    * @return array
@@ -929,60 +983,6 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
     }
 
     return $this->getHttpKernel()->handle($request, $type, $catch);
-  }
-
-  /**
-   * Returns the requested URL path of the page being viewed.
-   *
-   * @param \Symfony\Component\HttpFoundation\Request|NULL $request
-   *   (Optional) The request to derive the request path from. Defaults to NULL
-   *
-   * Examples:
-   * - http://example.com/node/306 returns "node/306".
-   * - http://example.com/drupalfolder/node/306 returns "node/306" while
-   *   base_path() returns "/drupalfolder/".
-   * - http://example.com/path/alias (which is a path alias for node/306)
-   *   returns "path/alias" as opposed to the internal path.
-   * - http://example.com/index.php returns an empty string (meaning: front
-   *   page).
-   * - http://example.com/index.php?page=1 returns an empty string.
-   *
-   * @return string
-   *   The requested Drupal URL path.
-   */
-  public static function requestPath(Request $request = NULL) {
-    if (isset(static::$requestPath)) {
-      return static::$requestPath;
-    }
-    if (!$request) {
-      // @todo Do we even need this?
-      $request = \Drupal::request();
-    }
-
-    // Get the part of the URI between the base path of the Drupal installation
-    // and the query string, and unescape it.
-    $request_path = request_uri(TRUE);
-    $base_path_len = strlen(rtrim(dirname($request->server->get('SCRIPT_NAME')), '\/'));
-    static::$requestPath = substr(urldecode($request_path), $base_path_len + 1);
-
-    // Depending on server configuration, the URI might or might not include the
-    // script name. For example, the front page might be accessed as
-    // http://example.com or as http://example.com/index.php, and the "user"
-    // page might be accessed as http://example.com/user or as
-    // http://example.com/index.php/user. Strip the script name from $path.
-    $script = basename($request->server->get('SCRIPT_NAME'));
-    if (static::$requestPath == $script) {
-      static::$requestPath = '';
-    }
-    elseif (strpos(static::$requestPath, $script . '/') === 0) {
-      static::$requestPath = substr(static::$requestPath, strlen($script) + 1);
-    }
-
-    // Extra slashes can appear in URLs or under some conditions, added by
-    // Apache so normalize.
-    static::$requestPath = trim(static::$requestPath, '/');
-
-    return static::$requestPath;
   }
 
   /**
