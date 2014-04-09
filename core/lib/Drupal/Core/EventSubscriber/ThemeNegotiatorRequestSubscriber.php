@@ -7,9 +7,6 @@
 
 namespace Drupal\Core\EventSubscriber;
 
-use Drupal\Core\Language\Language;
-use Drupal\Core\Language\LanguageManager;
-use Drupal\Core\StringTranslation\Translator\TranslatorInterface;
 use Drupal\Core\Theme\ThemeNegotiatorInterface;
 use Symfony\Component\HttpKernel\HttpKernelInterface;
 use Symfony\Component\HttpKernel\KernelEvents;
@@ -48,6 +45,7 @@ class ThemeNegotiatorRequestSubscriber implements EventSubscriberInterface {
     if ($event->getRequestType() == HttpKernelInterface::MASTER_REQUEST) {
       if (!defined('MAINTENANCE_MODE') || MAINTENANCE_MODE != 'update') {
         // @todo Refactor drupal_theme_initialize() into a request subscriber.
+        // @see https://drupal.org/node/2228093
         drupal_theme_initialize($event->getRequest());
       }
     }

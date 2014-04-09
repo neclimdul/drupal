@@ -652,6 +652,7 @@ function drupal_install_system($install_state) {
   // @todo Custom stream wrappers of a new module have to be registered as soon
   //   as the module is installed/enabled. Fix either ModuleHandler::install()
   //   and/or DrupalKernel::updateModules().
+  // @see https://drupal.org/node/2028109
   drupal_static_reset('file_get_stream_wrappers');
 
   // Ensure default language is saved.

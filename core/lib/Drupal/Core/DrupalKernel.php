@@ -914,7 +914,6 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
    */
   public function handle(Request $request, $type = self::MASTER_REQUEST, $catch = TRUE) {
     // Exit if we should be in a test environment but aren't.
-    // @todo Refactor this into a test kernel.
     if ($this->testOnly && !drupal_valid_test_ua()) {
       header($request->server->get('SERVER_PROTOCOL') . ' 403 Forbidden');
       exit;

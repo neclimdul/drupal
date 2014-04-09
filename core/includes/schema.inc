@@ -5,9 +5,9 @@
  * Schema API handling functions.
  */
 
-use Drupal\Core\DrupalKernel;
 use Drupal\Core\Cache\Cache;
 use Drupal\Core\Database\Database;
+use Drupal\Core\DrupalKernel;
 
 /**
  * @addtogroup schemaapi

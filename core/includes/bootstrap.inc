@@ -234,7 +234,8 @@ define('DRUPAL_ROOT', dirname(dirname(__DIR__)));
  *   The path of the matching directory.
  * @see default.settings.php
  *
- * @deprecated see \Drupal\Core\DrupalKernel::confPath()
+ * @deprecated 8.x
+ *   Use \Drupal\Core\DrupalKernel::confPath().
  */
 function conf_path($require_settings = TRUE, $reset = FALSE, Request $request = NULL) {
   return DrupalKernel::confPath($request, $require_settings, $reset);
@@ -1248,8 +1249,8 @@ function _drupal_exception_handler($exception) {
  *
  * @see drupal_bootstrap()
  *
- * @deprecated To be removed in 8.0. Use
- *   \Drupal\Core\DrupalKernel::getBootLevel().
+ * @deprecated 8.x
+ *   Use \Drupal\Core\DrupalKernel::getBootLevel().
  */
 function drupal_get_bootstrap_phase() {
   return DrupalKernel::getBootLevel();
@@ -1555,7 +1556,8 @@ function language_default() {
  *
  * @see current_path()
  *
- * @deprecated use \Drupal\Core\DrupalKernel::requestPath($request).
+ * @deprecated 8.x
+ *   Use \Drupal\Core\DrupalKernel::requestPath().
  */
 function request_path(Request $request = NULL) {
   return DrupalKernel::requestPath($request);
@@ -1564,6 +1566,9 @@ function request_path(Request $request = NULL) {
 /**
  * @todo This is a temporary function pending refactoring Drupal to use
  *   Symfony's Request object exclusively.
+ *
+ * @deprecated 8.x
+ *   Use \Drupal\Core\DrupalKernel::currentPath().
  */
 function _current_path($path = NULL) {
   return DrupalKernel::currentPath($path);
