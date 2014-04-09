@@ -861,6 +861,15 @@ abstract class WebTestBase extends TestBase {
       $this->rebuildContainer();
     }
 
+    // Reset/rebuild all data structures after enabling the modules, primarily
+    // to synchronize all data structures and caches between the test runner and
+    // the child site.
+    // Affects e.g. file_get_stream_wrappers().
+    // @see \Drupal\Core\DrupalKernel::bootKernel()
+    // @todo Test-specific setUp() methods may set up further fixtures; find a
+    //   way to execute this after setUp() is done, or to eliminate it entirely.
+    $this->resetAll();
+
     // Temporary fix so that when running from run-tests.sh we don't get an
     // empty current path which would indicate we're on the home page.
     $path = current_path();
