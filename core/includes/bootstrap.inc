@@ -1731,12 +1731,12 @@ function drupal_classloader_register($name, $path) {
  *
  * Example:
  * @code
- * function drupal_session_started($set = NULL) {
- *   static $session_started = FALSE;
- *   if (isset($set)) {
- *     $session_started = $set;
+ * function mymodule_log_stream_handle($new_handle = NULL) {
+ *   static $handle;
+ *   if (isset($new_handle)) {
+ *     $handle = $new_handle;
  *   }
- *   return $session_started && session_id();
+ *   return $handle;
  * }
  * @endcode
  *
