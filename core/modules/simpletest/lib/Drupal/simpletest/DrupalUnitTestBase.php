@@ -145,10 +145,6 @@ abstract class DrupalUnitTestBase extends UnitTestBase {
     $request = Request::create('/');
     $this->kernel = DrupalKernel::bootKernel($request, 'testing', FALSE);
 
-    $request = Request::create('/');
-    $this->container->set('request', $request);
-    $this->container->get('request_stack')->push($request);
-
     // Create a minimal core.extension configuration object so that the list of
     // enabled modules can be maintained allowing
     // \Drupal\Core\Config\ConfigInstaller::installDefaultConfig() to work.
