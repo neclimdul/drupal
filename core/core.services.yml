@@ -67,6 +67,13 @@ services:
     factory_method: get
     factory_service: cache_factory
     arguments: [data]
+  cache.discovery:
+    class: Drupal\Core\Cache\CacheBackendInterface
+    tags:
+      - { name: cache.bin }
+    factory_method: get
+    factory_service: cache_factory
+    arguments: [discovery]
   config.cachedstorage.storage:
     class: Drupal\Core\Config\FileStorage
     factory_class: Drupal\Core\Config\FileStorageFactory
@@ -150,19 +157,8 @@ services:
   path.alias_manager:
     class: Drupal\Core\Path\AliasManager
     arguments: ['@path.alias_storage', '@path.alias_whitelist', '@language_manager']
-  http_client_simpletest_subscriber:
-    class: Drupal\Core\Http\Plugin\SimpletestHttpRequestSubscriber
   http_default_client:
-    class: Guzzle\Http\Client
-    # Security consideration: we must not use the certificate authority file
-    # shipped with Guzzle because it can easily get outdated if a certificate
-    # authority is hacked. Instead, we rely on the certificate authority file
-    # provided by the operating system which is more likely going to be updated
-    # in a timely fashion.
-    arguments: [null, { curl.CURLOPT_TIMEOUT: 30, curl.CURLOPT_MAXREDIRS: 3, ssl.certificate_authority: system }]
-    calls:
-      - [addSubscriber, ['@http_client_simpletest_subscriber']]
-      - [setUserAgent, ['Drupal (+http://drupal.org/)']]
+    class: Drupal\Core\Http\Client
   theme.negotiator:
     class: Drupal\Core\Theme\ThemeNegotiator
     arguments: ['@access_check.theme', '@request_stack']
@@ -188,7 +184,7 @@ services:
       - { name: persist }
   default_plugin_manager:
     abstract: true
-    arguments: ['@container.namespaces', '@cache.default', '@language_manager', '@module_handler']
+    arguments: ['@container.namespaces', '@cache.discovery', '@language_manager', '@module_handler']
   module_handler:
     class: Drupal\Core\Extension\CachedModuleHandler
     arguments: ['%container.modules%', '@state', '@cache.bootstrap']
@@ -197,7 +193,7 @@ services:
     arguments: ['@config.factory', '@module_handler', '@cache.default', '@info_parser', '@config.installer', '@router.builder']
   entity.manager:
     class: Drupal\Core\Entity\EntityManager
-    arguments: ['@container.namespaces', '@service_container', '@module_handler', '@cache.default', '@language_manager', '@string_translation']
+    arguments: ['@container.namespaces', '@service_container', '@module_handler', '@cache.discovery', '@language_manager', '@string_translation']
     tags:
       - { name: plugin_manager_cache_clear }
   entity.form_builder:
@@ -205,13 +201,13 @@ services:
     arguments: ['@entity.manager', '@form_builder']
   plugin.manager.field.field_type:
     class: Drupal\Core\Field\FieldTypePluginManager
-    arguments: ['@container.namespaces', '@cache.default', '@language_manager', '@module_handler']
+    arguments: ['@container.namespaces', '@cache.discovery', '@language_manager', '@module_handler']
   plugin.manager.field.widget:
     class: Drupal\Core\Field\WidgetPluginManager
-    arguments: ['@container.namespaces', '@cache.default', '@module_handler', '@language_manager', '@plugin.manager.field.field_type']
+    arguments: ['@container.namespaces', '@cache.discovery', '@module_handler', '@language_manager', '@plugin.manager.field.field_type']
   plugin.manager.field.formatter:
     class: Drupal\Core\Field\FormatterPluginManager
-    arguments: ['@container.namespaces', '@cache.default', '@module_handler', '@language_manager', '@plugin.manager.field.field_type']
+    arguments: ['@container.namespaces', '@cache.discovery', '@module_handler', '@language_manager', '@plugin.manager.field.field_type']
   plugin.manager.archiver:
     class: Drupal\Core\Archiver\ArchiverManager
     parent: default_plugin_manager
@@ -220,13 +216,13 @@ services:
     arguments: ['@container.namespaces']
   plugin.manager.menu.local_action:
     class: Drupal\Core\Menu\LocalActionManager
-    arguments: ['@controller_resolver', '@request', '@router.route_provider', '@module_handler', '@cache.default', '@language_manager', '@access_manager', '@current_user']
+    arguments: ['@controller_resolver', '@request', '@router.route_provider', '@module_handler', '@cache.discovery', '@language_manager', '@access_manager', '@current_user']
   plugin.manager.menu.local_task:
     class: Drupal\Core\Menu\LocalTaskManager
-    arguments: ['@controller_resolver', '@request', '@router.route_provider', '@router.builder', '@module_handler', '@cache.default', '@language_manager', '@access_manager', '@current_user']
+    arguments: ['@controller_resolver', '@request', '@router.route_provider', '@router.builder', '@module_handler', '@cache.discovery', '@language_manager', '@access_manager', '@current_user']
   plugin.manager.menu.contextual_link:
     class: Drupal\Core\Menu\ContextualLinkManager
-    arguments: ['@controller_resolver', '@module_handler', '@cache.default', '@language_manager', '@access_manager', '@current_user', '@request_stack']
+    arguments: ['@controller_resolver', '@module_handler', '@cache.discovery', '@language_manager', '@access_manager', '@current_user', '@request_stack']
   plugin.cache_clearer:
     class: Drupal\Core\Plugin\CachedDiscoveryClearer
   request:
@@ -611,7 +607,7 @@ services:
     arguments: ['@database', '@request_stack']
   plugin.manager.mail:
     class: Drupal\Core\Mail\MailManager
-    arguments: ['@container.namespaces', '@cache.default', '@language_manager', '@module_handler', '@config.factory']
+    arguments: ['@container.namespaces', '@cache.discovery', '@language_manager', '@module_handler', '@config.factory']
   plugin.manager.condition:
     class: Drupal\Core\Condition\ConditionManager
     parent: default_plugin_manager
@@ -627,7 +623,7 @@ services:
       - { name: event_subscriber }
   image.toolkit.manager:
     class: Drupal\Core\ImageToolkit\ImageToolkitManager
-    arguments: ['@container.namespaces', '@cache.default', '@language_manager', '@config.factory', '@module_handler']
+    arguments: ['@container.namespaces', '@cache.discovery', '@language_manager', '@config.factory', '@module_handler']
   image.factory:
     class: Drupal\Core\Image\ImageFactory
     arguments: ['@image.toolkit.manager']
@@ -755,6 +751,6 @@ services:
     class: Drupal\Core\Asset\AssetDumper
   library.discovery:
     class: Drupal\Core\Asset\LibraryDiscovery
-    arguments: ['@cache.default', '@module_handler']
+    arguments: ['@cache.discovery', '@module_handler']
   info_parser:
     class: Drupal\Core\Extension\InfoParser

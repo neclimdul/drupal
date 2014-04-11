@@ -177,6 +177,11 @@ abstract class WebTestBase extends TestBase {
   protected $kernel;
 
   /**
+   * The config directories used in this test.
+   */
+  protected $configDirectories = array();
+
+  /**
    * Cookies to set on curl requests.
    *
    * @var array
