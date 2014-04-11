@@ -254,7 +254,7 @@ function _drupal_log_error($error, $fatal = FALSE) {
  * Returns the current error level.
  *
  * This function should only be used to get the current error level prior to
- * DurpalKernel::BOOTSTRAP_KERNEL or before Drupal is installed. In all other
+ * DrupalKernel::BOOTSTRAP_KERNEL or before Drupal is installed. In all other
  * situations the following code is preferred:
  * @code
  * \Drupal::config('system.logging')->get('error_level');

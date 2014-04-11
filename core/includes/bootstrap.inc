@@ -230,8 +230,9 @@ define('DRUPAL_ROOT', dirname(dirname(__DIR__)));
  * @param \Symfony\Component\HttpFoundation\Request $request
  *   The current request.
  *
- * @return string
+ * @return
  *   The path of the matching directory.
+ *
  * @see default.settings.php
  *
  * @deprecated 8.x
@@ -1129,15 +1130,13 @@ function drupal_anonymous_user() {
 /**
  * Bootstraps DrupalKernel to a given boot level.
  *
- * @param int $phase
- *   The boot level to bootstrap to. Possible values:
+ * @param $phase
+ *   A constant telling which phase to bootstrap to. Possible values:
  *   - DRUPAL_BOOTSTRAP_CONFIGURATION: Initializes configuration.
- *   - DRUPAL_BOOTSTRAP_PAGE_CACHE: Tries to serve a cached page.
- *   - DRUPAL_BOOTSTRAP_CODE: Loads code for subsystems and modules.
- *     data.
+ *   - DRUPAL_BOOTSTRAP_KERNEL: Initalizes a kernel.
  *
- * @return int
- *   The current bootstrap level.
+ * @return
+ *   The most recently completed phase.
  *
  * @deprecated 8.x
  *   Use \Drupal\Core\DrupalKernel::bootKernel() et al instead.
@@ -1539,9 +1538,6 @@ function language_default() {
 /**
  * Returns the requested URL path of the page being viewed.
  *
- * @param \Symfony\Component\HttpFoundation\Request|null $request
- *   (optional) The request to derive the request path from. Defaults to NULL
- *
  * Examples:
  * - http://example.com/node/306 returns "node/306".
  * - http://example.com/drupalfolder/node/306 returns "node/306" while
@@ -1559,8 +1555,8 @@ function language_default() {
  * @deprecated 8.x
  *   Use \Drupal\Core\DrupalKernel::requestPath().
  */
-function request_path(Request $request = NULL) {
-  return DrupalKernel::requestPath($request);
+function request_path() {
+  return DrupalKernel::requestPath();
 }
 
 /**

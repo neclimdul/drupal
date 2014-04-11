@@ -50,22 +50,22 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
   const CONTAINER_BASE_CLASS = '\Drupal\Core\DependencyInjection\Container';
 
   /**
-   * Pre bootstrap phase: initialize environment based on incoming Request.
+   * Bootstrap phase: Initialize PHP environment.
    */
   const BOOTSTRAP_ENVIRONMENT = 1;
 
   /**
-   * First bootstrap phase: initialize configuration.
+   * Bootstrap phase: Initialize site and settings.
    */
   const BOOTSTRAP_CONFIGURATION = 2;
 
   /**
-   * Third bootstrap phase: try to serve a cached page.
+   * Bootstrap phase: Try to serve a cached page.
    */
   const BOOTSTRAP_PAGE_CACHE = 3;
 
   /**
-   * Fourth bootstrap phase: load code for subsystems and modules.
+   * Bootstrap phase: Load legacy subsystems.
    */
   const BOOTSTRAP_CODE = 4;
 
