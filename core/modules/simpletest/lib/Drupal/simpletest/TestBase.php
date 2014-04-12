@@ -16,7 +16,7 @@ use Drupal\Core\Config\StorageComparer;
 use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\Core\Database\ConnectionNotDefinedException;
 use Drupal\Core\Config\StorageInterface;
-use Drupal\Core\DrupalKernel;
+use Drupal\Core\DrupalKernelFactory;
 use Drupal\Core\Language\Language;
 use Drupal\Core\Session\AccountProxy;
 use Drupal\Core\Session\AnonymousUserSession;
@@ -1108,7 +1108,6 @@ abstract class TestBase {
 
     // After preparing the environment and changing the database prefix, we are
     // in a valid test environment.
-    DrupalKernel::resetSingleton();
     drupal_valid_test_ua($this->databasePrefix);
     conf_path(FALSE, TRUE);
 
@@ -1141,7 +1140,7 @@ abstract class TestBase {
     // Preserve the request object after the container rebuild.
     $request = \Drupal::request();
 
-    $this->kernel = DrupalKernel::createKernel($request, $environment, FALSE);
+    $this->kernel = DrupalKernelFactory::get($request, $environment, FALSE);
     // DrupalKernel replaces the container in \Drupal::getContainer() with a
     // different object, so we need to replace the instance on this test class.
     $this->container = \Drupal::getContainer();

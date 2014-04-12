@@ -7,7 +7,7 @@
 
 use Drupal\Core\Cache\Cache;
 use Drupal\Core\Database\Database;
-use Drupal\Core\DrupalKernel;
+use Drupal\Core\DrupalKernelFactory;
 
 /**
  * @addtogroup schemaapi
@@ -87,7 +87,7 @@ function drupal_get_complete_schema($rebuild = FALSE) {
 
       // If the schema is empty, avoid saving it: some database engines require
       // the schema to perform queries, and this could lead to infinite loops.
-      if (!empty($schema) && DrupalKernel::isBootLevelReached(DrupalKernel::BOOTSTRAP_CODE)) {
+      if (!empty($schema) && DrupalKernelFactory::isBootLevelReached(DrupalKernelFactory::BOOTSTRAP_CODE)) {
         \Drupal::cache()->set('schema', $schema, Cache::PERMANENT);
       }
     }

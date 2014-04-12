@@ -21,7 +21,7 @@
  */
 
 use Drupal\Component\Utility\Settings;
-use Drupal\Core\DrupalKernel;
+use Drupal\Core\DrupalKernelFactory;
 use Symfony\Component\HttpFoundation\Request;
 
 // Change the directory to the Drupal root.
@@ -54,7 +54,8 @@ function authorize_access_allowed() {
 }
 
 $request = Request::createFromGlobals();
-$kernel = DrupalKernel::bootKernel($request);
+$kernel = DrupalKernelFactory::get($request);
+$kernel->preHandle($request);
 
 // We have to enable the user and system modules, even to check access and
 // display errors via the maintenance theme.

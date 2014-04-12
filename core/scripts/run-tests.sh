@@ -8,7 +8,7 @@
 use Drupal\Component\Utility\Settings;
 use Drupal\Component\Utility\Timer;
 use Drupal\Core\Database\Database;
-use Drupal\Core\DrupalKernel;
+use Drupal\Core\DrupalKernelFactory;
 use Symfony\Component\HttpFoundation\Request;
 
 require_once __DIR__ . '/../vendor/autoload.php';
@@ -348,7 +348,6 @@ function simpletest_script_init() {
   }
 
   chdir(realpath(__DIR__ . '/../..'));
-  require_once dirname(__DIR__) . '/includes/bootstrap.inc';
 }
 
 /**
@@ -357,16 +356,15 @@ function simpletest_script_init() {
  * @see install_begin_request()
  */
 function simpletest_script_bootstrap() {
-  // Load legacy include files.
-  foreach (glob(DRUPAL_ROOT . '/core/includes/*.inc') as $include) {
-    require_once $include;
-  }
+  require_once dirname(__DIR__) . '/includes/bootstrap.inc';
 
   // Replace services with in-memory and null implementations.
   $GLOBALS['conf']['container_service_providers']['InstallerServiceProvider'] = 'Drupal\Core\Installer\InstallerServiceProvider';
 
+  // Fully bootstrap a running Drupal site.
   $request = Request::createFromGlobals();
-  DrupalKernel::bootConfiguration($request);
+  $kernel = DrupalKernelFactory::get($request, 'testing', FALSE);
+  $kernel->preHandle($request);
 
   // Remove Drupal's error/exception handlers; they are designed for HTML
   // and there is no storage nor a (watchdog) logger here.
@@ -383,11 +381,7 @@ function simpletest_script_bootstrap() {
     ));
   }
 
-  $kernel = DrupalKernel::bootKernel($request, 'testing', FALSE);
-
   $container = $kernel->getContainer();
-  $container->enterScope('request');
-  $container->set('request', $request, 'request');
 
   $module_handler = $container->get('module_handler');
   // @todo Remove System module. Only needed because \Drupal\Core\Datetime\Date

@@ -9,8 +9,6 @@ use Symfony\Component\HttpFoundation\RedirectResponse;
 use Drupal\Component\Utility\Crypt;
 use Drupal\Component\Utility\OpCodeCache;
 use Drupal\Component\Utility\Settings;
-use Drupal\Core\Database\Database;
-use Drupal\Core\DrupalKernel;
 use Drupal\Core\Extension\ExtensionDiscovery;
 
 /**
@@ -638,7 +636,10 @@ function drupal_install_system($install_state) {
 
   unset($GLOBALS['conf']['container_service_providers']['InstallerServiceProvider']);
 
-  $kernel = \Drupal::service('kernel')->reboot($request, 'prod', FALSE);
+  // Reboot the kernel.
+  $kernel = \Drupal::service('kernel');
+  $kernel->shutdown();
+  $kernel->preHandle($request);
 
   // Install base system configuration.
   \Drupal::service('config.installer')->installDefaultConfig('core', 'core');
@@ -646,7 +647,7 @@ function drupal_install_system($install_state) {
   // Install System module.
   \Drupal::moduleHandler()->install(array('system'), FALSE);
 
-  // DrupalKernel::reboot() above calls into DrupalKernel::bootCode(), which
+  // DrupalKernel::preHandle() above calls into DrupalKernel::bootCode(), which
   // primes file_get_stream_wrappers()'s static list of custom stream wrappers
   // that are based on the currently enabled list of modules (none).
   // @todo Custom stream wrappers of a new module have to be registered as soon

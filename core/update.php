@@ -15,7 +15,7 @@
  */
 
 use Drupal\Component\Utility\Settings;
-use Drupal\Core\DrupalKernel;
+use Drupal\Core\DrupalKernelFactory;
 use Drupal\Core\Update\Form\UpdateScriptSelectionForm;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -312,7 +312,7 @@ require_once __DIR__ . '/includes/schema.inc';
 require_once __DIR__ . '/includes/database.inc';
 
 $request = Request::createFromGlobals();
-DrupalKernel::bootConfiguration($request);
+$kernel = DrupalKernelFactory::get($request, 'update', FALSE);
 
 // Updating from a site schema version prior to 8000 should block the update
 // process. Ensure that the site is not attempting to update a database
@@ -330,7 +330,7 @@ if (db_table_exists('system')) {
 $GLOBALS['conf']['container_service_providers']['UpdateServiceProvider'] = 'Drupal\Core\DependencyInjection\UpdateServiceProvider';
 $GLOBALS['conf']['update_service_provider_overrides'] = TRUE;
 
-$kernel = DrupalKernel::bootKernel($request, 'update', FALSE);
+$kernel->preHandle($request);
 
 // Determine if the current user has access to run update.php.
 \Drupal::service('session_manager')->initialize();

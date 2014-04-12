@@ -12,7 +12,7 @@
 
 use Drupal\Component\Utility\Crypt;
 use Drupal\Component\Utility\Settings;
-use Drupal\Core\DrupalKernel;
+use Drupal\Core\DrupalKernelFactory;
 use Symfony\Component\HttpFoundation\Request;
 
 // Change the directory to the Drupal root.
@@ -23,7 +23,8 @@ require_once __DIR__ . '/includes/bootstrap.inc';
 require_once __DIR__ . '/includes/utility.inc';
 
 $request = Request::createFromGlobals();
-DrupalKernel::bootConfiguration($request);
+$kernel = DrupalKernelFactory::get($request);
+$response = $kernel->preHandle($request);
 
 if (Settings::get('rebuild_access', FALSE) ||
   (isset($_GET['token'], $_GET['timestamp']) &&

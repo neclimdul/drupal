@@ -5,7 +5,7 @@ use Drupal\Component\Utility\Crypt;
 
 use Drupal\Component\Utility\Settings;
 use Drupal\Core\Config\FileStorage;
-use Drupal\Core\DrupalKernel;
+use Drupal\Core\DrupalKernelFactory;
 use Drupal\Core\Database\Database;
 use Drupal\Core\Database\DatabaseExceptionWrapper;
 use Drupal\Core\Database\Install\TaskException;
@@ -289,7 +289,7 @@ function install_begin_request(&$install_state) {
     exit;
   }
 
-  DrupalKernel::bootConfiguration($request);
+  DrupalKernelFactory::boot($request, DrupalKernelFactory::BOOTSTRAP_CONFIGURATION);
 
   // Ensure that procedural dependencies are loaded as early as possible,
   // since the error/exception handlers depend on them.
@@ -357,7 +357,7 @@ function install_begin_request(&$install_state) {
     $environment = 'prod';
   }
 
-  $kernel = DrupalKernel::bootKernel($request, $environment, FALSE);
+  $kernel = DrupalKernelFactory::get($request, $environment, FALSE);
   $container = $kernel->getContainer();
 
   // Register the file translation service.
@@ -370,6 +370,8 @@ function install_begin_request(&$install_state) {
   $container->set('string_translator.file_translation', new FileTranslation($directory));
   $container->get('string_translation')
     ->addTranslator($container->get('string_translator.file_translation'));
+
+  $kernel->preHandle($request);
 
   // Add in installation language if present.
   if (isset($install_state['parameters']['langcode'])) {

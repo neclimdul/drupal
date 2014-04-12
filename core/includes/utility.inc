@@ -8,7 +8,7 @@
 use Drupal\Component\Utility\Variable;
 use Drupal\Core\PhpStorage\PhpStorageFactory;
 use Drupal\Core\Cache\Cache;
-use Drupal\Core\DrupalKernel;
+use Drupal\Core\DrupalKernelFactory;
 use Symfony\Component\HttpFoundation\Request;
 
 /**
@@ -32,7 +32,7 @@ function drupal_var_export($var, $prefix = '') {
 /**
  * Rebuilds all caches even when Drupal itself does not work.
  *
- * Requires \Drupal\Core\DrupalKernel::BOOTSTRAP_CONFIGURATION.
+ * Requires \Drupal\Core\DrupalKernelFactory::BOOTSTRAP_CONFIGURATION.
  *
  * @param \Symfony\Component\HttpFoundation\Request $request
  *   The current request.
@@ -46,7 +46,7 @@ function drupal_rebuild(Request $request) {
   restore_error_handler();
   restore_exception_handler();
 
-  // Force DrupalKernel::bootKernel() to build a new kernel.
+  // Force DrupalKernelFactory to build a new kernel.
   PhpStorageFactory::get('service_container')->deleteAll();
   PhpStorageFactory::get('twig')->deleteAll();
 
@@ -54,7 +54,7 @@ function drupal_rebuild(Request $request) {
   drupal_page_is_cacheable(FALSE);
 
   // Bootstrap up to where caches exist and clear them.
-  DrupalKernel::bootKernel($request);
+  DrupalKernelFactory::get($request);
   foreach (Cache::getBins() as $bin) {
     $bin->deleteAll();
   }
@@ -62,7 +62,7 @@ function drupal_rebuild(Request $request) {
   drupal_flush_all_caches();
 
   // Restore Drupal's error and exception handlers.
-  // @see \Drupal\Core\DrupalKernel::bootConfiguration()
+  // @see \Drupal\Core\DrupalKernelFactory::bootConfiguration()
   set_error_handler('_drupal_error_handler');
   set_exception_handler('_drupal_exception_handler');
 }

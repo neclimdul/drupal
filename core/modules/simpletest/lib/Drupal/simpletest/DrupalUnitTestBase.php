@@ -9,6 +9,7 @@ namespace Drupal\simpletest;
 
 use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\Core\DrupalKernel;
+use Drupal\Core\DrupalKernelFactory;
 use Drupal\Core\KeyValueStore\KeyValueMemoryFactory;
 use Drupal\Core\Language\Language;
 use Symfony\Component\DependencyInjection\Reference;
@@ -141,9 +142,10 @@ abstract class DrupalUnitTestBase extends UnitTestBase {
     // Bootstrap the kernel.
     // Since there is no settings.php, the BOOTSTRAP_CONFIGURATION phase has to
     // be skipped, since Settings would be reset to be empty otherwise.
-    DrupalKernel::setBootLevel(DrupalKernel::BOOTSTRAP_CONFIGURATION);
+    DrupalKernelFactory::setBootLevel(DrupalKernelFactory::BOOTSTRAP_CONFIGURATION);
     $request = Request::create('/');
-    $this->kernel = DrupalKernel::bootKernel($request, 'testing', FALSE);
+    $this->kernel = DrupalKernelFactory::get($request, 'testing', FALSE);
+    $this->kernel->preHandle($request);
 
     // Create a minimal core.extension configuration object so that the list of
     // enabled modules can be maintained allowing

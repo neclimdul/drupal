@@ -8,6 +8,7 @@ use Drupal\Component\Utility\Timer;
 use Drupal\Component\Utility\Unicode;
 use Drupal\Component\Utility\UrlHelper;
 use Drupal\Core\DrupalKernel;
+use Drupal\Core\DrupalKernelFactory;
 use Drupal\Core\Database\Database;
 use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\Core\Extension\ExtensionDiscovery;
@@ -127,27 +128,27 @@ const WATCHDOG_DEBUG = 7;
 /**
  * First bootstrap phase: initialize configuration.
  */
-const DRUPAL_BOOTSTRAP_CONFIGURATION = DrupalKernel::BOOTSTRAP_CONFIGURATION;
+const DRUPAL_BOOTSTRAP_CONFIGURATION = DrupalKernelFactory::BOOTSTRAP_CONFIGURATION;
 
 /**
  * @todo Obsolete. Remove once Drush has been updated.
  */
-const DRUPAL_BOOTSTRAP_KERNEL = DrupalKernel::BOOTSTRAP_PAGE_CACHE;
+const DRUPAL_BOOTSTRAP_KERNEL = DrupalKernelFactory::BOOTSTRAP_PAGE_CACHE;
 
 /**
  * Third bootstrap phase: try to serve a cached page.
  */
-const DRUPAL_BOOTSTRAP_PAGE_CACHE = DrupalKernel::BOOTSTRAP_PAGE_CACHE;
+const DRUPAL_BOOTSTRAP_PAGE_CACHE = DrupalKernelFactory::BOOTSTRAP_PAGE_CACHE;
 
 /**
  * Fourth bootstrap phase: load code for subsystems and modules.
  */
-const DRUPAL_BOOTSTRAP_CODE = DrupalKernel::BOOTSTRAP_CODE;
+const DRUPAL_BOOTSTRAP_CODE = DrupalKernelFactory::BOOTSTRAP_CODE;
 
 /**
  * @todo Obsolete. Remove once Drush has been updated.
  */
-const DRUPAL_BOOTSTRAP_FULL = DrupalKernel::BOOTSTRAP_CODE;
+const DRUPAL_BOOTSTRAP_FULL = DrupalKernelFactory::BOOTSTRAP_CODE;
 
 /**
  * Role ID for anonymous users; should match what's in the "role" table.
@@ -236,10 +237,10 @@ define('DRUPAL_ROOT', dirname(dirname(__DIR__)));
  * @see default.settings.php
  *
  * @deprecated 8.x
- *   Use \Drupal\Core\DrupalKernel::confPath().
+ *   Use \Drupal\Core\DrupalKernelFactory::confPath().
  */
 function conf_path($require_settings = TRUE, $reset = FALSE, Request $request = NULL) {
-  return DrupalKernel::confPath($request, $require_settings, $reset);
+  return DrupalKernelFactory::confPath($request, $require_settings, $reset);
 }
 
 /**
@@ -1135,28 +1136,34 @@ function drupal_anonymous_user() {
  *   - DRUPAL_BOOTSTRAP_CONFIGURATION: Initializes configuration.
  *   - DRUPAL_BOOTSTRAP_KERNEL: Initalizes a kernel.
  *
- * @return
+ * @return int
  *   The most recently completed phase.
  *
  * @deprecated 8.x
- *   Use \Drupal\Core\DrupalKernel::bootKernel() et al instead.
+ *   Use \Drupal\Core\DrupalKernelFactory::boot() instead.
  *
  * @todo Obsolete. Remove once Drush has been updated.
  */
 function drupal_bootstrap($phase = NULL) {
+  $request = Request::createFromGlobals();
+
   switch ($phase) {
     case DRUPAL_BOOTSTRAP_CONFIGURATION:
-      DrupalKernel::bootConfiguration(Request::createFromGlobals());
+      DrupalKernelFactory::boot($request, DrupalKernelFactory::BOOTSTRAP_CONFIGURATION);
       break;
 
     case DRUPAL_BOOTSTRAP_KERNEL:
     case DRUPAL_BOOTSTRAP_PAGE_CACHE:
+      DrupalKernelFactory::boot($request, DrupalKernelFactory::BOOTSTRAP_PAGE_CACHE);
+      break;
+
     case DRUPAL_BOOTSTRAP_CODE:
     case DRUPAL_BOOTSTRAP_FULL:
-      DrupalKernel::bootKernel(Request::createFromGlobals());
+      DrupalKernelFactory::boot($request, DrupalKernelFactory::BOOTSTRAP_CODE);
       break;
   }
-  return DrupalKernel::getBootLevel();
+
+  return DrupalKernelFactory::getBootLevel();
 }
 
 /**
@@ -1249,10 +1256,10 @@ function _drupal_exception_handler($exception) {
  * @see drupal_bootstrap()
  *
  * @deprecated 8.x
- *   Use \Drupal\Core\DrupalKernel::getBootLevel().
+ *   Use \Drupal\Core\DrupalKernelFactory::getBootLevel().
  */
 function drupal_get_bootstrap_phase() {
-  return DrupalKernel::getBootLevel();
+  return DrupalKernelFactory::getBootLevel();
 }
 
 /**
@@ -1553,21 +1560,18 @@ function language_default() {
  * @see current_path()
  *
  * @deprecated 8.x
- *   Use \Drupal\Core\DrupalKernel::requestPath().
+ *   Use \Drupal\Core\DrupalKernelFactory::requestPath().
  */
 function request_path() {
-  return DrupalKernel::requestPath();
+  return DrupalKernelFactory::requestPath();
 }
 
 /**
  * @todo This is a temporary function pending refactoring Drupal to use
  *   Symfony's Request object exclusively.
- *
- * @deprecated 8.x
- *   Use \Drupal\Core\DrupalKernel::currentPath().
  */
 function _current_path($path = NULL) {
-  return DrupalKernel::currentPath($path);
+  return DrupalKernelFactory::currentPath();
 }
 
 /**

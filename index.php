@@ -8,7 +8,7 @@
  * See COPYRIGHT.txt and LICENSE.txt files in the "core" directory.
  */
 
-use Drupal\Core\DrupalKernel;
+use Drupal\Core\DrupalKernelFactory;
 use Symfony\Component\HttpFoundation\Request;
 
 require_once __DIR__ . '/core/vendor/autoload.php';
@@ -16,7 +16,7 @@ require_once __DIR__ . '/core/includes/bootstrap.inc';
 
 try {
   $request = Request::createFromGlobals();
-  $kernel = DrupalKernel::bootKernel($request);
+  $kernel = DrupalKernelFactory::get($request);
   $response = $kernel->handle($request)->prepare($request)->send();
   $kernel->terminate($request, $response);
 }
