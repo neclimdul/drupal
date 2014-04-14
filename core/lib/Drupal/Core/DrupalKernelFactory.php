@@ -67,7 +67,7 @@ class DrupalKernelFactory {
    *
    * @var int
    */
-  protected static $bootLevel = NULL;
+  protected static $bootLevel = 0;
 
   /**
    * Environment initialization status.
@@ -150,7 +150,7 @@ class DrupalKernelFactory {
     /** @var DrupalKernel $kernel */
     $kernel = null;
 
-    for ($current_phase = static::$bootLevel; $current_phase <= $phase; $current_phase++) {
+    for ($current_phase = static::$bootLevel + 1; $current_phase <= $phase; $current_phase++) {
 
       switch ($current_phase) {
         case static::BOOTSTRAP_ENVIRONMENT:
