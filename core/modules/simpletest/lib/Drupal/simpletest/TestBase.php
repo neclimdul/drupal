@@ -1108,6 +1108,7 @@ abstract class TestBase {
 
     // After preparing the environment and changing the database prefix, we are
     // in a valid test environment.
+    DrupalKernelFactory::setBootLevel(DrupalKernelFactory::BOOTSTRAP_ENVIRONMENT);
     drupal_valid_test_ua($this->databasePrefix);
     conf_path(FALSE, TRUE);
 
