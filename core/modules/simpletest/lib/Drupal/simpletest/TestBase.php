@@ -1141,11 +1141,14 @@ abstract class TestBase {
     // Preserve the request object after the container rebuild.
     $request = \Drupal::request();
 
+    // Rebuild the kernel and bring it back to a fully bootstrapped state.
     $this->kernel = DrupalKernelFactory::get($request, $environment, FALSE);
-    // DrupalKernel replaces the container in \Drupal::getContainer() with a
-    // different object, so we need to replace the instance on this test class.
-    $this->container = \Drupal::getContainer();
+    $this->kernel->preHandle($request);
 
+    // Replace the local container with the newly bootstrapped container.
+    $this->container = $this->kernel->getContainer();
+
+    // Ensure container has the correct user stored in the proxy.
     $this->container->get('current_user')->setAccount(\Drupal::currentUser());
   }
 
