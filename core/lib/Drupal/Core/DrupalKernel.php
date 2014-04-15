@@ -288,6 +288,8 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
    */
   public function bootCode() {
 
+    require_once DRUPAL_ROOT . '/core/includes/common.inc';
+    require_once DRUPAL_ROOT . '/core/includes/database.inc';
     require_once DRUPAL_ROOT . '/' . Settings::get('path_inc', 'core/includes/path.inc');
     require_once DRUPAL_ROOT . '/core/includes/module.inc';
     require_once DRUPAL_ROOT . '/core/includes/theme.inc';

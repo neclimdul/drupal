@@ -124,9 +124,6 @@ class DrupalKernelFactory {
       static::boot($request);
     }
 
-    require_once DRUPAL_ROOT . '/core/includes/common.inc';
-    require_once DRUPAL_ROOT . '/core/includes/database.inc';
-
     // @todo DRUPAL_TEST_IN_CHILD_SITE must not be passed here.
     //   DrupalKernelFactory::bootConfiguration() negotiates a test request via
     //   drupal_valid_test_ua() already. This parameter here only exists for the
@@ -168,9 +165,6 @@ class DrupalKernelFactory {
 
         // @todo Below levels should be removed when drupal_bootstrap() is gone.
         case static::BOOTSTRAP_PAGE_CACHE:
-          require_once DRUPAL_ROOT . '/core/includes/common.inc';
-          require_once DRUPAL_ROOT . '/core/includes/database.inc';
-
           $kernel = new DrupalKernel('prod', drupal_classloader(), TRUE, DRUPAL_TEST_IN_CHILD_SITE);
           $kernel->handlePageCache($request);
           break;
