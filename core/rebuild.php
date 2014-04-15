@@ -19,7 +19,6 @@ use Symfony\Component\HttpFoundation\Request;
 chdir('..');
 
 require_once __DIR__ . '/vendor/autoload.php';
-require_once __DIR__ . '/includes/bootstrap.inc';
 require_once __DIR__ . '/includes/utility.inc';
 
 $request = Request::createFromGlobals();

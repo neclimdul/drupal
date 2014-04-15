@@ -356,7 +356,6 @@ function simpletest_script_init() {
  * @see install_begin_request()
  */
 function simpletest_script_bootstrap() {
-  require_once dirname(__DIR__) . '/includes/bootstrap.inc';
 
   // Replace services with in-memory and null implementations.
   $GLOBALS['conf']['container_service_providers']['InstallerServiceProvider'] = 'Drupal\Core\Installer\InstallerServiceProvider';

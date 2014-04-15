@@ -12,7 +12,6 @@ use Drupal\Core\DrupalKernelFactory;
 use Symfony\Component\HttpFoundation\Request;
 
 require_once __DIR__ . '/core/vendor/autoload.php';
-require_once __DIR__ . '/core/includes/bootstrap.inc';
 
 try {
   $request = Request::createFromGlobals();

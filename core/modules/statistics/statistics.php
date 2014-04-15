@@ -11,7 +11,6 @@ use Symfony\Component\HttpFoundation\Request;
 chdir('../../..');
 
 require_once dirname(dirname(__DIR__)) . '/vendor/autoload.php';
-require_once dirname(dirname(__DIR__)) . '/includes/bootstrap.inc';
 
 DrupalKernelFactory::get(Request::createFromGlobals());
 

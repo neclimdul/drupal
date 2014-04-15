@@ -28,7 +28,6 @@ use Symfony\Component\HttpFoundation\Request;
 chdir('..');
 
 require_once __DIR__ . '/vendor/autoload.php';
-require_once __DIR__ . '/includes/bootstrap.inc';
 
 /**
  * Global flag to identify update.php and authorize.php runs.

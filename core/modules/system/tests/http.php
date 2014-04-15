@@ -11,7 +11,6 @@ use Symfony\Component\HttpFoundation\Request;
 chdir('../../../..');
 
 require_once './core/vendor/autoload.php';
-require_once './core/includes/bootstrap.inc';
 
 // Set a global variable to indicate a mock HTTP request.
 $is_http_mock = !empty($_SERVER['HTTPS']);

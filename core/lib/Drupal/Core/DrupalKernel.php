@@ -191,6 +191,7 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
     if ($this->booted) {
       return;
     }
+
     $this->initializeContainer();
     $this->booted = TRUE;
     if ($this->containerNeedsDumping && !$this->dumpDrupalContainer($this->container, static::CONTAINER_BASE_CLASS)) {

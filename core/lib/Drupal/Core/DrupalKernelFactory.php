@@ -156,6 +156,7 @@ class DrupalKernelFactory {
 
       switch ($current_phase) {
         case static::BOOTSTRAP_ENVIRONMENT:
+          require_once dirname(dirname(dirname(__DIR__))) . '/includes/bootstrap.inc';
           static::bootEnvironment($request);
           break;
 
