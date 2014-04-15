@@ -139,16 +139,21 @@ class DrupalKernelFactory {
    *
    * Public access to this is provided for backwards support only.
    *
+   * @todo Clean up and make protected once drupal_bootstrap() is gone.
+   *
    * @param Request $request
    * @param null $phase
    */
   public static function boot(Request $request, $phase = NULL) {
 
     $phase = isset($phase) ? $phase : static::BOOTSTRAP_CONFIGURATION;
-    $request = Request::createFromGlobals();
 
-    /** @var DrupalKernel $kernel */
-    $kernel = null;
+    /**
+     * Temporary variable used for booting later phases for drupal_bootstrap().
+     *
+     * @var DrupalKernel $kernel
+     */
+    static $kernel = null;
 
     for ($current_phase = static::$bootLevel + 1; $current_phase <= $phase; $current_phase++) {
 
@@ -161,6 +166,7 @@ class DrupalKernelFactory {
           static::bootConfiguration($request);
           break;
 
+        // @todo Below levels should be removed when drupal_bootstrap() is gone.
         case static::BOOTSTRAP_PAGE_CACHE:
           require_once DRUPAL_ROOT . '/core/includes/common.inc';
           require_once DRUPAL_ROOT . '/core/includes/database.inc';
