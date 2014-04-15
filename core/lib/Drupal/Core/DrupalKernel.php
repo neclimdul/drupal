@@ -215,42 +215,19 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
   public function getContainer() {
 
     // Ensure container is available before returning it.
-    if (false === $this->booted) {
-      $this->boot();
-    }
+    $this->boot();
 
     return $this->container;
   }
 
   /**
-   * Sets testOnly property.
-   *
-   * @param bool $test_only
-   *   Whether this is a test only.
-   *
-   * @see core/modules/system/tests/https.php
-   * @see core/modules/system/tests/http.php
-   *
-   * @return $this
-   */
-  public function setTestOnly($test_only) {
-    $this->testOnly = $test_only;
-    return $this;
-  }
-
-  /**
-   * Attempts to serve a page from the cache.
-   *
-   * @param \Symfony\Component\HttpFoundation\Request $request
-   *   The current request.
-   *
-   * @return $this
+   * {@inheritdoc}
    */
   public function handlePageCache(Request $request) {
     // @todo Use the current_user proxy.
     global $user;
 
-    $this->ensureContainerScope($request);
+    $this->boot();
 
     // Check for a cache mode force from settings.php.
     if (Settings::get('page_cache_without_database')) {
@@ -289,11 +266,28 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
   }
 
   /**
+   * Sets testOnly property.
+   *
+   * @param bool $test_only
+   *   Whether this is a test only.
+   *
+   * @see core/modules/system/tests/https.php
+   * @see core/modules/system/tests/http.php
+   *
+   * @return $this
+   */
+  public function setTestOnly($test_only) {
+    $this->testOnly = $test_only;
+    return $this;
+  }
+
+  /**
    * Finishes booting by loading remaining includes and enabled modules.
    *
    * @return $this
    */
   public function bootCode() {
+
     require_once DRUPAL_ROOT . '/' . Settings::get('path_inc', 'core/includes/path.inc');
     require_once DRUPAL_ROOT . '/core/includes/module.inc';
     require_once DRUPAL_ROOT . '/core/includes/theme.inc';
@@ -416,8 +410,10 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
    * {@inheritdoc}
    */
   public function handle(Request $request, $type = self::MASTER_REQUEST, $catch = TRUE) {
-    $this->preHandle($request);
 
+    $this->boot();
+    $this->ensureContainerScope($request);
+    $this->bootCode();
     return $this->getHttpKernel()->handle($request, $type, $catch);
   }
 
@@ -426,16 +422,8 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
    */
   public function preHandle(Request $request) {
 
-    if (false === $this->booted) {
-      $this->boot();
-    }
-
-    // Let early page caching try to handle the request.
-    // The page cache may prematurely end the request on a cache hit.
-    // @todo Invoke proper request/response/terminate events.
-    $this->handlePageCache($request);
-
-    // Finish booting extra code.
+    $this->boot();
+    $this->ensureContainerScope($request);
     $this->bootCode();
 
     // Exit if we should be in a test environment but aren't.

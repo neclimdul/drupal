@@ -166,6 +166,7 @@ class DrupalKernelFactory {
           require_once DRUPAL_ROOT . '/core/includes/database.inc';
 
           $kernel = new DrupalKernel('prod', drupal_classloader(), TRUE, DRUPAL_TEST_IN_CHILD_SITE);
+          $kernel->handlePageCache($request);
           break;
 
         case static::BOOTSTRAP_CODE:

@@ -17,7 +17,10 @@ require_once __DIR__ . '/core/includes/bootstrap.inc';
 try {
   $request = Request::createFromGlobals();
   $kernel = DrupalKernelFactory::get($request);
-  $response = $kernel->handle($request)->prepare($request)->send();
+  $response = $kernel
+    ->handlePageCache($request)
+    ->handle($request)
+      ->prepare($request)->send();
   $kernel->terminate($request, $response);
 }
 catch (Exception $e) {
