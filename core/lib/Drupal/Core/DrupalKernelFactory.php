@@ -116,8 +116,8 @@ class DrupalKernelFactory {
    * @param bool $allow_dumping
    *   (optional) Allow dumping the container. Defaults to TRUE.
    *
-   * @return \Drupal\Core\DrupalKernel
-   *   The bootstapped kernel.
+   * @return \Drupal\Core\DrupalKernelInterface
+   *   The bootstrapped kernel.
    */
   public static function get(Request $request, $environment = 'prod', $allow_dumping = TRUE) {
     if (!static::$isEnvironmentInitialized) {
