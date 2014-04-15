@@ -1140,7 +1140,7 @@ function drupal_anonymous_user() {
  *   The most recently completed phase.
  *
  * @deprecated 8.x
- *   Use \Drupal\Core\DrupalKernelFactory::boot() instead.
+ *   Use \Drupal\Core\DrupalKernelFactory::get() and interact with the kernel.
  *
  * @todo Obsolete. Remove once Drush has been updated.
  */
