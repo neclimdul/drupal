@@ -548,10 +548,9 @@ $settings['update_free_access'] = FALSE;
  * To see what PHP settings are possible, including whether they can be set at
  * runtime (by using ini_set()), read the PHP documentation:
  * http://php.net/manual/ini.list.php
- * See drupal_environment_initialize() in core/includes/bootstrap.inc for
- * required runtime settings and the .htaccess file for non-runtime settings.
- * Settings defined there should not be duplicated here so as to avoid conflict
- * issues.
+ * See Drupal\Core\DrupalKernelFactory::bootEnvironment() for required runtime
+ * settings and the .htaccess file for non-runtime settings. Settings defined
+ * there should not be duplicated here so as to avoid conflict issues.
  */
 
 /**
