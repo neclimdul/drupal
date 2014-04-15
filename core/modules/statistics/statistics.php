@@ -5,7 +5,7 @@
  * Handles counts of node views via AJAX with minimal bootstrap.
  */
 
-use Drupal\Core\DrupalKernel;
+use Drupal\Core\DrupalKernelFactory;
 use Symfony\Component\HttpFoundation\Request;
 
 chdir('../../..');
@@ -13,7 +13,7 @@ chdir('../../..');
 require_once dirname(dirname(__DIR__)) . '/vendor/autoload.php';
 require_once dirname(dirname(__DIR__)) . '/includes/bootstrap.inc';
 
-DrupalKernel::bootKernel(Request::createFromGlobals());
+DrupalKernelFactory::get(Request::createFromGlobals());
 
 if (\Drupal::config('statistics.settings')->get('count_content_views')) {
   $nid = filter_input(INPUT_POST, 'nid', FILTER_VALIDATE_INT);
