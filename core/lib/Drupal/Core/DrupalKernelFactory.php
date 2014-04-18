@@ -157,10 +157,13 @@ class DrupalKernelFactory {
       switch ($current_phase) {
         case static::BOOTSTRAP_ENVIRONMENT:
           require_once dirname(dirname(dirname(__DIR__))) . '/includes/bootstrap.inc';
-          static::bootEnvironment($request);
+          static::bootEnvironment();
           break;
 
         case static::BOOTSTRAP_CONFIGURATION:
+          // @todo Remove this legacy/BC construct.
+          static::currentPath(static::requestPath($request));
+
           static::bootConfiguration($request);
           break;
 
@@ -418,12 +421,9 @@ class DrupalKernelFactory {
   }
 
   /**
-   *
-   * @param Request $request
+   * Bootstraps the environment.
    */
-  protected static function bootEnvironment(Request $request) {
-    // @todo Remove this legacy/BC construct.
-    static::currentPath(static::requestPath($request));
+  protected static function bootEnvironment() {
 
     // Enforce E_STRICT, but allow users to set levels not part of E_STRICT.
     error_reporting(E_STRICT | E_ALL);
