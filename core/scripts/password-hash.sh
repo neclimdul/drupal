@@ -12,7 +12,7 @@
  *  Plain-text passwords in quotes (or with spaces backslash escaped).
  */
 
-use Drupal\Core\DrupalKernel;
+use Drupal\Core\DrupalKernelFactory;
 use Symfony\Component\HttpFoundation\Request;
 
 if (version_compare(PHP_VERSION, "5.2.0", "<")) {
@@ -83,10 +83,9 @@ while ($param = array_shift($_SERVER['argv'])) {
 
 $core = dirname(__DIR__);
 require_once $core . '/vendor/autoload.php';
-require_once $core . '/includes/bootstrap.inc';
 
 $request = Request::createFromGlobals();
-$kernel = DrupalKernel::bootKernel($request);
+$kernel = DrupalKernelFactory::get($request);
 
 $password_hasher = $kernel->getContainer()->get('password');
 
