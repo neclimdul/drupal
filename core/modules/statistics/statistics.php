@@ -12,9 +12,13 @@ chdir('../../..');
 
 require_once dirname(dirname(__DIR__)) . '/vendor/autoload.php';
 
-DrupalKernelFactory::get(Request::createFromGlobals());
+$kernel = DrupalKernelFactory::get(Request::createFromGlobals());
 
-if (\Drupal::config('statistics.settings')->get('count_content_views')) {
+$views = $kernel->getContainer()
+  ->get('config.factory')
+  ->get('statistics.settings')
+  ->get('count_content_views');
+if ($views) {
   $nid = filter_input(INPUT_POST, 'nid', FILTER_VALIDATE_INT);
   if ($nid) {
     \Drupal::database()->merge('node_counter')
