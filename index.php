@@ -11,11 +11,11 @@
 use Drupal\Core\DrupalKernel;
 use Symfony\Component\HttpFoundation\Request;
 
-$autloader = require_once __DIR__ . '/core/vendor/autoload.php';
+$autoloader = require_once __DIR__ . '/core/vendor/autoload.php';
 
 try {
   $request = Request::createFromGlobals();
-  $kernel = new DrupalKernel('production', $autloader);
+  $kernel = new DrupalKernel('prod', $autoloader);
   $response = $kernel
     ->handlePageCache($request)
     ->handle($request)
