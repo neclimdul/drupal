@@ -5,14 +5,15 @@
  * Handles counts of node views via AJAX with minimal bootstrap.
  */
 
-use Drupal\Core\DrupalKernelFactory;
+use Drupal\Core\DrupalKernel;
 use Symfony\Component\HttpFoundation\Request;
 
 chdir('../../..');
 
-require_once dirname(dirname(__DIR__)) . '/vendor/autoload.php';
+$autoloader = require_once dirname(dirname(__DIR__)) . '/vendor/autoload.php';
 
-$kernel = DrupalKernelFactory::get(Request::createFromGlobals());
+$kernel = new DrupalKernel('prod', $autoloader);
+$kernel->boot(Request::createFromGlobals());
 
 $views = $kernel->getContainer()
   ->get('config.factory')
@@ -33,4 +34,3 @@ if ($views) {
       ->execute();
   }
 }
-
