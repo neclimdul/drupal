@@ -5,7 +5,7 @@ use Drupal\Component\Utility\Crypt;
 
 use Drupal\Component\Utility\Settings;
 use Drupal\Core\Config\FileStorage;
-use Drupal\Core\DrupalKernelFactory;
+use Drupal\Core\DrupalKernel;
 use Drupal\Core\Database\Database;
 use Drupal\Core\Database\DatabaseExceptionWrapper;
 use Drupal\Core\Database\Install\TaskException;
@@ -357,7 +357,7 @@ function install_begin_request(&$install_state) {
     $environment = 'prod';
   }
 
-  $kernel = new \Drupal\Core\DrupalKernel($environment, drupal_classloader(), FALSE);
+  $kernel = new DrupalKernel($environment, drupal_classloader(), FALSE);
   $kernel->boot($request);
   $container = $kernel->getContainer();
 

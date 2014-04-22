@@ -8,10 +8,8 @@
 use Drupal\Component\Utility\Settings;
 use Drupal\Component\Utility\Timer;
 use Drupal\Core\Database\Database;
-use Drupal\Core\DrupalKernelFactory;
+use Drupal\Core\DrupalKernel;
 use Symfony\Component\HttpFoundation\Request;
-
-require_once __DIR__ . '/../vendor/autoload.php';
 
 const SIMPLETEST_SCRIPT_COLOR_PASS = 32; // Green.
 const SIMPLETEST_SCRIPT_COLOR_FAIL = 31; // Red.
@@ -360,9 +358,11 @@ function simpletest_script_bootstrap() {
   // Replace services with in-memory and null implementations.
   $GLOBALS['conf']['container_service_providers']['InstallerServiceProvider'] = 'Drupal\Core\Installer\InstallerServiceProvider';
 
+  $autoloader = require_once __DIR__ . '/../vendor/autoload.php';
+
   // Fully bootstrap a running Drupal site.
   $request = Request::createFromGlobals();
-  $kernel = DrupalKernelFactory::get($request, 'testing', FALSE);
+  $kernel = new DrupalKernel('testing', $autoloader, FALSE);
   $kernel->preHandle($request);
 
   // Remove Drupal's error/exception handlers; they are designed for HTML

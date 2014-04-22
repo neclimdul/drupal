@@ -12,17 +12,17 @@
 
 use Drupal\Component\Utility\Crypt;
 use Drupal\Component\Utility\Settings;
-use Drupal\Core\DrupalKernelFactory;
+use Drupal\Core\DrupalKernel;
 use Symfony\Component\HttpFoundation\Request;
 
 // Change the directory to the Drupal root.
 chdir('..');
 
-require_once __DIR__ . '/vendor/autoload.php';
+$autoloader = require_once __DIR__ . '/vendor/autoload.php';
 require_once __DIR__ . '/includes/utility.inc';
 
 $request = Request::createFromGlobals();
-$kernel = DrupalKernelFactory::get($request);
+$kernel = new DrupalKernel('prod', $autoloader);
 $response = $kernel->preHandle($request);
 
 if (Settings::get('rebuild_access', FALSE) ||
@@ -31,7 +31,7 @@ if (Settings::get('rebuild_access', FALSE) ||
     ($_GET['token'] === Crypt::hmacBase64($_GET['timestamp'], Settings::get('hash_salt')))
   )) {
 
-  drupal_rebuild($request);
+  drupal_rebuild($kernel, $request);
   drupal_set_message('Cache rebuild complete.');
 }
 

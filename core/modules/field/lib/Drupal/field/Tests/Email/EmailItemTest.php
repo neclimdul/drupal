@@ -21,7 +21,7 @@ class EmailItemTest extends FieldUnitTestBase {
    *
    * @var array
    */
-  public static $modules = array('email');
+  public static $modules = array('text');
 
   public static function getInfo() {
     return array(

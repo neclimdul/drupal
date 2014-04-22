@@ -21,7 +21,7 @@ class EmailFieldRdfaTest extends FieldRdfaTestBase {
   /**
    * {@inheritdoc}
    */
-  public static $modules = array('email', 'text');
+  public static $modules = array('text');
 
   public static function getInfo() {
     return array(

@@ -181,7 +181,7 @@ class EntityFormDisplayTest extends DrupalUnitTestBase {
    * Tests deleting field instance.
    */
   public function testDeleteFieldInstance() {
-    $this->enableModules(array('field_sql_storage', 'field_test'));
+    $this->enableModules(array('field_test'));
 
     $field_name = 'test_field';
     // Create a field and an instance.

@@ -5,12 +5,12 @@
  * Fake an HTTP request, for use during testing.
  */
 
-use Drupal\Core\DrupalKernelFactory;
+use Drupal\Core\DrupalKernel;
 use Symfony\Component\HttpFoundation\Request;
 
 chdir('../../../..');
 
-require_once './core/vendor/autoload.php';
+$autoloader = require_once './core/vendor/autoload.php';
 
 // Set a global variable to indicate a mock HTTP request.
 $is_http_mock = !empty($_SERVER['HTTPS']);
@@ -24,8 +24,7 @@ foreach ($_SERVER as &$value) {
 }
 
 $request = Request::createFromGlobals();
-$kernel = DrupalKernelFactory::get($request);
-$kernel->setTestOnly(TRUE);
+$kernel = new DrupalKernel('testing', $autoloader, TRUE, TRUE);
 $response = $kernel
   ->handlePageCache($request)
   ->handle($request)

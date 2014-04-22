@@ -190,7 +190,7 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
     // Include our bootstrap file.
     require_once dirname(dirname(dirname(__DIR__))) . '/includes/bootstrap.inc';
 
-    $this->initializePhpEnvironment();
+    $this->bootEnvironment();
 
     // Indicate that code is operating in a test child site.
     if (!defined('DRUPAL_TEST_IN_CHILD_SITE')) {
@@ -641,7 +641,7 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
    * This method sets PHP environment options we want to be sure are set
    * correctly for security or just saneness.
    */
-  protected function initializePhpEnvironment() {
+  protected function bootEnvironment() {
 
     // Enforce E_STRICT, but allow users to set levels not part of E_STRICT.
     error_reporting(E_STRICT | E_ALL);
@@ -767,7 +767,7 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
       // to use the same session identifiers across HTTP and HTTPS.
       list(, $session_name) = explode('://', $base_url, 2);
       // HTTP_HOST can be modified by a visitor, but has been sanitized already
-      // in DrupalKernelFactory::bootEnvironment().
+      // in DrupalKernel::bootEnvironment().
       if ($cookie_domain = $request->server->get('HTTP_HOST')) {
         // Strip leading periods, www., and port numbers from cookie domain.
         $cookie_domain = ltrim($cookie_domain, '.');

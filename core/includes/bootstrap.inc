@@ -1,29 +1,17 @@
 <?php
 
 use Drupal\Component\Utility\Crypt;
-use Drupal\Component\Utility\NestedArray;
 use Drupal\Component\Utility\Settings;
 use Drupal\Component\Utility\String;
-use Drupal\Component\Utility\Timer;
 use Drupal\Component\Utility\Unicode;
-use Drupal\Component\Utility\UrlHelper;
 use Drupal\Core\DrupalKernel;
-use Drupal\Core\DrupalKernelFactory;
-use Drupal\Core\Database\Database;
-use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\Core\Extension\ExtensionDiscovery;
-use Drupal\Core\Utility\Title;
 use Drupal\Core\Utility\Error;
 use Symfony\Component\ClassLoader\ApcClassLoader;
-use Symfony\Component\DependencyInjection\ContainerInterface;
-use Symfony\Component\DependencyInjection\Container;
-use Symfony\Component\DependencyInjection\Reference;
 use Symfony\Component\DependencyInjection\Exception\RuntimeException as DependencyInjectionRuntimeException;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Drupal\Core\Language\Language;
-use Drupal\Core\Lock\DatabaseLockBackend;
-use Drupal\Core\Lock\LockBackendInterface;
 use Drupal\Core\Session\AnonymousUserSession;
 
 /**
@@ -127,28 +115,38 @@ const WATCHDOG_DEBUG = 7;
 
 /**
  * First bootstrap phase: initialize configuration.
+ *
+ * @deprecated 8.x
  */
-const DRUPAL_BOOTSTRAP_CONFIGURATION = DrupalKernelFactory::BOOTSTRAP_CONFIGURATION;
+const DRUPAL_BOOTSTRAP_CONFIGURATION = 0;
 
 /**
- * @todo Obsolete. Remove once Drush has been updated.
+ * Second bootstrap phase, initialize a kernel.
+ *
+ * @deprecated 8.x
  */
-const DRUPAL_BOOTSTRAP_KERNEL = DrupalKernelFactory::BOOTSTRAP_PAGE_CACHE;
+const DRUPAL_BOOTSTRAP_KERNEL = 1;
 
 /**
  * Third bootstrap phase: try to serve a cached page.
+ *
+ * @deprecated 8.x
  */
-const DRUPAL_BOOTSTRAP_PAGE_CACHE = DrupalKernelFactory::BOOTSTRAP_PAGE_CACHE;
+const DRUPAL_BOOTSTRAP_PAGE_CACHE = 2;
 
 /**
  * Fourth bootstrap phase: load code for subsystems and modules.
+ *
+ * @deprecated 8.x
  */
-const DRUPAL_BOOTSTRAP_CODE = DrupalKernelFactory::BOOTSTRAP_CODE;
+const DRUPAL_BOOTSTRAP_CODE = 3;
 
 /**
- * @todo Obsolete. Remove once Drush has been updated.
+ * Final bootstrap phase: initialize language, path, theme, and modules.
+ *
+ * @deprecated 8.x
  */
-const DRUPAL_BOOTSTRAP_FULL = DrupalKernelFactory::BOOTSTRAP_CODE;
+const DRUPAL_BOOTSTRAP_FULL = 4;
 
 /**
  * Role ID for anonymous users; should match what's in the "role" table.
@@ -237,7 +235,7 @@ define('DRUPAL_ROOT', dirname(dirname(__DIR__)));
  * @see default.settings.php
  *
  * @deprecated 8.x
- *   Use \Drupal\Core\DrupalKernelFactory::confPath().
+ *   Use \Drupal\Component\Utility\Settings::confPath().
  */
 function conf_path($require_settings = TRUE, $reset = FALSE, Request $request = NULL) {
   return Settings::confPath($request, $require_settings, $reset);
@@ -1140,30 +1138,49 @@ function drupal_anonymous_user() {
  *   The most recently completed phase.
  *
  * @deprecated 8.x
- *   Use \Drupal\Core\DrupalKernelFactory::get() and interact with the kernel.
+ *   Interact directly with the kernel.
  *
  * @todo Obsolete. Remove once Drush has been updated.
  */
 function drupal_bootstrap($phase = NULL) {
-  $request = Request::createFromGlobals();
 
-  switch ($phase) {
-    case DRUPAL_BOOTSTRAP_CONFIGURATION:
-      DrupalKernelFactory::boot($request, DrupalKernelFactory::BOOTSTRAP_CONFIGURATION);
-      break;
 
-    case DRUPAL_BOOTSTRAP_KERNEL:
-    case DRUPAL_BOOTSTRAP_PAGE_CACHE:
-      DrupalKernelFactory::boot($request, DrupalKernelFactory::BOOTSTRAP_PAGE_CACHE);
-      break;
+  /**
+   * Temporary variable used for booting later phases for drupal_bootstrap().
+   *
+   * @var DrupalKernel $kernel
+   */
+  static $kernel = null, $boot_level = 0;
 
-    case DRUPAL_BOOTSTRAP_CODE:
-    case DRUPAL_BOOTSTRAP_FULL:
-      DrupalKernelFactory::boot($request, DrupalKernelFactory::BOOTSTRAP_CODE);
-      break;
+  if (isset($phase)) {
+    $request = Request::createFromGlobals();
+    for ($current_phase = $boot_level; $current_phase <= $phase; $current_phase++) {
+
+      switch ($current_phase) {
+        case DRUPAL_BOOTSTRAP_CONFIGURATION:
+          Settings::initialize($request);
+          break;
+
+        case DRUPAL_BOOTSTRAP_KERNEL:
+          $kernel = new DrupalKernel('prod', drupal_classloader());
+          $kernel->boot($request);
+          break;
+
+        case DRUPAL_BOOTSTRAP_PAGE_CACHE:
+          $kernel->handlePageCache($request);
+          break;
+
+        case DRUPAL_BOOTSTRAP_CODE:
+        case DRUPAL_BOOTSTRAP_FULL:
+          $kernel->preHandle($request);
+          break;
+      }
+    }
+    $boot_level = $phase;
   }
 
-  return DrupalKernelFactory::getBootLevel();
+
+  return \Drupal::getContainer() ? DRUPAL_BOOTSTRAP_CODE : DRUPAL_BOOTSTRAP_CONFIGURATION;
 }
 
 /**
@@ -1256,10 +1273,9 @@ function _drupal_exception_handler($exception) {
  * @see drupal_bootstrap()
  *
  * @deprecated 8.x
- *   Use \Drupal\Core\DrupalKernelFactory::getBootLevel().
  */
 function drupal_get_bootstrap_phase() {
-  return DrupalKernelFactory::getBootLevel();
+  return drupal_bootstrap();
 }
 
 /**
@@ -1560,10 +1576,38 @@ function language_default() {
  * @see current_path()
  *
  * @deprecated 8.x
- *   Use \Drupal\Core\DrupalKernelFactory::requestPath().
  */
 function request_path() {
-  return DrupalKernelFactory::requestPath();
+  static $path;
+
+  if (isset($path)) {
+    return $path;
+  }
+
+  // Get the part of the URI between the base path of the Drupal installation
+  // and the query string, and unescape it.
+  $request_path = request_uri(TRUE);
+  $base_path_len = strlen(rtrim(dirname($_SERVER['SCRIPT_NAME']), '\/'));
+  $path = substr(urldecode($request_path), $base_path_len + 1);
+
+  // Depending on server configuration, the URI might or might not include the
+  // script name. For example, the front page might be accessed as
+  // http://example.com or as http://example.com/index.php, and the "user"
+  // page might be accessed as http://example.com/user or as
+  // http://example.com/index.php/user. Strip the script name from $path.
+  $script = basename($_SERVER['SCRIPT_NAME']);
+  if ($path == $script) {
+    $path = '';
+  }
+  elseif (strpos($path, $script . '/') === 0) {
+    $path = substr($path, strlen($script) + 1);
+  }
+
+  // Extra slashes can appear in URLs or under some conditions, added by Apache,
+  // so normalize.
+  $path = trim($path, '/');
+
+  return $path;
 }
 
 /**
@@ -1571,7 +1615,11 @@ function request_path() {
  *   Symfony's Request object exclusively.
  */
 function _current_path($path = NULL) {
-  return DrupalKernelFactory::currentPath();
+  static $current_path = '';
+  if (isset($path)) {
+    $current_path = $path;
+  }
+  return $current_path;
 }
 
 /**

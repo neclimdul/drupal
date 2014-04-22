@@ -16,7 +16,7 @@ use Drupal\Core\Config\StorageComparer;
 use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\Core\Database\ConnectionNotDefinedException;
 use Drupal\Core\Config\StorageInterface;
-use Drupal\Core\DrupalKernelFactory;
+use Drupal\Core\DrupalKernel;
 use Drupal\Core\Language\Language;
 use Drupal\Core\Session\AccountProxy;
 use Drupal\Core\Session\AnonymousUserSession;
@@ -1108,7 +1108,6 @@ abstract class TestBase {
 
     // After preparing the environment and changing the database prefix, we are
     // in a valid test environment.
-    DrupalKernelFactory::setBootLevel(DrupalKernelFactory::BOOTSTRAP_ENVIRONMENT);
     drupal_valid_test_ua($this->databasePrefix);
     conf_path(FALSE, TRUE);
 
@@ -1142,7 +1141,7 @@ abstract class TestBase {
     $request = \Drupal::request();
 
     // Rebuild the kernel and bring it back to a fully bootstrapped state.
-    $this->kernel = DrupalKernelFactory::get($request, $environment, FALSE);
+    $this->kernel = new DrupalKernel($environment, drupal_classloader(), FALSE);
     $this->kernel->preHandle($request);
 
     // Replace the local container with the newly bootstrapped container.

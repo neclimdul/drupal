@@ -21,13 +21,13 @@
  */
 
 use Drupal\Component\Utility\Settings;
-use Drupal\Core\DrupalKernelFactory;
+use Drupal\Core\DrupalKernel;
 use Symfony\Component\HttpFoundation\Request;
 
 // Change the directory to the Drupal root.
 chdir('..');
 
-require_once __DIR__ . '/vendor/autoload.php';
+$autoloader = require_once __DIR__ . '/vendor/autoload.php';
 
 /**
  * Global flag to identify update.php and authorize.php runs.
@@ -53,7 +53,7 @@ function authorize_access_allowed() {
 }
 
 $request = Request::createFromGlobals();
-$kernel = DrupalKernelFactory::get($request);
+$kernel = new DrupalKernel('prod', $autoloader);
 $kernel->preHandle($request);
 
 // We have to enable the user and system modules, even to check access and

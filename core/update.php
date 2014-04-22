@@ -15,7 +15,7 @@
  */
 
 use Drupal\Component\Utility\Settings;
-use Drupal\Core\DrupalKernelFactory;
+use Drupal\Core\DrupalKernel;
 use Drupal\Core\Update\Form\UpdateScriptSelectionForm;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -24,7 +24,7 @@ use Symfony\Component\DependencyInjection\Reference;
 // Change the directory to the Drupal root.
 chdir('..');
 
-require_once __DIR__ . '/vendor/autoload.php';
+$autoloader = require_once __DIR__ . '/vendor/autoload.php';
 
 // Exit early if an incompatible PHP version would cause fatal errors.
 // The minimum version is specified explicitly, as DRUPAL_MINIMUM_PHP is not
@@ -312,7 +312,7 @@ require_once __DIR__ . '/includes/schema.inc';
 require_once __DIR__ . '/includes/database.inc';
 
 $request = Request::createFromGlobals();
-$kernel = DrupalKernelFactory::get($request, 'update', FALSE);
+$kernel = new DrupalKernel('update', $autoloader, FALSE);
 
 // Updating from a site schema version prior to 8000 should block the update
 // process. Ensure that the site is not attempting to update a database
