@@ -1,4 +1,8 @@
 <?php
+/**
+ * @file
+ * Functions that need to be loaded on every Drupal request.
+ */
 
 use Drupal\Component\Utility\Crypt;
 use Drupal\Component\Utility\Settings;
@@ -13,11 +17,6 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Drupal\Core\Language\Language;
 use Drupal\Core\Session\AnonymousUserSession;
-
-/**
- * @file
- * Functions that need to be loaded on every Drupal request.
- */
 
 /**
  * Minimum supported version of PHP.

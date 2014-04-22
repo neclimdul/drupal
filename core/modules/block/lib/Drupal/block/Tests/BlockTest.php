@@ -9,6 +9,7 @@ namespace Drupal\block\Tests;
 
 use Drupal\Core\Cache\Cache;
 use Drupal\simpletest\WebTestBase;
+use Drupal\Component\Utility\String;
 
 /**
  * Provides testing for basic block module functionality.
@@ -179,6 +180,22 @@ class BlockTest extends BlockTestBase {
       $elements = $this->xpath('//div[@id = :id]', array(':id' => drupal_html_id('block-' . $block['id'])));
       $this->assertTrue(!empty($elements), 'The block was found.');
     }
+  }
+
+  /**
+   * Test block display of theme titles.
+   */
+  function testThemeName() {
+    // Enable the help block.
+    $this->drupalPlaceBlock('system_help_block', array('region' => 'help'));
+    // Explicitly set the default and admin themes.
+    $theme = 'block_test_specialchars_theme';
+    theme_enable(array($theme));
+    \Drupal::service('router.builder')->rebuild();
+    $this->drupalGet('admin/structure/block');
+    $this->assertRaw(String::checkPlain('<"Cat" & \'Mouse\'>'));
+    $this->drupalGet('admin/structure/block/list/block_test_specialchars_theme');
+    $this->assertRaw(String::checkPlain('Demonstrate block regions (<"Cat" & \'Mouse\'>)'));
   }
 
   /**

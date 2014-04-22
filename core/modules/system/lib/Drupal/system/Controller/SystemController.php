@@ -7,7 +7,7 @@
 
 namespace Drupal\system\Controller;
 
-use Drupal\Component\Utility\Json;
+use Drupal\Component\Serialization\Json;
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Entity\Query\QueryFactory;
 use Drupal\Core\Extension\ThemeHandlerInterface;
@@ -317,14 +317,6 @@ class SystemController extends ControllerBase {
     $build[] = $this->formBuilder->getForm('Drupal\system\Form\ThemeAdminForm', $admin_theme_options);
 
     return $build;
-  }
-
-  /**
-   * @todo Remove system_theme_default().
-   */
-  public function themeSetDefault() {
-    module_load_include('admin.inc', 'system');
-    return system_theme_default();
   }
 
   /**

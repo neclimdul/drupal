@@ -2440,36 +2440,6 @@ function hook_system_themes_page_alter(&$theme_groups) {
 }
 
 /**
- * Alters outbound URLs.
- *
- * @param $path
- *   The outbound path to alter, not adjusted for path aliases yet. It won't be
- *   adjusted for path aliases until all modules are finished altering it. This
- *   may have been altered by other modules before this one.
- * @param $options
- *   A set of URL options for the URL so elements such as a fragment or a query
- *   string can be added to the URL.
- * @param $original_path
- *   The original path, before being altered by any modules.
- *
- * @see url()
- */
-function hook_url_outbound_alter(&$path, &$options, $original_path) {
-  // Use an external RSS feed rather than the Drupal one.
-  if ($path == 'rss.xml') {
-    $path = 'http://example.com/rss.xml';
-    $options['external'] = TRUE;
-  }
-
-  // Instead of pointing to user/[uid]/edit, point to user/me/edit.
-  if (preg_match('|^user/([0-9]*)/edit(/.*)?|', $path, $matches)) {
-    if (\Drupal::currentUser()->id() == $matches[1]) {
-      $path = 'user/me/edit' . $matches[2];
-    }
-  }
-}
-
-/**
  * Provide replacement values for placeholder tokens.
  *
  * This hook is invoked when someone calls
@@ -2906,6 +2876,31 @@ function hook_link_alter(&$variables) {
   if (isset($variables['route_name']) && strpos($variables['route_name'], 'admin') !== FALSE) {
     $variables['text'] .= ' (Warning!)';
   }
+}
+
+/**
+ * Alter the configuration synchronization steps.
+ *
+ * @param array $sync_steps
+ *   A one-dimensional array of \Drupal\Core\Config\ConfigImporter method names
+ *   or callables that are invoked to complete the import, in the order that
+ *   they will be processed. Each callable item defined in $sync_steps should
+ *   either be a global function or a public static method. The callable should
+ *   accept a $context array by reference. For example:
+ *   <code>
+ *     function _additional_configuration_step(&$context) {
+ *       // Do stuff.
+ *       // If finished set $context['finished'] = 1.
+ *     }
+ *   </code>
+ *   For more information on creating batches, see the
+ *   @link batch Batch operations @endlink documentation.
+ *
+ * @see callback_batch_operation()
+ * @see \Drupal\Core\Config\ConfigImporter::initialize()
+ */
+function hook_config_import_steps_alter(&$sync_steps) {
+  $sync_steps[] = '_additional_configuration_step';
 }
 
 /**

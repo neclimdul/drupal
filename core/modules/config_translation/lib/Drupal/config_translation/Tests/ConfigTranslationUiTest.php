@@ -7,7 +7,7 @@
 
 namespace Drupal\config_translation\Tests;
 
-use Drupal\Component\Utility\Json;
+use Drupal\Component\Serialization\Json;
 use Drupal\Component\Utility\Unicode;
 use Drupal\Core\Config\FileStorage;
 use Drupal\Core\Language\Language;
@@ -368,7 +368,6 @@ class ConfigTranslationUiTest extends WebTestBase {
    */
   public function testDateFormatTranslation() {
     $this->drupalLogin($this->admin_user);
-    $file_storage = new FileStorage($this->configDirectories[CONFIG_ACTIVE_DIRECTORY]);
 
     $this->drupalGet('admin/config/regional/date-time');
 

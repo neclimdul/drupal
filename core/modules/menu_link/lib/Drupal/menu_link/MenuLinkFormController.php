@@ -7,6 +7,7 @@
 
 namespace Drupal\menu_link;
 
+use Drupal\Component\Utility\UrlHelper;
 use Drupal\Core\Entity\EntityFormController;
 use Drupal\Core\Language\Language;
 use Drupal\Core\Path\AliasManagerInterface;
@@ -98,7 +99,7 @@ class MenuLinkFormController extends EntityFormController {
     if (isset($menu_link->options['fragment'])) {
       $path .= '#' . $menu_link->options['fragment'];
     }
-    if ($menu_link->module == 'menu') {
+    if ($menu_link->module == 'menu_ui') {
       $form['link_path'] = array(
         '#type' => 'textfield',
         '#title' => t('Path'),
@@ -137,7 +138,7 @@ class MenuLinkFormController extends EntityFormController {
     );
 
     // Generate a list of possible parents (not including this link or descendants).
-    $options = menu_parent_options(menu_get_menus(), $menu_link);
+    $options = menu_ui_parent_options(menu_ui_get_menus(), $menu_link);
     $default = $menu_link->menu_name . ':' . $menu_link->plid;
     if (!isset($options[$default])) {
       $default = 'tools:0';
@@ -212,7 +213,7 @@ class MenuLinkFormController extends EntityFormController {
       $menu_link->link_path = $normal_path;
       $form_state['values']['link_path'] = $normal_path;
     }
-    if (!url_is_external($menu_link->link_path)) {
+    if (!UrlHelper::isExternal($menu_link->link_path)) {
       $parsed_link = parse_url($menu_link->link_path);
       if (isset($parsed_link['query'])) {
         $menu_link->options['query'] = array();
@@ -298,7 +299,7 @@ class MenuLinkFormController extends EntityFormController {
     if ($saved) {
       drupal_set_message(t('The menu link has been saved.'));
       $form_state['redirect_route'] = array(
-        'route_name' => 'menu.menu_edit',
+        'route_name' => 'menu_ui.menu_edit',
         'route_parameters' => array(
           'menu' => $menu_link->menu_name,
         ),

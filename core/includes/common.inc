@@ -1,7 +1,17 @@
 <?php
 
+/**
+ * @file
+ * Common functions that many Drupal modules will need to reference.
+ *
+ * The functions that are critical and need to be available even when serving
+ * a cached page are instead located in bootstrap.inc.
+ */
+
+use Drupal\Component\Serialization\Json;
+use Drupal\Component\Serialization\Yaml;
+use Drupal\Component\Serialization\Exception\InvalidDataTypeException;
 use Drupal\Component\Utility\Crypt;
-use Drupal\Component\Utility\Json;
 use Drupal\Component\Utility\Number;
 use Drupal\Component\Utility\Settings;
 use Drupal\Component\Utility\SortArray;
@@ -13,8 +23,6 @@ use Drupal\Core\Cache\Cache;
 use Drupal\Core\Language\Language;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\Yaml\Parser;
-use Symfony\Component\Yaml\Exception\ParseException;
 use Drupal\Core\PhpStorage\PhpStorageFactory;
 use Drupal\Component\Utility\NestedArray;
 use Drupal\Core\Datetime\DrupalDateTime;
@@ -23,14 +31,6 @@ use Drupal\Core\Routing\GeneratorNotInitializedException;
 use Drupal\Core\Template\Attribute;
 use Drupal\Core\Render\Element;
 use Drupal\Core\Session\AnonymousUserSession;
-
-/**
- * @file
- * Common functions that many Drupal modules will need to reference.
- *
- * The functions that are critical and need to be available even when serving
- * a cached page are instead located in bootstrap.inc.
- */
 
 /**
  * @defgroup php_wrappers PHP wrapper functions
@@ -2824,7 +2824,7 @@ function drupal_clear_js_cache() {
  * @ingroup php_wrappers
  *
  * @deprecated in Drupal 8.x-dev, will be removed before Drupal 8.0.
- *   Use \Drupal\Component\Utility\Json::encode().
+ *   Use \Drupal\Component\Serialization\Json::encode().
  */
 function drupal_json_encode($var) {
   return Json::encode($var);
@@ -2838,7 +2838,7 @@ function drupal_json_encode($var) {
  * @ingroup php_wrappers
  *
  * @deprecated in Drupal 8.x-dev, will be removed before Drupal 8.0.
- *   Use \Drupal\Component\Utility\Json::decode().
+ *   Use \Drupal\Component\Serialization\Json::decode().
  */
 function drupal_json_decode($var) {
   return Json::decode($var);
@@ -2893,20 +2893,17 @@ function drupal_get_token($value = '') {
  *   The token to be validated.
  * @param string $value
  *   An additional value to base the token on.
- * @param bool $skip_anonymous
- *   Set to true to skip token validation for anonymous users.
  *
  * @return bool
- *   True for a valid token, false for an invalid token. When $skip_anonymous
- *   is true, the return value will always be true for anonymous users.
+ *   True for a valid token, false for an invalid token.
  *
  * @see \Drupal\Core\Access\CsrfTokenGenerator
  *
  * @deprecated in Drupal 8.x-dev, will be removed before Drupal 8.0.
  *   Use return \Drupal::csrfToken()->validate().
  */
-function drupal_valid_token($token, $value = '', $skip_anonymous = FALSE) {
-  return \Drupal::csrfToken()->validate($token, $value, $skip_anonymous);
+function drupal_valid_token($token, $value = '') {
+  return \Drupal::csrfToken()->validate($token, $value);
 }
 
 /**

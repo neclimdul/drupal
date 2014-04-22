@@ -7,8 +7,8 @@
 
 namespace Drupal\simpletest;
 
+use Drupal\Component\Serialization\Json;
 use Drupal\Component\Utility\Crypt;
-use Drupal\Component\Utility\Json;
 use Drupal\Component\Utility\NestedArray;
 use Drupal\Component\Utility\String;
 use Drupal\Component\Utility\Xss;
@@ -549,7 +549,7 @@ abstract class WebTestBase extends TestBase {
   }
 
   /**
-   * Internal helper function; Create a role with specified permissions.
+   * Creates a role with specified permissions.
    *
    * @param array $permissions
    *   Array of permission names to assign to role.

@@ -13,7 +13,6 @@ use Drupal\Core\KeyValueStore\KeyValueMemoryFactory;
 use Drupal\Core\Language\Language;
 use Symfony\Component\DependencyInjection\Reference;
 use Drupal\Core\Database\Database;
-use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\Request;
 
 /**
@@ -225,8 +224,9 @@ abstract class DrupalUnitTestBase extends UnitTestBase {
     $container->register('cache_factory', 'Drupal\Core\Cache\MemoryBackendFactory');
 
     $container
-      ->register('config.storage', 'Drupal\Core\Config\FileStorage')
-      ->addArgument($this->configDirectories[CONFIG_ACTIVE_DIRECTORY]);
+      ->register('config.storage.active', 'Drupal\Core\Config\DatabaseStorage')
+      ->addArgument(Database::getConnection())
+      ->addArgument('config');
 
     $this->settingsSet('keyvalue_default', 'keyvalue.memory');
     $container->set('keyvalue.memory', $this->keyValueFactory);
@@ -250,7 +250,7 @@ abstract class DrupalUnitTestBase extends UnitTestBase {
         ->addArgument(new Reference('service_container'))
         ->addArgument(new Reference('settings'));
 
-      $container->register('state', 'Drupal\Core\KeyValueStore\State')
+      $container->register('state', 'Drupal\Core\State\State')
         ->addArgument(new Reference('keyvalue'));
     }
 

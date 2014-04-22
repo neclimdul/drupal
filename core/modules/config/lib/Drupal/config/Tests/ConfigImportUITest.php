@@ -152,8 +152,8 @@ class ConfigImportUITest extends WebTestBase {
     // Ensure installations and uninstallation occur as expected.
     $installed = \Drupal::state()->get('ConfigImportUITest.core.extension.modules_installed', array());
     $uninstalled = \Drupal::state()->get('ConfigImportUITest.core.extension.modules_uninstalled', array());
-    $expected = array('ban', 'action', 'text', 'options');
-    $this->assertIdentical($expected, $installed, 'Ban, Action, Text and Options modules installed in the correct order.');
+    $expected = array('action', 'ban', 'text', 'options');
+    $this->assertIdentical($expected, $installed, 'Action, Ban, Text and Options modules installed in the correct order.');
     $this->assertTrue(empty($uninstalled), 'No modules uninstalled during import');
 
     // Verify that the action.settings configuration object was only written
@@ -207,7 +207,7 @@ class ConfigImportUITest extends WebTestBase {
     $installed = \Drupal::state()->get('ConfigImportUITest.core.extension.modules_installed', array());
     $uninstalled = \Drupal::state()->get('ConfigImportUITest.core.extension.modules_uninstalled', array());
     $expected = array('options', 'text', 'ban', 'action');
-    $this->assertIdentical($expected, $uninstalled, 'Options, Text, Action and Ban modules uninstalled in the correct order.');
+    $this->assertIdentical($expected, $uninstalled, 'Options, Text, Ban and Action modules uninstalled in the correct order.');
     $this->assertTrue(empty($installed), 'No modules installed during import');
 
     $theme_info = \Drupal::service('theme_handler')->listInfo();
@@ -304,6 +304,31 @@ class ConfigImportUITest extends WebTestBase {
 
     // Load the diff UI and verify that the diff reflects an added key.
     $this->drupalGet('admin/config/development/configuration/sync/diff/' . $config_name);
+  }
+
+  /**
+   * Tests that mutliple validation errors are listed on the page.
+   */
+  public function testImportValidation() {
+    // Set state value so that
+    // \Drupal\config_import_test\EventSubscriber::onConfigImportValidate() logs
+    // validation errors.
+    \Drupal::state()->set('config_import_test.config_import_validate_fail', TRUE);
+    // Ensure there is something to import.
+    $new_site_name = 'Config import test ' . $this->randomString();
+    $this->prepareSiteNameUpdate($new_site_name);
+
+    $this->drupalGet('admin/config/development/configuration');
+    $this->assertNoText(t('There are no configuration changes.'));
+    $this->drupalPostForm(NULL, array(), t('Import all'));
+
+    // Verify that the validation messages appear.
+    $this->assertText('The configuration synchronization failed validation.');
+    $this->assertText('Config import validate error 1.');
+    $this->assertText('Config import validate error 2.');
+
+    // Verify site name has not changed.
+    $this->assertNotEqual($new_site_name, \Drupal::config('system.site')->get('name'));
   }
 
   function prepareSiteNameUpdate($new_site_name) {
