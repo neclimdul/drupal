@@ -8,14 +8,14 @@
  * See COPYRIGHT.txt and LICENSE.txt files in the "core" directory.
  */
 
-use Drupal\Core\DrupalKernelFactory;
+use Drupal\Core\DrupalKernel;
 use Symfony\Component\HttpFoundation\Request;
 
-require_once __DIR__ . '/core/vendor/autoload.php';
+$autloader = require_once __DIR__ . '/core/vendor/autoload.php';
 
 try {
   $request = Request::createFromGlobals();
-  $kernel = DrupalKernelFactory::get($request);
+  $kernel = new DrupalKernel('production', $autloader);
   $response = $kernel
     ->handlePageCache($request)
     ->handle($request)

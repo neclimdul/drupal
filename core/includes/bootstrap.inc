@@ -240,7 +240,7 @@ define('DRUPAL_ROOT', dirname(dirname(__DIR__)));
  *   Use \Drupal\Core\DrupalKernelFactory::confPath().
  */
 function conf_path($require_settings = TRUE, $reset = FALSE, Request $request = NULL) {
-  return DrupalKernelFactory::confPath($request, $require_settings, $reset);
+  return Settings::confPath($request, $require_settings, $reset);
 }
 
 /**

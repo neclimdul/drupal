@@ -9,6 +9,7 @@ namespace Drupal\Core;
 
 use Drupal\Component\Utility\Crypt;
 use Drupal\Component\Utility\Settings;
+use Drupal\Component\Utility\Timer;
 use Drupal\Component\Utility\UrlHelper;
 use Drupal\Core\Config\BootstrapConfigStorageFactory;
 use Drupal\Core\Config\NullStorage;
@@ -145,6 +146,14 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
    */
   protected $serviceProviders;
 
+
+  /**
+   * Whether the environment has been initialized for the request.
+   *
+   * @var bool
+   */
+  protected static $isRequestInitialized = FALSE;
+
   /**
    * Constructs a DrupalKernel object.
    *
@@ -162,34 +171,43 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
    *   (optional) Whether the DrupalKernel object is for testing purposes only.
    *   Defaults to FALSE.
    */
-  public function __construct($environment, ClassLoader $class_loader = NULL, $allow_dumping = TRUE, $test_only = FALSE) {
+  public function __construct($environment, ClassLoader $class_loader, $allow_dumping = TRUE, $test_only = FALSE) {
     $this->environment = $environment;
     $this->allowDumping = $allow_dumping;
     $this->testOnly = $test_only;
-    if ($class_loader) {
-      $this->classLoader = $class_loader;
-    }
-    else {
-      $this->classLoader = drupal_classloader();
-    }
-  }
-
-  /**
-   * Sets the classloader.
-   *
-   * @param \Composer\Autoload\ClassLoader $class_loader
-   *   The class loader.
-   */
-  public function setClassLoader(ClassLoader $class_loader) {
     $this->classLoader = $class_loader;
   }
 
   /**
    * {@inheritdoc}
    */
-  public function boot() {
+  public function boot(Request $request) {
     if ($this->booted) {
       return;
+    }
+
+    // Include our bootstrap file.
+    require_once dirname(dirname(dirname(__DIR__))) . '/includes/bootstrap.inc';
+
+    // Initialize Request globals.
+    $this->initializeRequestGlobals($request);
+
+    // Get our most basic settings setup.
+    Settings::initialize($request);
+
+    // Start a page timer:
+    Timer::start('page');
+
+    // Set the Drupal custom error handler.
+    set_error_handler('_drupal_error_handler');
+    set_exception_handler('_drupal_exception_handler');
+
+    // Redirect the user to the installation script if Drupal has not been
+    // installed yet (i.e., if no $databases array has been defined in the
+    // settings.php file) and we are not already installing.
+    if (empty($GLOBALS['databases']) && !drupal_installation_attempted() && !drupal_is_cli()) {
+      include_once DRUPAL_ROOT . '/core/includes/install.inc';
+      install_goto('core/install.php');
     }
 
     $this->initializeContainer();
@@ -214,10 +232,6 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
    * {@inheritdoc}
    */
   public function getContainer() {
-
-    // Ensure container is available before returning it.
-    $this->boot();
-
     return $this->container;
   }
 
@@ -228,7 +242,7 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
     // @todo Use the current_user proxy.
     global $user;
 
-    $this->boot();
+    $this->boot($request);
 
     // Check for a cache mode force from settings.php.
     if (Settings::get('page_cache_without_database')) {
@@ -267,27 +281,11 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
   }
 
   /**
-   * Sets testOnly property.
-   *
-   * @param bool $test_only
-   *   Whether this is a test only.
-   *
-   * @see core/modules/system/tests/https.php
-   * @see core/modules/system/tests/http.php
-   *
-   * @return $this
-   */
-  public function setTestOnly($test_only) {
-    $this->testOnly = $test_only;
-    return $this;
-  }
-
-  /**
    * Finishes booting by loading remaining includes and enabled modules.
    *
    * @return $this
    */
-  public function bootCode() {
+  public function bootCode(Request $request) {
 
     require_once DRUPAL_ROOT . '/core/includes/common.inc';
     require_once DRUPAL_ROOT . '/core/includes/database.inc';
@@ -308,6 +306,15 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
 
     // Load all enabled modules.
     $this->container->get('module_handler')->loadAll();
+
+    // Ensure container has a request scope so we can load file stream wrappers.
+    if (!$this->container->isScopeActive('request')) {
+      // Enter the request scope so that current_user service is available for
+      // locale/translation sake.
+      $this->container->enterScope('request');
+      $this->container->set('request', $request);
+      $this->container->get('request_stack')->push($request);
+    }
 
     // Make sure all stream wrappers are registered.
     file_get_stream_wrappers();
@@ -388,7 +395,6 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
     return $serviceProviders;
   }
 
-
   /**
    * {@inheritdoc}
    */
@@ -414,9 +420,8 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
    */
   public function handle(Request $request, $type = self::MASTER_REQUEST, $catch = TRUE) {
 
-    $this->boot();
-    $this->ensureContainerScope($request);
-    $this->bootCode();
+    $this->boot($request);
+    $this->bootCode($request);
     return $this->getHttpKernel()->handle($request, $type, $catch);
   }
 
@@ -425,24 +430,13 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
    */
   public function preHandle(Request $request) {
 
-    $this->boot();
-    $this->ensureContainerScope($request);
-    $this->bootCode();
+    $this->boot($request);
+    $this->bootCode($request);
 
     // Exit if we should be in a test environment but aren't.
     if ($this->testOnly && !drupal_valid_test_ua()) {
       header($request->server->get('SERVER_PROTOCOL') . ' 403 Forbidden');
       exit;
-    }
-  }
-
-  protected function ensureContainerScope($request) {
-    if (!$this->container->isScopeActive('request')) {
-      // Enter the request scope so that current_user service is available for
-      // locale/translation sake.
-      $this->container->enterScope('request');
-      $this->container->set('request', $request);
-      $this->container->get('request_stack')->push($request);
     }
   }
 
@@ -494,13 +488,6 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
     $this->newModuleList = $module_list;
     foreach ($module_filenames as $name => $extension) {
       $this->moduleData[$name] = $extension;
-    }
-    // If we haven't yet booted, we don't need to do anything: the new module
-    // list will take effect when boot() is called. If we have already booted,
-    // then reboot in order to refresh the serviceProvider list and container.
-    if ($this->booted) {
-      $this->booted = FALSE;
-      $this->boot();
     }
   }
 
@@ -622,6 +609,134 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
       $this->container->set('request', $request);
     }
     \Drupal::setContainer($this->container);
+  }
+
+  /**
+   * Bootstraps the legacy global request variables.
+   *
+   * @param \Symfony\Component\HttpFoundation\Request $request
+   *   The current request.
+   *
+   * @todo D8: Eliminate this entirely in favor of Request object.
+   */
+  protected static function initializeRequestGlobals(Request $request) {
+    // If we do this more then once per page request things go weird.
+    // $globals--
+    if (static::$isRequestInitialized) {
+      return;
+    }
+
+    // Provided by settings.php.
+    global $base_url, $cookie_domain;
+    // Set and derived from $base_url by this function.
+    global $base_path, $base_root, $script_path;
+    global $base_secure_url, $base_insecure_url;
+
+    $is_https = $request->isSecure();
+
+    if (isset($base_url)) {
+      // Parse fixed base URL from settings.php.
+      $parts = parse_url($base_url);
+      if (!isset($parts['path'])) {
+        $parts['path'] = '';
+      }
+      $base_path = $parts['path'] . '/';
+      // Build $base_root (everything until first slash after "scheme://").
+      $base_root = substr($base_url, 0, strlen($base_url) - strlen($parts['path']));
+    }
+    else {
+      // Create base URL.
+      $http_protocol = $is_https ? 'https' : 'http';
+      $base_root = $http_protocol . '://' . $request->server->get('HTTP_HOST');
+
+      $base_url = $base_root;
+
+      // For a request URI of '/index.php/foo', $_SERVER['SCRIPT_NAME'] is
+      // '/index.php', whereas $_SERVER['PHP_SELF'] is '/index.php/foo'.
+      if ($dir = rtrim(dirname($request->server->get('SCRIPT_NAME')), '\/')) {
+        // Remove "core" directory if present, allowing install.php, update.php,
+        // and others to auto-detect a base path.
+        $core_position = strrpos($dir, '/core');
+        if ($core_position !== FALSE && strlen($dir) - 5 == $core_position) {
+          $base_path = substr($dir, 0, $core_position);
+        }
+        else {
+          $base_path = $dir;
+        }
+        $base_url .= $base_path;
+        $base_path .= '/';
+      }
+      else {
+        $base_path = '/';
+      }
+    }
+    $base_secure_url = str_replace('http://', 'https://', $base_url);
+    $base_insecure_url = str_replace('https://', 'http://', $base_url);
+
+    // Determine the path of the script relative to the base path, and add a
+    // trailing slash. This is needed for creating URLs to Drupal pages.
+    if (!isset($script_path)) {
+      $script_path = '';
+      // We don't expect scripts outside of the base path, but sanity check
+      // anyway.
+      if (strpos($request->server->get('SCRIPT_NAME'), $base_path) === 0) {
+        $script_path = substr($request->server->get('SCRIPT_NAME'), strlen($base_path)) . '/';
+        // If the request URI does not contain the script name, then clean URLs
+        // are in effect and the script path can be similarly dropped from URL
+        // generation. For servers that don't provide $_SERVER['REQUEST_URI'],
+        // we do not know the actual URI requested by the client, and
+        // request_uri() returns a URI with the script name, resulting in
+        // non-clean URLs unless
+        // there's other code that intervenes.
+        if (strpos(request_uri(TRUE) . '/', $base_path . $script_path) !== 0) {
+          $script_path = '';
+        }
+        // @todo Temporary BC for install.php, update.php, and other scripts.
+        //   - http://drupal.org/node/1547184
+        //   - http://drupal.org/node/1546082
+        if ($script_path !== 'index.php/') {
+          $script_path = '';
+        }
+      }
+    }
+
+    if ($cookie_domain) {
+      // If the user specifies the cookie domain, also use it for session name.
+      $session_name = $cookie_domain;
+    }
+    else {
+      // Otherwise use $base_url as session name, without the protocol
+      // to use the same session identifiers across HTTP and HTTPS.
+      list(, $session_name) = explode('://', $base_url, 2);
+      // HTTP_HOST can be modified by a visitor, but has been sanitized already
+      // in DrupalKernelFactory::bootEnvironment().
+      if ($cookie_domain = $request->server->get('HTTP_HOST')) {
+        // Strip leading periods, www., and port numbers from cookie domain.
+        $cookie_domain = ltrim($cookie_domain, '.');
+        if (strpos($cookie_domain, 'www.') === 0) {
+          $cookie_domain = substr($cookie_domain, 4);
+        }
+        $cookie_domain = explode(':', $cookie_domain);
+        $cookie_domain = '.' . $cookie_domain[0];
+      }
+    }
+    // Per RFC 2109, cookie domains must contain at least one dot other than the
+    // first. For hosts such as 'localhost' or IP Addresses we don't set a
+    // cookie domain.
+    if (count(explode('.', $cookie_domain)) > 2 && !is_numeric(str_replace('.', '', $cookie_domain))) {
+      ini_set('session.cookie_domain', $cookie_domain);
+    }
+    // To prevent session cookies from being hijacked, a user can configure the
+    // SSL version of their website to only transfer session cookies via SSL by
+    // using PHP's session.cookie_secure setting. The browser will then use two
+    // separate session cookies for the HTTPS and HTTP versions of the site. So
+    // we must use different session identifiers for HTTPS and HTTP to prevent a
+    // cookie collision.
+    if ($is_https) {
+      ini_set('session.cookie_secure', TRUE);
+    }
+    $prefix = ini_get('session.cookie_secure') ? 'SSESS' : 'SESS';
+    session_name($prefix . substr(hash('sha256', $session_name), 0, 32));
   }
 
   /**

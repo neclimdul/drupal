@@ -365,7 +365,7 @@ function install_begin_request(&$install_state) {
     $directory = $GLOBALS['config']['locale.settings']['translation.path'];
   }
   else {
-    $directory = conf_path() . '/files/translations';
+    $directory = conf_path($request) . '/files/translations';
   }
   $container->set('string_translator.file_translation', new FileTranslation($directory));
   $container->get('string_translation')
