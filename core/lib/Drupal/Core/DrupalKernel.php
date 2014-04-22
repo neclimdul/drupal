@@ -10,6 +10,7 @@ namespace Drupal\Core;
 use Drupal\Component\Utility\Crypt;
 use Drupal\Component\Utility\Settings;
 use Drupal\Component\Utility\Timer;
+use Drupal\Component\Utility\Unicode;
 use Drupal\Component\Utility\UrlHelper;
 use Drupal\Core\Config\BootstrapConfigStorageFactory;
 use Drupal\Core\Config\NullStorage;
@@ -189,11 +190,32 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
     // Include our bootstrap file.
     require_once dirname(dirname(dirname(__DIR__))) . '/includes/bootstrap.inc';
 
-    // Initialize Request globals.
-    $this->initializeRequestGlobals($request);
+    $this->initializePhpEnvironment();
+
+    // Indicate that code is operating in a test child site.
+    if (!defined('DRUPAL_TEST_IN_CHILD_SITE')) {
+      if ($test_prefix = drupal_valid_test_ua()) {
+        // Only code that interfaces directly with tests should rely on this
+        // constant; e.g., the error/exception handler conditionally adds further
+        // error information into HTTP response headers that are consumed by
+        // Simpletest's internal browser.
+        define('DRUPAL_TEST_IN_CHILD_SITE', TRUE);
+
+        // Log fatal errors to the test site directory.
+        ini_set('log_errors', 1);
+        ini_set('error_log', DRUPAL_ROOT . '/sites/simpletest/' . substr($test_prefix, 10) . '/error.log');
+      }
+      else {
+        // Ensure that no other code defines this.
+        define('DRUPAL_TEST_IN_CHILD_SITE', FALSE);
+      }
+    }
 
     // Get our most basic settings setup.
     Settings::initialize($request);
+
+    // Initialize Request globals.
+    $this->initializeRequestGlobals($request);
 
     // Start a page timer:
     Timer::start('page');
@@ -489,6 +511,8 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
     foreach ($module_filenames as $name => $extension) {
       $this->moduleData[$name] = $extension;
     }
+
+    $this->initializeContainer();
   }
 
   /**
@@ -612,6 +636,40 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
   }
 
   /**
+   * Setup a consistent PHP environment.
+   *
+   * This method sets PHP environment options we want to be sure are set
+   * correctly for security or just saneness.
+   */
+  protected function initializePhpEnvironment() {
+
+    // Enforce E_STRICT, but allow users to set levels not part of E_STRICT.
+    error_reporting(E_STRICT | E_ALL);
+
+    // Override PHP settings required for Drupal to work properly.
+    // sites/default/default.settings.php contains more runtime settings.
+    // The .htaccess file contains settings that cannot be changed at runtime.
+
+    // Use session cookies, not transparent sessions that puts the session id in
+    // the query string.
+    ini_set('session.use_cookies', '1');
+    ini_set('session.use_only_cookies', '1');
+    ini_set('session.use_trans_sid', '0');
+    // Don't send HTTP headers using PHP's session handler.
+    // Send an empty string to disable the cache limiter.
+    ini_set('session.cache_limiter', '');
+    // Use httponly session cookies.
+    ini_set('session.cookie_httponly', '1');
+
+    // Set sane locale settings, to ensure consistent string, dates, times and
+    // numbers handling.
+    setlocale(LC_ALL, 'C');
+
+    // Detect string handling method.
+    Unicode::check();
+  }
+
+  /**
    * Bootstraps the legacy global request variables.
    *
    * @param \Symfony\Component\HttpFoundation\Request $request
@@ -619,7 +677,7 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
    *
    * @todo D8: Eliminate this entirely in favor of Request object.
    */
-  protected static function initializeRequestGlobals(Request $request) {
+  protected function initializeRequestGlobals(Request $request) {
     // If we do this more then once per page request things go weird.
     // $globals--
     if (static::$isRequestInitialized) {
@@ -736,7 +794,9 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
       ini_set('session.cookie_secure', TRUE);
     }
     $prefix = ini_get('session.cookie_secure') ? 'SSESS' : 'SESS';
+
     session_name($prefix . substr(hash('sha256', $session_name), 0, 32));
+    static::$isRequestInitialized = TRUE;
   }
 
   /**

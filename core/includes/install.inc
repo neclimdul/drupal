@@ -640,12 +640,13 @@ function drupal_install_system($install_state) {
   $kernel = \Drupal::service('kernel');
   $kernel->shutdown();
   $kernel->preHandle($request);
+  $container = $kernel->getContainer();
 
   // Install base system configuration.
   \Drupal::service('config.installer')->installDefaultConfig('core', 'core');
 
   // Install System module.
-  \Drupal::moduleHandler()->install(array('system'), FALSE);
+  $container->get('module_handler')->install(array('system'), FALSE);
 
   // DrupalKernel::preHandle() above calls into DrupalKernel::bootCode(), which
   // primes file_get_stream_wrappers()'s static list of custom stream wrappers

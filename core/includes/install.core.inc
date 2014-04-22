@@ -289,7 +289,7 @@ function install_begin_request(&$install_state) {
     exit;
   }
 
-  DrupalKernelFactory::boot($request, DrupalKernelFactory::BOOTSTRAP_CONFIGURATION);
+  Settings::initialize($request);
 
   // Ensure that procedural dependencies are loaded as early as possible,
   // since the error/exception handlers depend on them.
@@ -357,7 +357,8 @@ function install_begin_request(&$install_state) {
     $environment = 'prod';
   }
 
-  $kernel = DrupalKernelFactory::get($request, $environment, FALSE);
+  $kernel = new \Drupal\Core\DrupalKernel($environment, drupal_classloader(), FALSE);
+  $kernel->boot($request);
   $container = $kernel->getContainer();
 
   // Register the file translation service.
@@ -365,7 +366,7 @@ function install_begin_request(&$install_state) {
     $directory = $GLOBALS['config']['locale.settings']['translation.path'];
   }
   else {
-    $directory = conf_path($request) . '/files/translations';
+    $directory = Settings::confPath($request) . '/files/translations';
   }
   $container->set('string_translator.file_translation', new FileTranslation($directory));
   $container->get('string_translation')
