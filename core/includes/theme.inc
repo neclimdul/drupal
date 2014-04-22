@@ -109,7 +109,21 @@ function drupal_theme_initialize(Request $request = NULL) {
   if (!$request) {
     $request = \Drupal::request();
   }
-  $theme = \Drupal::service('theme.negotiator')->determineActiveTheme($request) ?: 'stark';
+  $theme = \Drupal::service('theme.negotiator')->determineActiveTheme($request);
+
+  // If no theme could be negotiated, or if the negotiated theme is not within
+  // the list of enabled themes, fall back to the default theme output of core
+  // and modules (similar to Stark, but without a theme extension at all). This
+  // is possible, because _drupal_theme_initialize() always loads the Twig theme
+  // engine.
+  if (!$theme || !isset($themes[$theme])) {
+    $theme = 'core';
+    $theme_key = $theme;
+    // /core/core.info.yml does not actually exist, but is required because
+    // Extension expects a pathname.
+    _drupal_theme_initialize(new Extension('theme', 'core/core.info.yml'));
+    return;
+  }
 
   // Store the identifier for retrieving theme settings with.
   $theme_key = $theme;
@@ -407,6 +421,8 @@ function _theme($hook, $variables = array()) {
   if (!$module_handler->isLoaded() && !defined('MAINTENANCE_MODE')) {
     throw new Exception(t('_theme() may not be called until all modules are loaded.'));
   }
+  // Ensure the theme is initialized.
+  drupal_theme_initialize();
 
   /** @var \Drupal\Core\Utility\ThemeRegistry $theme_registry */
   $theme_registry = \Drupal::service('theme.registry')->getRuntime();
@@ -857,8 +873,8 @@ function theme_get_setting($setting_name, $theme = NULL) {
 
     // Get the values for the theme-specific settings from the .info.yml files
     // of the theme and all its base themes.
-    if ($theme) {
-      $themes = list_themes();
+    $themes = list_themes();
+    if ($theme && isset($themes[$theme])) {
       $theme_object = $themes[$theme];
 
       // Create a list which includes the current theme and all its base themes.
@@ -880,7 +896,7 @@ function theme_get_setting($setting_name, $theme = NULL) {
     // Get the global settings from configuration.
     $cache[$theme]->merge(\Drupal::config('system.theme.global')->get());
 
-    if ($theme) {
+    if ($theme && isset($themes[$theme])) {
       // Retrieve configured theme-specific settings, if any.
       try {
         if ($theme_settings = \Drupal::config($theme . '.settings')->get()) {
@@ -981,13 +997,16 @@ function theme_settings_convert_to_config(array $theme_settings, Config $config)
  * @param $theme_list
  *   An array of theme names.
  *
+ * @return bool
+ *   Whether any of the given themes have been enabled.
+ *
  * @deprecated in Drupal 8.x-dev, will be removed before Drupal 8.0.
  *   Use \Drupal::service('theme_handler')->enable().
  *
  * @see \Drupal\Core\Extension\ThemeHandler::enable().
  */
 function theme_enable($theme_list) {
-  \Drupal::service('theme_handler')->enable($theme_list);
+  return \Drupal::service('theme_handler')->enable($theme_list);
 }
 
 /**
@@ -996,13 +1015,16 @@ function theme_enable($theme_list) {
  * @param $theme_list
  *   An array of theme names.
  *
+ * @return bool
+ *   Whether any of the given themes have been disabled.
+ *
  * @deprecated in Drupal 8.x-dev, will be removed before Drupal 8.0.
  *   Use \Drupal::service('theme_handler')->disable().
  *
  * @see \Drupal\Core\Extension\ThemeHandler::disable().
  */
 function theme_disable($theme_list) {
-  \Drupal::service('theme_handler')->disable($theme_list);
+  return \Drupal::service('theme_handler')->disable($theme_list);
 }
 
 /**

@@ -1082,6 +1082,7 @@ function install_profile_info($profile, $langcode = 'en') {
     // Set defaults for module info.
     $defaults = array(
       'dependencies' => array(),
+      'themes' => array('stark'),
       'description' => '',
       'version' => NULL,
       'hidden' => FALSE,
