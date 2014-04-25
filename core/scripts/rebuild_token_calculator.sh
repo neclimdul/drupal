@@ -11,14 +11,15 @@ use Drupal\Component\Utility\Settings;
 use Drupal\Core\DrupalKernel;
 use Symfony\Component\HttpFoundation\Request;
 
-require_once __DIR__ . '/../vendor/autoload.php';
-require_once dirname(__DIR__) . '/includes/bootstrap.inc';
+$autoloader = require_once __DIR__ . '/../vendor/autoload.php';
+require_once __DIR__ . '/../includes/bootstrap.inc';
 
 if (!drupal_is_cli()) {
   exit;
 }
 $request = Request::createFromGlobals();
-DrupalKernel::bootConfiguration($request);
+$kernel = new DrupalKernel('prod', $autoloader);
+$kernel->boot($request);
 
 $timestamp = time();
 $token = Crypt::hmacBase64($timestamp, Settings::get('hash_salt'));
