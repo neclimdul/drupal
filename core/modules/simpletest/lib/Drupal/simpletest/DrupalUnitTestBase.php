@@ -139,7 +139,7 @@ abstract class DrupalUnitTestBase extends UnitTestBase {
 
     // Bootstrap the kernel.
     $request = Request::create('/');
-    $this->kernel = new DrupalKernel('testing', $request, FALSE);
+    $this->kernel = new DrupalKernel('testing', drupal_classloader(), FALSE);
     $this->kernel->preHandle($request);
 
     // Create a minimal core.extension configuration object so that the list of
