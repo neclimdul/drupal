@@ -86,7 +86,7 @@ $autoloader = require_once $core . '/vendor/autoload.php';
 
 $request = Request::createFromGlobals();
 $kernel = new DrupalKernel('prod', $autoloader, FALSE);
-
+$kernel->boot($request);
 $password_hasher = $kernel->getContainer()->get('password');
 
 foreach ($passwords as $password) {
