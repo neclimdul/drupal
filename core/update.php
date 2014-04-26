@@ -308,6 +308,7 @@ require_once __DIR__ . '/includes/database.inc';
 
 $request = Request::createFromGlobals();
 $kernel = new DrupalKernel('update', $autoloader, FALSE);
+$kernel->boot($request);
 
 // Updating from a site schema version prior to 8000 should block the update
 // process. Ensure that the site is not attempting to update a database
