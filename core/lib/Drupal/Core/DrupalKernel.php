@@ -8,7 +8,7 @@
 namespace Drupal\Core;
 
 use Drupal\Component\Utility\Crypt;
-use Drupal\Component\Utility\Settings;
+use Drupal\Core\Site\Settings;
 use Drupal\Component\Utility\Timer;
 use Drupal\Component\Utility\Unicode;
 use Drupal\Component\Utility\UrlHelper;

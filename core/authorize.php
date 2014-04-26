@@ -20,9 +20,9 @@
  * @link authorize Authorized operation helper functions @endlink
  */
 
-use Drupal\Component\Utility\Settings;
 use Drupal\Core\DrupalKernel;
 use Symfony\Component\HttpFoundation\Request;
+use Drupal\Core\Site\Settings;
 use Drupal\Core\Page\DefaultHtmlPageRenderer;
 
 // Change the directory to the Drupal root.

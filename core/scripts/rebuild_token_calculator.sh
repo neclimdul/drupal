@@ -7,9 +7,9 @@
  */
 
 use Drupal\Component\Utility\Crypt;
-use Drupal\Component\Utility\Settings;
 use Drupal\Core\DrupalKernel;
 use Symfony\Component\HttpFoundation\Request;
+use Drupal\Core\Site\Settings;
 
 $autoloader = require_once __DIR__ . '/../vendor/autoload.php';
 require_once __DIR__ . '/../includes/bootstrap.inc';

@@ -181,8 +181,8 @@ Topic coordinators
 ------------------
 
 Accessibility
-- Brandon Bowersox-Johnson 'bowersox' http://drupal.org/user/186415
 - Mike Gifford 'mgifford' http://drupal.org/user/27930
+- Jesse Renée Beach 'jessebeach' http://drupal.org/user/748566
 
 Documentation
 - Jennifer Hodgdon 'jhodgdon' http://drupal.org/user/155601
@@ -210,7 +210,7 @@ Action module
 - ?
 
 Aggregator module
-- Paris Liakos 'rootatwc' http://drupal.org/user/1011436
+- Paris Liakos 'ParisLiakos' http://drupal.org/user/1011436
 
 Ban module
 - ?
@@ -324,7 +324,7 @@ Language module
 Link module
 - ?
 
-Menu module
+Menu UI module
 - ?
 
 Menu Link module

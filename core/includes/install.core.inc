@@ -1,8 +1,8 @@
 <?php
 
 use Drupal\Component\Utility\UrlHelper;
-use Drupal\Component\Utility\Settings;
 use Drupal\Core\DrupalKernel;
+use Drupal\Core\Config\BootstrapConfigStorageFactory;
 use Drupal\Core\Database\Database;
 use Drupal\Core\Database\DatabaseExceptionWrapper;
 use Drupal\Core\Database\Install\TaskException;
@@ -12,6 +12,7 @@ use Drupal\Core\Installer\Exception\NoProfilesException;
 use Drupal\Core\Language\Language;
 use Drupal\Core\Language\LanguageManager;
 use Drupal\Core\Page\DefaultHtmlPageRenderer;
+use Drupal\Core\Site\Settings;
 use Drupal\Core\StringTranslation\Translator\FileTranslation;
 use Drupal\Core\Extension\ExtensionDiscovery;
 use Drupal\Core\DependencyInjection\ContainerBuilder;
@@ -429,10 +430,9 @@ function install_begin_request(&$install_state) {
     }
   }
 
-  // Ensure that the active configuration directory is empty before installation
-  // starts.
+  // Ensure that the active configuration is empty before installation starts.
   if ($install_state['config_verified'] && empty($task)) {
-    $config = \Drupal::service('config.storage')->listAll();
+    $config = BootstrapConfigStorageFactory::get()->listAll();
     if (!empty($config)) {
       $task = NULL;
       throw new AlreadyInstalledException($container->get('string_translation'));
@@ -1507,7 +1507,6 @@ function install_profile_modules(&$install_state) {
     'operations' => $operations,
     'title' => t('Installing @drupal', array('@drupal' => drupal_install_profile_distribution_name())),
     'error_message' => t('The installation has encountered an error.'),
-    'finished' => '_install_profile_modules_finished',
   );
   return $batch;
 }
@@ -1685,10 +1684,10 @@ function install_finished(&$install_state) {
   // Installation profiles are always loaded last.
   module_set_weight($profile, 1000);
 
-  // Flush all caches to ensure that any full bootstraps during the installer
-  // do not leave stale cached data, and that any content types or other items
-  // registered by the installation profile are registered correctly.
-  drupal_flush_all_caches();
+  // Build the router once after installing all modules.
+  // This would normally happen upon KernelEvents::TERMINATE, but since the
+  // installer does not use an HttpKernel, that event is never triggered.
+  \Drupal::service('router.builder')->rebuild();
 
   // Run cron to populate update status tables (if available) so that users
   // will be warned if they've installed an out of date Drupal version.
@@ -1726,15 +1725,6 @@ function _install_module_batch($module, $module_name, &$context) {
   \Drupal::moduleHandler()->install(array($module), FALSE);
   $context['results'][] = $module;
   $context['message'] = t('Installed %module module.', array('%module' => $module_name));
-}
-
-/**
- * 'Finished' callback for module installation batch.
- */
-function _install_profile_modules_finished($success, $results, $operations) {
-  // Flush all caches to complete the module installation process. Subsequent
-  // installation tasks will now have full access to the profile's modules.
-  drupal_flush_all_caches();
 }
 
 /**
