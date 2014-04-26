@@ -11,6 +11,8 @@ use Drupal\Core\DrupalKernel;
 use Drupal\Core\Site\Settings;
 use Symfony\Component\HttpFoundation\Request;
 
+$loader = require_once __DIR__ . '/../vendor/autoload.php';
+
 const SIMPLETEST_SCRIPT_COLOR_PASS = 32; // Green.
 const SIMPLETEST_SCRIPT_COLOR_FAIL = 31; // Red.
 const SIMPLETEST_SCRIPT_COLOR_EXCEPTION = 33; // Brown.
@@ -24,7 +26,7 @@ if ($args['help'] || $count == 0) {
 }
 
 simpletest_script_init();
-simpletest_script_bootstrap();
+simpletest_script_bootstrap($loader);
 
 if ($args['execute-test']) {
   simpletest_script_setup_database();
@@ -353,17 +355,19 @@ function simpletest_script_init() {
  *
  * @see install_begin_request()
  */
-function simpletest_script_bootstrap() {
+function simpletest_script_bootstrap($loader) {
 
   // Replace services with in-memory and null implementations.
   $GLOBALS['conf']['container_service_providers']['InstallerServiceProvider'] = 'Drupal\Core\Installer\InstallerServiceProvider';
 
-  $autoloader = require_once __DIR__ . '/../vendor/autoload.php';
-
-  // Fully bootstrap a running Drupal site.
   $request = Request::createFromGlobals();
-  $kernel = new DrupalKernel('testing', $autoloader, FALSE);
-  $kernel->preHandle($request);
+  $kernel = new DrupalKernel('testing', $loader, FALSE);
+  $kernel->boot($request);
+
+  // Load legacy include files.
+  foreach (glob(DRUPAL_ROOT . '/core/includes/*.inc') as $include) {
+    require_once $include;
+  }
 
   // Remove Drupal's error/exception handlers; they are designed for HTML
   // and there is no storage nor a (watchdog) logger here.
@@ -380,7 +384,10 @@ function simpletest_script_bootstrap() {
     ));
   }
 
+  // Manually enter set request scope since we can't use the handle methods yet.
   $container = $kernel->getContainer();
+  $container->enterScope('request');
+  $container->set('request', $request, 'request');
 
   $module_handler = $container->get('module_handler');
   // @todo Remove System module. Only needed because \Drupal\Core\Datetime\Date
