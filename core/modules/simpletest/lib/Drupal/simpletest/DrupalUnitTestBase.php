@@ -138,8 +138,16 @@ abstract class DrupalUnitTestBase extends UnitTestBase {
     $request = Request::create('/');
     $this->kernel = new DrupalKernel('testing', drupal_classloader(), FALSE);
     $this->kernel->boot($request);
-    $this->container = $this->kernel->getContainer();
+
+    // Merge in settings from TestBase::prepareEnvironment().
+    // This is weird but Kernel boot resets settings and containerBuilder() methods
+    // set some settings so we merge them together.
     new Settings($settings + Settings::getAll());
+
+    // Set the request scope.
+    $this->container = $this->kernel->getContainer();
+    $this->container->set('request', $request);
+    $this->container->get('request_stack')->push($request);
 
     \Drupal::state()->set('system.module.files', $this->moduleFiles);
     \Drupal::state()->set('system.theme.files', $this->themeFiles);
