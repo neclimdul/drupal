@@ -8,7 +8,7 @@
 namespace Drupal\simpletest;
 
 use Drupal\Core\Session\UserSession;
-use Drupal\Component\Utility\Settings;
+use Drupal\Core\Site\Settings;
 
 /**
  * Base class for testing the interactive installer.

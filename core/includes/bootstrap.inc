@@ -234,7 +234,7 @@ define('DRUPAL_ROOT', dirname(dirname(__DIR__)));
  * @see default.settings.php
  *
  * @deprecated 8.x
- *   Use \Drupal\Component\Utility\Settings::confPath().
+ *   Use \Drupal\Core\Site\Settings::confPath().
  */
 function conf_path($require_settings = TRUE, $reset = FALSE, Request $request = NULL) {
   return Settings::confPath($request, $require_settings, $reset);

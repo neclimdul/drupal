@@ -240,7 +240,7 @@ $config_directories = array();
  * directory and reverse proxy address, and temporary configuration, such as
  * turning on Twig debugging and security overrides.
  *
- * @see \Drupal\Component\Utility\Settings::get()
+ * @see \Drupal\Core\Site\Settings::get()
  */
 
 /**
