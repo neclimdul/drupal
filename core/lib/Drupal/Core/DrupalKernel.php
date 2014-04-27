@@ -224,9 +224,6 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
     set_error_handler('_drupal_error_handler');
     set_exception_handler('_drupal_exception_handler');
 
-    // If we didn't get a valid settings file, ensure we don't try to dump the container.
-    $this->allowDumping = $this->allowDumping && Settings::get('hash_salt');
-
     // Redirect the user to the installation script if Drupal has not been
     // installed yet (i.e., if no $databases array has been defined in the
     // settings.php file) and we are not already installing.
@@ -235,11 +232,7 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
       install_goto('core/install.php');
     }
 
-    $this->initializeContainer();
     $this->booted = TRUE;
-    if ($this->containerNeedsDumping && !$this->dumpDrupalContainer($this->container, static::CONTAINER_BASE_CLASS)) {
-      watchdog('DrupalKernel', 'Container cannot be written to disk');
-    }
   }
 
   /**
@@ -257,6 +250,12 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
    * {@inheritdoc}
    */
   public function getContainer() {
+    if (!isset($this->container)) {
+      $this->initializeContainer();
+    }
+    if ($this->containerNeedsDumping && !$this->dumpDrupalContainer($this->container, static::CONTAINER_BASE_CLASS)) {
+      watchdog('DrupalKernel', 'Container cannot be written to disk');
+    }
     return $this->container;
   }
 
@@ -274,7 +273,7 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
       $cache_enabled = TRUE;
     }
     else {
-      $config = $this->container->get('config.factory')->get('system.performance');
+      $config = $this->getContainer()->get('config.factory')->get('system.performance');
       $cache_enabled = $config->get('cache.page.use_internal');
     }
 
@@ -328,6 +327,9 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
     require_once DRUPAL_ROOT . '/core/includes/errors.inc';
     require_once DRUPAL_ROOT . '/core/includes/schema.inc';
     require_once DRUPAL_ROOT . '/core/includes/entity.inc';
+
+    // Ensure container is loaded.
+    $this->getContainer();
 
     // Load all enabled modules.
     $this->container->get('module_handler')->loadAll();

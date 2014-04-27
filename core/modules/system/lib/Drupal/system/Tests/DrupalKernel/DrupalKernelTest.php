@@ -17,6 +17,11 @@ use Symfony\Component\HttpFoundation\Request;
  */
 class DrupalKernelTest extends DrupalUnitTestBase {
 
+  /**
+   * @var \Composer\Autoload\ClassLoader
+   */
+  protected $classloader;
+
   public static function getInfo() {
     return array(
       'name' => 'DrupalKernel tests',
@@ -25,7 +30,7 @@ class DrupalKernelTest extends DrupalUnitTestBase {
     );
   }
 
-  function setUp() {
+  public function setUp() {
     // DrupalKernel relies on global $config_directories and requires those
     // directories to exist. Therefore, create the directories, but do not
     // invoke DrupalUnitTestBase::setUp(), since that would set up further
@@ -39,30 +44,56 @@ class DrupalKernelTest extends DrupalUnitTestBase {
       'directory' => DRUPAL_ROOT . '/' . $this->public_files_directory . '/php',
       'secret' => drupal_get_hash_salt(),
     )));
+
+    $this->classloader = drupal_classloader();
+  }
+
+  /**
+   * Build a kernel for testings.
+   *
+   * Because the bootstrap is in DrupalKernel::boot and that involved loading
+   * settings from the filesystem we need to go to extra lengths to build a kernel
+   * for testing.
+   *
+   * @param \Symfony\Component\HttpFoundation\Request $request
+   *   A request object to use in booting the kernel.
+   * @param array $modules_enabled
+   *   A list of modules to enable on the kernel.
+   * @param bool $read_only
+   *   Build the kernel in a read only state.
+   * @return DrupalKernel
+   */
+  protected function getTestKernel(Request $request, array $modules_enabled, $read_only = FALSE) {
+    $kernel = new DrupalKernel('testing', $this->classloader);
+    $kernel->updateModules($modules_enabled);
+    $kernel->boot($request);
+    $this->settingsSet('hash_salt', $this->databasePrefix);
+
+    if ($read_only) {
+      $php_storage = Settings::get('php_storage');
+      $php_storage['service_container']['class'] = 'Drupal\Component\PhpStorage\FileReadOnlyStorage';
+      $this->settingsSet('php_storage', $php_storage);
+    }
+    return $kernel;
   }
 
   /**
    * Tests DIC compilation.
    */
-  function testCompileDIC() {
-    $classloader = drupal_classloader();
+  public function testCompileDIC() {
     // @todo: write a memory based storage backend for testing.
-    $module_enabled = array(
+    $modules_enabled = array(
       'system' => 'system',
       'user' => 'user',
     );
 
     $request = Request::createFromGlobals();
-    $kernel = new DrupalKernel('testing', $classloader);
-    $this->settingsSet('hash_salt', $this->databasePrefix);
-    $kernel->updateModules($module_enabled);
-    $kernel->boot($request);
+    $this->getTestKernel($request, $modules_enabled)
+      ->getContainer();
+
     // Instantiate it a second time and we should get the compiled Container
     // class.
-    $kernel = new DrupalKernel('testing', $classloader);
-    $this->settingsSet('hash_salt', $this->databasePrefix);
-    $kernel->updateModules($module_enabled);
-    $kernel->boot($request);
+    $kernel = $this->getTestKernel($request, $modules_enabled);
     $container = $kernel->getContainer();
     $refClass = new \ReflectionClass($container);
     $is_compiled_container =
@@ -72,19 +103,14 @@ class DrupalKernelTest extends DrupalUnitTestBase {
 
     // Now use the read-only storage implementation, simulating a "production"
     // environment.
-    $php_storage = Settings::get('php_storage');
-    $php_storage['service_container']['class'] = 'Drupal\Component\PhpStorage\FileReadOnlyStorage';
-    $this->settingsSet('php_storage', $php_storage);
-    $kernel = new DrupalKernel('testing', $classloader);
-    $this->settingsSet('hash_salt', $this->databasePrefix);
-    $kernel->updateModules($module_enabled);
-    $kernel->boot($request);
-    $container = $kernel->getContainer();
+    $container = $this->getTestKernel($request, $modules_enabled, TRUE)
+      ->getContainer();
     $refClass = new \ReflectionClass($container);
     $is_compiled_container =
       $refClass->getParentClass()->getName() == 'Drupal\Core\DependencyInjection\Container' &&
       !$refClass->isSubclassOf('Symfony\Component\DependencyInjection\ContainerBuilder');
     $this->assertTrue($is_compiled_container);
+
     // Test that our synthetic services are there.
     $classloader = $container->get('class_loader');
     $refClass = new \ReflectionClass($classloader);
@@ -98,18 +124,14 @@ class DrupalKernelTest extends DrupalUnitTestBase {
 
     // Add another module so that we can test that the new module's bundle is
     // registered to the new container.
-    $module_enabled['service_provider_test'] = 'service_provider_test';
-    $kernel = new DrupalKernel('testing', $classloader);
-    $this->settingsSet('hash_salt', $this->databasePrefix);
-    $kernel->updateModules($module_enabled);
-    $kernel->boot($request);
+    $modules_enabled['service_provider_test'] = 'service_provider_test';
+    $this->getTestKernel($request, $modules_enabled, TRUE)
+      ->getContainer();
+
     // Instantiate it a second time and we should still get a ContainerBuilder
     // class because we are using the read-only PHP storage.
-    $kernel = new DrupalKernel('testing', $classloader);
-    $this->settingsSet('hash_salt', $this->databasePrefix);
-    $kernel->updateModules($module_enabled);
-    $kernel->boot($request);
-    $container = $kernel->getContainer();
+    $container = $this->getTestKernel($request, $modules_enabled, TRUE)
+      ->getContainer();
     $refClass = new \ReflectionClass($container);
     $is_container_builder = $refClass->isSubclassOf('Symfony\Component\DependencyInjection\ContainerBuilder');
     $this->assertTrue($is_container_builder);

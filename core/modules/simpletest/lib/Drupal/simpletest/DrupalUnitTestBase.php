@@ -224,6 +224,7 @@ abstract class DrupalUnitTestBase extends UnitTestBase {
    * @see \DrupalUnitTestBase::disableModules()
    */
   public function containerBuild(ContainerBuilder $container) {
+
     // Keep the container object around for tests.
     $this->container = $container;
 
