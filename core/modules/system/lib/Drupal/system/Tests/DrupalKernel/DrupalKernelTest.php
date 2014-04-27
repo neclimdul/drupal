@@ -10,6 +10,7 @@ namespace Drupal\system\Tests\DrupalKernel;
 use Drupal\Core\DrupalKernel;
 use Drupal\Core\Site\Settings;
 use Drupal\simpletest\DrupalUnitTestBase;
+use Symfony\Component\HttpFoundation\Request;
 
 /**
  * Tests compilation of the DIC.
@@ -50,14 +51,18 @@ class DrupalKernelTest extends DrupalUnitTestBase {
       'system' => 'system',
       'user' => 'user',
     );
+
+    $request = Request::createFromGlobals();
     $kernel = new DrupalKernel('testing', $classloader);
+    $this->settingsSet('hash_salt', $this->databasePrefix);
     $kernel->updateModules($module_enabled);
-    $kernel->boot();
+    $kernel->boot($request);
     // Instantiate it a second time and we should get the compiled Container
     // class.
     $kernel = new DrupalKernel('testing', $classloader);
+    $this->settingsSet('hash_salt', $this->databasePrefix);
     $kernel->updateModules($module_enabled);
-    $kernel->boot();
+    $kernel->boot($request);
     $container = $kernel->getContainer();
     $refClass = new \ReflectionClass($container);
     $is_compiled_container =
@@ -71,8 +76,9 @@ class DrupalKernelTest extends DrupalUnitTestBase {
     $php_storage['service_container']['class'] = 'Drupal\Component\PhpStorage\FileReadOnlyStorage';
     $this->settingsSet('php_storage', $php_storage);
     $kernel = new DrupalKernel('testing', $classloader);
+    $this->settingsSet('hash_salt', $this->databasePrefix);
     $kernel->updateModules($module_enabled);
-    $kernel->boot();
+    $kernel->boot($request);
     $container = $kernel->getContainer();
     $refClass = new \ReflectionClass($container);
     $is_compiled_container =
@@ -94,13 +100,15 @@ class DrupalKernelTest extends DrupalUnitTestBase {
     // registered to the new container.
     $module_enabled['service_provider_test'] = 'service_provider_test';
     $kernel = new DrupalKernel('testing', $classloader);
+    $this->settingsSet('hash_salt', $this->databasePrefix);
     $kernel->updateModules($module_enabled);
-    $kernel->boot();
+    $kernel->boot($request);
     // Instantiate it a second time and we should still get a ContainerBuilder
     // class because we are using the read-only PHP storage.
     $kernel = new DrupalKernel('testing', $classloader);
+    $this->settingsSet('hash_salt', $this->databasePrefix);
     $kernel->updateModules($module_enabled);
-    $kernel->boot();
+    $kernel->boot($request);
     $container = $kernel->getContainer();
     $refClass = new \ReflectionClass($container);
     $is_container_builder = $refClass->isSubclassOf('Symfony\Component\DependencyInjection\ContainerBuilder');
