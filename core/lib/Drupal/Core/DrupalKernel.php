@@ -224,6 +224,9 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
     set_error_handler('_drupal_error_handler');
     set_exception_handler('_drupal_exception_handler');
 
+    // If we didn't get a valid settings file, ensure we don't try to dump the container.
+    $this->allowDumping = $this->allowDumping && Settings::get('hash_salt');
+
     // Redirect the user to the installation script if Drupal has not been
     // installed yet (i.e., if no $databases array has been defined in the
     // settings.php file) and we are not already installing.

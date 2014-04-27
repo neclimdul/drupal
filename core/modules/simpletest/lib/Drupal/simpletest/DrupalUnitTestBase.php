@@ -11,6 +11,7 @@ use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\Core\DrupalKernel;
 use Drupal\Core\KeyValueStore\KeyValueMemoryFactory;
 use Drupal\Core\Language\Language;
+use Drupal\Core\Site\Settings;
 use Symfony\Component\DependencyInjection\Reference;
 use Drupal\Core\Database\Database;
 use Symfony\Component\HttpFoundation\Request;
@@ -129,18 +130,19 @@ abstract class DrupalUnitTestBase extends UnitTestBase {
     // Create and set new configuration directories.
     $this->prepareConfigDirectories();
 
-    // Build a minimal, partially mocked environment for unit tests.
-    $this->containerBuild(\Drupal::getContainer());
     // Make sure it survives kernel rebuilds.
     $GLOBALS['conf']['container_service_providers']['TestServiceProvider'] = 'Drupal\simpletest\TestServiceProvider';
 
-    \Drupal::state()->set('system.module.files', $this->moduleFiles);
-    \Drupal::state()->set('system.theme.files', $this->themeFiles);
-
+    $settings = Settings::getAll();
     // Bootstrap the kernel.
     $request = Request::create('/');
     $this->kernel = new DrupalKernel('testing', drupal_classloader(), FALSE);
-    $this->kernel->preHandle($request);
+    $this->kernel->boot($request);
+    $this->container = $this->kernel->getContainer();
+    new Settings($settings + Settings::getAll());
+
+    \Drupal::state()->set('system.module.files', $this->moduleFiles);
+    \Drupal::state()->set('system.theme.files', $this->themeFiles);
 
     // Create a minimal core.extension configuration object so that the list of
     // enabled modules can be maintained allowing
