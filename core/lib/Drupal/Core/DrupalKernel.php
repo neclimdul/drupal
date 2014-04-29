@@ -202,25 +202,6 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
 
     $this->bootEnvironment();
 
-    // Indicate that code is operating in a test child site.
-    if (!defined('DRUPAL_TEST_IN_CHILD_SITE')) {
-      if ($test_prefix = drupal_valid_test_ua()) {
-        // Only code that interfaces directly with tests should rely on this
-        // constant; e.g., the error/exception handler conditionally adds further
-        // error information into HTTP response headers that are consumed by
-        // Simpletest's internal browser.
-        define('DRUPAL_TEST_IN_CHILD_SITE', TRUE);
-
-        // Log fatal errors to the test site directory.
-        ini_set('log_errors', 1);
-        ini_set('error_log', DRUPAL_ROOT . '/sites/simpletest/' . substr($test_prefix, 10) . '/error.log');
-      }
-      else {
-        // Ensure that no other code defines this.
-        define('DRUPAL_TEST_IN_CHILD_SITE', FALSE);
-      }
-    }
-
     // Get our most basic settings setup.
     Settings::initialize($request);
 
@@ -229,10 +210,6 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
 
     // Start a page timer:
     Timer::start('page');
-
-    // Set the Drupal custom error handler.
-    set_error_handler('_drupal_error_handler');
-    set_exception_handler('_drupal_exception_handler');
 
     // Redirect the user to the installation script if Drupal has not been
     // installed yet (i.e., if no $databases array has been defined in the
@@ -686,6 +663,29 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
 
     // Detect string handling method.
     Unicode::check();
+
+    // Indicate that code is operating in a test child site.
+    if (!defined('DRUPAL_TEST_IN_CHILD_SITE')) {
+      if ($test_prefix = drupal_valid_test_ua()) {
+        // Only code that interfaces directly with tests should rely on this
+        // constant; e.g., the error/exception handler conditionally adds further
+        // error information into HTTP response headers that are consumed by
+        // Simpletest's internal browser.
+        define('DRUPAL_TEST_IN_CHILD_SITE', TRUE);
+
+        // Log fatal errors to the test site directory.
+        ini_set('log_errors', 1);
+        ini_set('error_log', DRUPAL_ROOT . '/sites/simpletest/' . substr($test_prefix, 10) . '/error.log');
+      }
+      else {
+        // Ensure that no other code defines this.
+        define('DRUPAL_TEST_IN_CHILD_SITE', FALSE);
+      }
+    }
+
+    // Set the Drupal custom error handler.
+    set_error_handler('_drupal_error_handler');
+    set_exception_handler('_drupal_exception_handler');
 
     static::$isEnvironmentInitialized = TRUE;
   }
