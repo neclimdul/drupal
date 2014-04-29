@@ -149,11 +149,21 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
 
 
   /**
-   * Whether the environment has been initialized for the request.
+   * Whether the request globals have been initialized.
    *
    * @var bool
    */
   protected static $isRequestInitialized = FALSE;
+
+  /**
+   * Whether the php environment has been initialized.
+   *
+   * We can only boot this stage once because it sets session ini settings and if
+   * a session is already active it will throw warnings and notices.
+   *
+   * @var bool
+   */
+  protected static $isEnvironmentInitialized = FALSE;
 
   /**
    * Constructs a DrupalKernel object.
@@ -648,6 +658,10 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
    */
   protected function bootEnvironment() {
 
+    if (static::$isEnvironmentInitialized) {
+      return;
+    }
+
     // Enforce E_STRICT, but allow users to set levels not part of E_STRICT.
     error_reporting(E_STRICT | E_ALL);
 
@@ -672,6 +686,8 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
 
     // Detect string handling method.
     Unicode::check();
+
+    static::$isEnvironmentInitialized = TRUE;
   }
 
   /**
