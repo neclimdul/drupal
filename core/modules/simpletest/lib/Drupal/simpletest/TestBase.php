@@ -1143,9 +1143,13 @@ abstract class TestBase {
     // Preserve the request object after the container rebuild.
     $request = \Drupal::request();
 
+    // Store global settings.
+    $settings = Settings::getAll();
     // Rebuild the kernel and bring it back to a fully bootstrapped state.
     $this->kernel = new DrupalKernel($environment, drupal_classloader(), FALSE);
     $this->kernel->preHandle($request);
+    // Restore any modified settings.
+    new Settings($settings + Settings::getAll());
 
     // Replace the local container with the newly bootstrapped container.
     $this->container = $this->kernel->getContainer();
