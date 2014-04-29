@@ -1147,9 +1147,10 @@ abstract class TestBase {
     $settings = Settings::getAll();
     // Rebuild the kernel and bring it back to a fully bootstrapped state.
     $this->kernel = new DrupalKernel($environment, drupal_classloader(), FALSE);
-    $this->kernel->preHandle($request);
-    // Restore any modified settings.
+    $this->kernel->boot($request);
+    // Restore any modified settings before the container is built.
     new Settings($settings + Settings::getAll());
+    $this->kernel->preHandle($request);
 
     // Replace the local container with the newly bootstrapped container.
     $this->container = $this->kernel->getContainer();
