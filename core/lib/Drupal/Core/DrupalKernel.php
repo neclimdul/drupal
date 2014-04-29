@@ -243,6 +243,9 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
    * {@inheritdoc}
    */
   public function getContainer() {
+    // Container should probably always be built during boot() but because of
+    // the way Settings are loaded we need to delay it to facilitate
+    // modification for testing. globals --
     if (!isset($this->container)) {
       $this->initializeContainer();
     }
