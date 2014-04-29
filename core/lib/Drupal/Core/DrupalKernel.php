@@ -200,6 +200,12 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
     // Include our bootstrap file.
     require_once dirname(dirname(dirname(__DIR__))) . '/includes/bootstrap.inc';
 
+    // Exit if we should be in a test environment but aren't.
+    if ($this->testOnly && !drupal_valid_test_ua()) {
+      header($request->server->get('SERVER_PROTOCOL') . ' 403 Forbidden');
+      exit;
+    }
+
     $this->bootEnvironment();
 
     // Get our most basic settings setup.
@@ -446,12 +452,6 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
 
     $this->boot($request);
     $this->bootCode($request);
-
-    // Exit if we should be in a test environment but aren't.
-    if ($this->testOnly && !drupal_valid_test_ua()) {
-      header($request->server->get('SERVER_PROTOCOL') . ' 403 Forbidden');
-      exit;
-    }
   }
 
   /**
