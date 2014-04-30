@@ -716,6 +716,9 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
 
     $is_https = $request->isSecure();
 
+    // @todo Refactor with the Symfony Request object.
+    _current_path(request_path());
+
     if (isset($base_url)) {
       // Parse fixed base URL from settings.php.
       $parts = parse_url($base_url);
