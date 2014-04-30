@@ -19,6 +19,7 @@ use Drupal\Core\Language\Language;
 use Drupal\Core\Session\AccountInterface;
 use Drupal\Core\Session\AnonymousUserSession;
 use Drupal\Core\Session\UserSession;
+use Drupal\Core\Site\Settings;
 use Drupal\Core\StreamWrapper\PublicStream;
 use Drupal\Core\Datetime\DrupalDateTime;
 use Drupal\block\Entity\Block;
@@ -1012,10 +1013,46 @@ abstract class WebTestBase extends TestBase {
   }
 
   /**
-   * Overrides \Drupal\simpletest\TestBase::rebuildContainer().
+   * Rebuilds \Drupal::getContainer().
+   *
+   * Use this to build a new kernel and service container. For example, when the
+   * list of enabled modules is changed via the internal browser, in which case
+   * the test process still contains an old kernel and service container with an
+   * old module list.
+   *
+   * @see TestBase::prepareEnvironment()
+   * @see TestBase::restoreEnvironment()
+   *
+   * @todo Fix http://drupal.org/node/1708692 so that module enable/disable
+   *   changes are immediately reflected in \Drupal::getContainer(). Until then,
+   *   tests can invoke this workaround when requiring services from newly
+   *   enabled modules to be immediately available in the same request.
    */
   protected function rebuildContainer($environment = 'prod') {
-    parent::rebuildContainer($environment);
+    // Preserve the request object after the container rebuild.
+    $request = \Drupal::request();
+
+    // Store global settings.
+    $settings = Settings::getAll();
+    // Rebuild the kernel and bring it back to a fully bootstrapped state.
+    $this->kernel = new DrupalKernel($environment, drupal_classloader(), FALSE);
+    $this->kernel->boot($request);
+    // Restore any modified settings before the container is built.
+    new Settings($settings + Settings::getAll());
+    $this->kernel->preHandle($request);
+
+    // Replace the local container with the newly bootstrapped container.
+    $this->container = $this->kernel->getContainer();
+
+    // Ensure container has the correct user stored in the proxy.
+    $this->container->get('current_user')->setAccount(\Drupal::currentUser());
+
+    // The request context is normally set by the router_listener from within
+    // its KernelEvents::REQUEST listener. In the simpletest parent site this
+    // event is not fired, therefore it is necessary to updated the request
+    // context manually here.
+    $this->container->get('router.request_context')->fromRequest($request);
+
     // Make sure the url generator has a request object, otherwise calls to
     // $this->drupalGet() will fail.
     $this->prepareRequestForGenerator();
