@@ -632,22 +632,22 @@ function drupal_verify_profile($install_state) {
  *   to set the default language.
  */
 function drupal_install_system($install_state) {
-  // Immediately boot a new kernel into the regular production environment.
-  $request = \Drupal::request();
 
+  // Remove the service provider adding alternative installer services to the
+  // container.
   unset($GLOBALS['conf']['container_service_providers']['InstallerServiceProvider']);
 
-  // Reboot the kernel.
+  // Reboot the kernel into a full Drupal environment to continue installing
+  // modules.
   $kernel = \Drupal::service('kernel');
   $kernel->shutdown();
-  $kernel->preHandle($request);
-  $container = $kernel->getContainer();
+  $kernel->preHandle(\Drupal::request());
 
   // Install base system configuration.
   \Drupal::service('config.installer')->installDefaultConfig('core', 'core');
 
   // Install System module.
-  $container->get('module_handler')->install(array('system'), FALSE);
+  $kernel->getContainer()->get('module_handler')->install(array('system'), FALSE);
 
   // DrupalKernel::preHandle() above calls into DrupalKernel::bootCode(), which
   // primes file_get_stream_wrappers()'s static list of custom stream wrappers
