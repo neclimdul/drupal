@@ -20,6 +20,7 @@ try {
   $response = $kernel
     ->handlePageCache($request)
     ->handle($request)
+      // Handle the response object.
       ->prepare($request)->send();
   $kernel->terminate($request, $response);
 }
