@@ -364,11 +364,6 @@ function simpletest_script_bootstrap($loader) {
   $kernel = new DrupalKernel('testing', $loader, FALSE);
   $kernel->boot($request);
 
-  // Load legacy include files.
-  foreach (glob(DRUPAL_ROOT . '/core/includes/*.inc') as $include) {
-    require_once $include;
-  }
-
   // Remove Drupal's error/exception handlers; they are designed for HTML
   // and there is no storage nor a (watchdog) logger here.
   restore_error_handler();
@@ -385,11 +380,9 @@ function simpletest_script_bootstrap($loader) {
   }
 
   // Manually enter set request scope since we can't use the handle methods yet.
-  $container = $kernel->getContainer();
-  $container->enterScope('request');
-  $container->set('request', $request, 'request');
+   $kernel->bootCode($request);
 
-  $module_handler = $container->get('module_handler');
+  $module_handler = $kernel->getContainer()->get('module_handler');
   // @todo Remove System module. Only needed because \Drupal\Core\Datetime\Date
   //   has a (needless) dependency on the 'date_format' entity, so calls to
   //   format_date()/format_interval() cause a plugin not found exception.
