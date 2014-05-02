@@ -197,6 +197,9 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
       return;
     }
 
+    // Start a page timer:
+    Timer::start('page');
+
     // Include our bootstrap file.
     require_once dirname(dirname(dirname(__DIR__))) . '/includes/bootstrap.inc';
 
@@ -213,9 +216,6 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
 
     // Initialize Request globals.
     $this->initializeRequestGlobals($request);
-
-    // Start a page timer:
-    Timer::start('page');
 
     // Redirect the user to the installation script if Drupal has not been
     // installed yet (i.e., if no $databases array has been defined in the
