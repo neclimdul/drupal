@@ -166,6 +166,11 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
   protected static $isEnvironmentInitialized = FALSE;
 
   /**
+   * Whether the DrupalKernel object is for testing purposes.
+   */
+  protected $testOnly = FALSE;
+
+  /**
    * Constructs a DrupalKernel object.
    *
    * @param string $environment
