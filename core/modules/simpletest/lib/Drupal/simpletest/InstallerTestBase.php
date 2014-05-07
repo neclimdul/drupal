@@ -9,6 +9,7 @@ namespace Drupal\simpletest;
 
 use Drupal\Core\Session\UserSession;
 use Drupal\Core\Site\Settings;
+use Symfony\Component\HttpFoundation\Request;
 
 /**
  * Base class for testing the interactive installer.
@@ -110,7 +111,7 @@ abstract class InstallerTestBase extends WebTestBase {
     $this->setUpSite();
 
     // Import new settings.php written by the installer.
-    Settings::initialize($this->container->get('request'));
+    Settings::initialize(Request::create('/install.php'));
     foreach ($GLOBALS['config_directories'] as $type => $path) {
       $this->configDirectories[$type] = $path;
     }
