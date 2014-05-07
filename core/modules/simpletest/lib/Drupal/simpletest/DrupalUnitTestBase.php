@@ -130,18 +130,21 @@ abstract class DrupalUnitTestBase extends UnitTestBase {
     // Create and set new configuration directories.
     $this->prepareConfigDirectories();
 
-    // Make sure it survives kernel rebuilds.
+    // Add this test class as a service provider.
+    // @todo Remove the indirection; implement ServiceProviderInterface instead.
     $GLOBALS['conf']['container_service_providers']['TestServiceProvider'] = 'Drupal\simpletest\TestServiceProvider';
 
+    // Back up settings from TestBase::prepareEnvironment().
     $settings = Settings::getAll();
     // Bootstrap the kernel.
+    // Do not dump it to disk; this test runs in-memory.
     $request = Request::create('/');
     $this->kernel = new DrupalKernel('testing', drupal_classloader(), FALSE);
     $this->kernel->boot($request);
 
-    // Merge in settings from TestBase::prepareEnvironment().
-    // This is weird but Kernel boot resets settings and containerBuilder() methods
-    // set some settings so we merge them together.
+    // Restore and merge settings.
+    // DrupalKernel::boot() initializes new Settings, and the containerBuild()
+    // method sets additional settings.
     new Settings($settings + Settings::getAll());
 
     // Set the request scope.

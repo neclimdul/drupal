@@ -28,6 +28,6 @@ $kernel = new DrupalKernel('testing', $autoloader, TRUE, TRUE);
 $response = $kernel
   ->handlePageCache($request)
   ->handle($request)
-    // Handle the response object.
-    ->prepare($request)->send();
+  ->prepare($request)
+  ->send();
 $kernel->terminate($request, $response);

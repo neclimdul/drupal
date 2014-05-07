@@ -105,6 +105,7 @@ class DrupalKernelTest extends DrupalUnitTestBase {
     // environment.
     $container = $this->getTestKernel($request, $modules_enabled, TRUE)
       ->getContainer();
+
     $refClass = new \ReflectionClass($container);
     $is_compiled_container =
       $refClass->getParentClass()->getName() == 'Drupal\Core\DependencyInjection\Container' &&
@@ -132,15 +133,19 @@ class DrupalKernelTest extends DrupalUnitTestBase {
     // class because we are using the read-only PHP storage.
     $container = $this->getTestKernel($request, $modules_enabled, TRUE)
       ->getContainer();
+
     $refClass = new \ReflectionClass($container);
     $is_container_builder = $refClass->isSubclassOf('Symfony\Component\DependencyInjection\ContainerBuilder');
     $this->assertTrue($is_container_builder);
+
     // Assert that the new module's bundle was registered to the new container.
     $this->assertTrue($container->has('service_provider_test_class'));
+
     // Test that our synthetic services are there.
     $classloader = $container->get('class_loader');
     $refClass = new \ReflectionClass($classloader);
     $this->assertTrue($refClass->hasMethod('loadClass'), 'Container has a classloader');
+
     // Check that the location of the new module is registered.
     $modules = $container->getParameter('container.modules');
     $this->assertEqual($modules['service_provider_test'], array(

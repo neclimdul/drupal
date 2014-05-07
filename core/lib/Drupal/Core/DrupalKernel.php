@@ -8,13 +8,12 @@
 namespace Drupal\Core;
 
 use Drupal\Component\Utility\Crypt;
-use Drupal\Core\Database\Database;
-use Drupal\Core\Site\Settings;
 use Drupal\Component\Utility\Timer;
 use Drupal\Component\Utility\Unicode;
 use Drupal\Component\Utility\UrlHelper;
 use Drupal\Core\Config\BootstrapConfigStorageFactory;
 use Drupal\Core\Config\NullStorage;
+use Drupal\Core\Database\Database;
 use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\Core\DependencyInjection\ServiceProviderInterface;
 use Drupal\Core\DependencyInjection\YamlFileLoader;
@@ -22,6 +21,7 @@ use Drupal\Core\Extension\ExtensionDiscovery;
 use Drupal\Core\Language\Language;
 use Drupal\Core\PhpStorage\PhpStorageFactory;
 use Drupal\Core\Session\AnonymousUserSession;
+use Drupal\Core\Site\Settings;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBag;
 use Symfony\Component\DependencyInjection\Dumper\PhpDumper;
 use Symfony\Component\HttpFoundation\Request;
@@ -148,7 +148,6 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
    */
   protected $serviceProviders;
 
-
   /**
    * Whether the request globals have been initialized.
    *
@@ -157,17 +156,20 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
   protected static $isRequestInitialized = FALSE;
 
   /**
-   * Whether the php environment has been initialized.
+   * Whether the PHP environment has been initialized.
    *
-   * We can only boot this stage once because it sets session ini settings and if
-   * a session is already active it will throw warnings and notices.
+   * This legacy phase can only be booted once because it sets session INI
+   * settings. If a session has already been started, re-generating these
+   * settings would break the session.
    *
    * @var bool
    */
   protected static $isEnvironmentInitialized = FALSE;
 
   /**
-   * Whether the DrupalKernel object is for testing purposes.
+   * Whether this instance is for testing purposes only.
+   *
+   * @var bool
    */
   protected $testOnly = FALSE;
 
@@ -185,7 +187,7 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
    *   (optional) FALSE to stop the container from being written to or read
    *   from disk. Defaults to TRUE.
    * @param bool $test_only
-   *   (optional) Whether the DrupalKernel object is for testing purposes only.
+   *   (optional) Whether the kernel is built for testing purposes only.
    *   Defaults to FALSE.
    */
   public function __construct($environment, ClassLoader $class_loader, $allow_dumping = TRUE, $test_only = FALSE) {
@@ -265,6 +267,8 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
 
   /**
    * {@inheritdoc}
+   *
+   * @todo Invoke proper request/response/terminate events.
    */
   public function handlePageCache(Request $request) {
     // @todo Use the current_user proxy.
@@ -465,6 +469,7 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
     $this->container->enterScope('request');
     $this->container->set('request', $request);
     $this->container->get('request_stack')->push($request);
+    return $this;
   }
 
   /**

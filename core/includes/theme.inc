@@ -91,7 +91,7 @@ function drupal_theme_access($theme) {
  * Initializes the theme system by loading the theme.
  *
  * @param \Symfony\Component\HttpFoundation\Request $request
- *   The request to initialize the theme for.
+ *   The request for which to initialize the theme.
  */
 function drupal_theme_initialize(Request $request = NULL) {
   global $theme, $theme_key;

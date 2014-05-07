@@ -12,8 +12,8 @@
 
 use Drupal\Component\Utility\Crypt;
 use Drupal\Core\DrupalKernel;
-use Symfony\Component\HttpFoundation\Request;
 use Drupal\Core\Site\Settings;
+use Symfony\Component\HttpFoundation\Request;
 
 // Change the directory to the Drupal root.
 chdir('..');

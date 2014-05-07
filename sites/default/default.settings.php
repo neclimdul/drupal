@@ -485,9 +485,10 @@ $settings['update_free_access'] = FALSE;
  * To see what PHP settings are possible, including whether they can be set at
  * runtime (by using ini_set()), read the PHP documentation:
  * http://php.net/manual/ini.list.php
- * See Drupal\Core\DrupalKernelFactory::bootEnvironment() for required runtime
- * settings and the .htaccess file for non-runtime settings. Settings defined
- * there should not be duplicated here so as to avoid conflict issues.
+ * See \Drupal\Core\DrupalKernel::bootEnvironment() for required runtime
+ * settings and the .htaccess file for non-runtime settings.
+ * Settings defined there should not be duplicated here so as to avoid conflict
+ * issues.
  */
 
 /**
@@ -547,7 +548,7 @@ ini_set('session.cookie_lifetime', 2000000);
  * The 'bootstrap_config_storage' setting needs to be a callable that returns
  * core.services.yml.
  */
-# $settings['bootstrap_config_storage'] = array('Drupal\Core\Config\BootstrapConfigStorageFactory', 'getFileStorage');
+ # $settings['bootstrap_config_storage'] = array('Drupal\Core\Config\BootstrapConfigStorageFactory', 'getFileStorage');
 
 /**
  * Configuration overrides.

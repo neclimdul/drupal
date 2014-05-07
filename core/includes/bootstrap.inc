@@ -1142,14 +1142,10 @@ function drupal_anonymous_user() {
  * @todo Obsolete. Remove once Drush has been updated.
  */
 function drupal_bootstrap($phase = NULL) {
-
-
-  /**
-   * Temporary variable used for booting later phases for drupal_bootstrap().
-   *
-   * @var DrupalKernel $kernel
-   */
-  static $kernel = null, $boot_level = 0;
+  // Temporary variables used for booting later legacy phases.
+  /** @var \Drupal\Core\DrupalKernel $kernel */
+  static $kernel;
+  static $boot_level = 0;
 
   if (isset($phase)) {
     $request = Request::createFromGlobals();

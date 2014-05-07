@@ -8,8 +8,8 @@
 
 use Drupal\Component\Utility\Crypt;
 use Drupal\Core\DrupalKernel;
-use Symfony\Component\HttpFoundation\Request;
 use Drupal\Core\Site\Settings;
+use Symfony\Component\HttpFoundation\Request;
 
 // Check for $_SERVER['argv'] instead of PHP_SAPI === 'cli' to allow this script
 // to be tested with the Simpletest UI test runner.

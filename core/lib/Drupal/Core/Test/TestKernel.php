@@ -10,9 +10,9 @@ namespace Drupal\Core\Test;
 use Drupal\Core\DrupalKernel;
 use Drupal\Core\Extension\Extension;
 use Drupal\Core\Installer\InstallerServiceProvider;
-use Composer\Autoload\ClassLoader;
 use Drupal\Core\Site\Settings;
 use Symfony\Component\HttpFoundation\Request;
+use Composer\Autoload\ClassLoader;
 
 /**
  * Kernel for run-tests.sh.

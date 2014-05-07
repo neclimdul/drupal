@@ -9,8 +9,8 @@
  */
 
 use Drupal\Core\DrupalKernel;
-use Symfony\Component\HttpFoundation\Request;
 use Drupal\Core\Site\Settings;
+use Symfony\Component\HttpFoundation\Request;
 
 $autoloader = require_once __DIR__ . '/core/vendor/autoload.php';
 
@@ -20,8 +20,8 @@ try {
   $response = $kernel
     ->handlePageCache($request)
     ->handle($request)
-      // Handle the response object.
-      ->prepare($request)->send();
+    ->prepare($request)
+    ->send();
   $kernel->terminate($request, $response);
 }
 catch (Exception $e) {

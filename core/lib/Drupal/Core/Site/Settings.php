@@ -31,9 +31,8 @@ final class Settings {
    */
   private static $instance;
 
-
   /**
-   * The conf path for the given request.
+   * The site directory from which to read settings.php.
    *
    * @var string
    */
@@ -117,7 +116,6 @@ final class Settings {
     new Settings($settings);
   }
 
-
   /**
    * Returns the appropriate configuration directory.
    *
@@ -174,4 +172,5 @@ final class Settings {
     static::$confPath = find_conf_path($http_host, $script_name, $require_settings);
     return static::$confPath;
   }
+
 }
