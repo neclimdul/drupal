@@ -7,8 +7,6 @@
  * @see phpunit.xml.dist
  */
 
-define('DRUPAL_ROOT', realpath(__DIR__ . '/../../'));
-
 /**
  * Finds all valid extension directories recursively within a given directory.
  *
