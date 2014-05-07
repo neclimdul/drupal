@@ -8,6 +8,7 @@
 namespace Drupal\Core;
 
 use Drupal\Component\Utility\Crypt;
+use Drupal\Core\Database\Database;
 use Drupal\Core\Site\Settings;
 use Drupal\Component\Utility\Timer;
 use Drupal\Component\Utility\Unicode;
@@ -225,7 +226,7 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
     // Redirect the user to the installation script if Drupal has not been
     // installed yet (i.e., if no $databases array has been defined in the
     // settings.php file) and we are not already installing.
-    if (empty($GLOBALS['databases']) && !drupal_installation_attempted() && !drupal_is_cli()) {
+    if (!Database::getConnectionInfo() && !drupal_installation_attempted() && !drupal_is_cli()) {
       include_once DRUPAL_ROOT . '/core/includes/install.inc';
       install_goto('core/install.php');
     }
@@ -460,6 +461,11 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
 
     $this->boot($request);
     $this->bootCode($request);
+    // Normally this is handled in the HttpKernel object but prehandle exists
+    // for pages that don't run through a http kernel.
+    $this->container->enterScope('request');
+    $this->container->set('request', $request);
+    $this->container->get('request_stack')->push($request);
   }
 
   /**

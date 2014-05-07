@@ -27,6 +27,10 @@ services:
     arguments: ['@database']
   cache.backend.php:
     class: Drupal\Core\Cache\PhpBackendFactory
+  cache.backend.memory:
+    class: Drupal\Core\Cache\MemoryBackendFactory
+  cache.backend.null:
+    class: Drupal\Core\Cache\NullBackendFactory
   cache.bootstrap:
     class: Drupal\Core\Cache\CacheBackendInterface
     tags:
@@ -122,9 +126,10 @@ services:
     arguments: [default]
   form_builder:
     class: Drupal\Core\Form\FormBuilder
-    arguments: ['@module_handler', '@keyvalue.expirable', '@event_dispatcher', '@url_generator', '@string_translation', '@?csrf_token', '@?http_kernel']
-    calls:
-      - [setRequest, ['@?request=']]
+    arguments: ['@form_validator', '@module_handler', '@keyvalue.expirable', '@event_dispatcher', '@url_generator', '@request_stack', '@?csrf_token', '@?http_kernel']
+  form_validator:
+    class: Drupal\Core\Form\FormValidator
+    arguments: ['@request_stack', '@string_translation', '@csrf_token']
   keyvalue:
     class: Drupal\Core\KeyValueStore\KeyValueFactory
     arguments: ['@service_container', '@settings']
@@ -605,7 +610,7 @@ services:
     arguments: ['@config.manager', '@config.storage', '@config.storage.snapshot']
   exception_controller:
     class: Drupal\Core\Controller\ExceptionController
-    arguments: ['@content_negotiation', '@title_resolver', '@html_page_renderer', '@html_fragment_renderer']
+    arguments: ['@content_negotiation', '@title_resolver', '@html_page_renderer', '@html_fragment_renderer', '@string_translation']
     calls:
       - [setContainer, ['@service_container']]
   exception_listener:

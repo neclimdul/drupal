@@ -373,8 +373,10 @@ function install_begin_request(&$install_state) {
 
   $kernel->preHandle($request);
 
-  // Add in installation language if present.
+  // Set the default language to the selected language, if any.
   if (isset($install_state['parameters']['langcode'])) {
+    $default_language = new Language(array('id' => $install_state['parameters']['langcode']));
+    $container->get('language.default')->set($default_language);
     \Drupal::translation()->setDefaultLangcode($install_state['parameters']['langcode']);
   }
 
@@ -425,7 +427,7 @@ function install_begin_request(&$install_state) {
     $task = NULL;
 
     // Do not install over a configured settings.php.
-    if (!empty($GLOBALS['databases'])) {
+    if (Database::getConnectionInfo()) {
       throw new AlreadyInstalledException($container->get('string_translation'));
     }
   }
@@ -1000,9 +1002,8 @@ function install_verify_completed_task() {
  * Verifies that settings.php specifies a valid database connection.
  */
 function install_verify_database_settings() {
-  global $databases;
-  if (!empty($databases)) {
-    $database = $databases['default']['default'];
+  if ($database = Database::getConnectionInfo()) {
+    $database = $database['default'];
     $settings_file = './' . conf_path(FALSE) . '/settings.php';
     $errors = install_database_errors($database, $settings_file);
     if (empty($errors)) {
@@ -1016,7 +1017,6 @@ function install_verify_database_settings() {
  * Checks a database connection and returns any errors.
  */
 function install_database_errors($database, $settings_file) {
-  global $databases;
   $errors = array();
 
   // Check database type.
@@ -1028,18 +1028,13 @@ function install_database_errors($database, $settings_file) {
   else {
     // Run driver specific validation
     $errors += $database_types[$driver]->validateDatabaseSettings($database);
-
+    if (!empty($errors)) {
+      // No point to try further.
+      return $errors;
+    }
     // Run tasks associated with the database type. Any errors are caught in the
     // calling function.
-    $databases['default']['default'] = $database;
-    // Just changing the global doesn't get the new information processed.
-    // We need to close any active connections and tell the Database class to
-    // re-parse $databases.
-    if (Database::isActiveConnection()) {
-      Database::closeConnection();
-    }
-    Database::parseConnectionInfo();
-
+    Database::addConnectionInfo('default', 'default', $database);
     try {
       db_run_tasks($driver);
     }

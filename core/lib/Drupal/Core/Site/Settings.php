@@ -7,6 +7,7 @@
 
 namespace Drupal\Core\Site;
 
+use Drupal\Core\Database\Database;
 use Symfony\Component\HttpFoundation\Request;
 
 /**
@@ -98,15 +99,20 @@ final class Settings {
    */
   public static function initialize(Request $request) {
     // Export these settings.php variables to the global namespace.
-    global $base_url, $databases, $cookie_domain, $config_directories, $config;
+    global $base_url, $cookie_domain, $config_directories, $config;
     $settings = array();
     $config = array();
+    $databases = array();
 
     // Make conf_path() available as local variable in settings.php.
     $conf_path = static::confPath($request);
     if (is_readable(DRUPAL_ROOT . '/' . $conf_path . '/settings.php')) {
       require DRUPAL_ROOT . '/' . $conf_path . '/settings.php';
     }
+
+    // Initialize Database.
+    Database::setMultipleConnectionInfo($databases);
+
     // Initialize Settings.
     new Settings($settings);
   }

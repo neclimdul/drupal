@@ -17,7 +17,6 @@ use Drupal\Component\Utility\SortArray;
 use Drupal\Component\Utility\String;
 use Drupal\Component\Utility\Tags;
 use Drupal\Component\Utility\UrlHelper;
-use Drupal\Component\Utility\Xss;
 use Drupal\Core\Cache\Cache;
 use Drupal\Core\Language\Language;
 use Drupal\Core\Site\Settings;
@@ -479,73 +478,6 @@ function valid_email_address($mail) {
  */
 function check_url($uri) {
   return String::checkPlain(UrlHelper::stripDangerousProtocols($uri));
-}
-
-/**
- * Applies a very permissive XSS/HTML filter for admin-only use.
- *
- * Use only for fields where it is impractical to use the
- * whole filter system, but where some (mainly inline) mark-up
- * is desired (so \Drupal\Component\Utility\String::checkPlain() is not
- * acceptable).
- *
- * Allows all tags that can be used inside an HTML body, save
- * for scripts and styles.
- *
- * @param string $string
- *   The string to apply the filter to.
- *
- * @return string
- *   The filtered string.
- *
- * @see \Drupal\Component\Utility\Xss::filterAdmin()
- */
-function filter_xss_admin($string) {
-  return Xss::filterAdmin($string);
-}
-
-/**
- * Filters HTML to prevent cross-site-scripting (XSS) vulnerabilities.
- *
- * Based on kses by Ulf Harnhammar, see http://sourceforge.net/projects/kses.
- * For examples of various XSS attacks, see: http://ha.ckers.org/xss.html.
- *
- * This code does four things:
- * - Removes characters and constructs that can trick browsers.
- * - Makes sure all HTML entities are well-formed.
- * - Makes sure all HTML tags and attributes are well-formed.
- * - Makes sure no HTML tags contain URLs with a disallowed protocol (e.g.
- *   javascript:).
- *
- * @param $string
- *   The string with raw HTML in it. It will be stripped of everything that can
- *   cause an XSS attack.
- * @param $allowed_tags
- *   An array of allowed tags.
- *
- * @return
- *   An XSS safe version of $string, or an empty string if $string is not
- *   valid UTF-8.
- *
- * @see \Drupal\Component\Utility\Xss::filter()
- */
-function filter_xss($string, $allowed_tags = array('a', 'em', 'strong', 'cite', 'blockquote', 'code', 'ul', 'ol', 'li', 'dl', 'dt', 'dd')) {
-  return Xss::filter($string, $allowed_tags);
-}
-
-/**
- * Processes an HTML attribute value and strips dangerous protocols from URLs.
- *
- * @param string $string
- *   The string with the attribute value.
- *
- * @return string
- *   Cleaned up and HTML-escaped version of $string.
- *
- * @see \Drupal\Component\Utility\UrlHelper::filterBadProtocol()
- */
-function filter_xss_bad_protocol($string) {
-  return UrlHelper::filterBadProtocol($string);
 }
 
 /**
@@ -1058,7 +990,7 @@ function l($text, $path, array $options = array()) {
     // Add a "data-drupal-link-system-path" attribute to let the
     // drupal.active-link library know the path in a standardized manner.
     if (!isset($variables['options']['attributes']['data-drupal-link-system-path'])) {
-      $variables['options']['attributes']['data-drupal-link-system-path'] = \Drupal::service('path.alias_manager.cached')->getSystemPath($path);
+      $variables['options']['attributes']['data-drupal-link-system-path'] = \Drupal::service('path.alias_manager.cached')->getPathByAlias($path);
     }
   }
 
@@ -3094,7 +3026,7 @@ function drupal_pre_render_link($element) {
  * A typical example comes from node links, which are stored in a renderable
  * array similar to this:
  * @code
- * $node->content['links'] = array(
+ * $build['links'] = array(
  *   '#theme' => 'links__node',
  *   '#pre_render' => array('drupal_pre_render_links'),
  *   'comment' => array(
@@ -3129,7 +3061,7 @@ function drupal_pre_render_link($element) {
  * {{ content.links.comment }}
  * @endcode
  *
- * (where $node->content has been transformed into $content before handing
+ * (where a node's content has been transformed into $content before handing
  * control to the node.html.twig template).
  *
  * The pre_render function defined here allows the above flexibility, but also
@@ -3465,16 +3397,6 @@ function drupal_render(&$elements, $is_recursive_call = FALSE) {
     return '';
   }
 
-  // Collect all #post_render_cache callbacks associated with this element when:
-  // - about to store this element in the render cache, or when;
-  // - about to apply #post_render_cache callbacks.
-  if (isset($elements['#cache']) || !$is_recursive_call) {
-    $post_render_cache = drupal_render_collect_post_render_cache($elements);
-    if ($post_render_cache) {
-      $elements['#post_render_cache'] = $post_render_cache;
-    }
-  }
-
   // Add any JavaScript state information associated with the element.
   if (!empty($elements['#states'])) {
     drupal_process_states($elements);
@@ -3578,6 +3500,15 @@ function drupal_render(&$elements, $is_recursive_call = FALSE) {
   $suffix = isset($elements['#suffix']) ? $elements['#suffix'] : '';
   $elements['#markup'] = $prefix . $elements['#children'] . $suffix;
 
+  // Collect all #post_render_cache callbacks associated with this element when:
+  // - about to store this element in the render cache, or when;
+  // - about to apply #post_render_cache callbacks.
+  if (!$is_recursive_call || isset($elements['#cache'])) {
+    $post_render_cache = drupal_render_collect_post_render_cache($elements);
+    if ($post_render_cache) {
+      $elements['#post_render_cache'] = $post_render_cache;
+    }
+  }
   // Collect all cache tags. This allows the caller of drupal_render() to also
   // access the complete list of cache tags.
   if (!$is_recursive_call || isset($elements['#cache'])) {
@@ -3656,6 +3587,10 @@ function render(&$element) {
     return NULL;
   }
   if (is_array($element)) {
+    // Early return if this element was pre-rendered (no need to re-render).
+    if (isset($element['#printed']) && $element['#printed'] == TRUE && isset($element['#markup']) && strlen($element['#markup']) > 0) {
+      return $element['#markup'];
+    }
     show($element);
     return drupal_render($element, TRUE);
   }
@@ -3816,6 +3751,9 @@ function drupal_render_cache_set(&$markup, array $elements) {
  * @param string $token
  *   A unique token to uniquely identify the placeholder.
  *
+ * @return string
+ *   The generated placeholder HTML.
+ *
  * @see drupal_render_cache_get()
  */
 function drupal_render_cache_generate_placeholder($callback, array $context, $token) {
@@ -3828,37 +3766,10 @@ function drupal_render_cache_generate_placeholder($callback, array $context, $to
 }
 
 /**
- * Pre-render callback: Renders a render cache placeholder into #markup.
- *
- * @param $elements
- *   A structured array whose keys form the arguments to l():
- *   - #callback: The #post_render_cache callback that will replace the
- *     placeholder with its eventual markup.
- *   - #context: An array providing context for the #post_render_cache callback.
- *
- * @return
- *   The passed-in element containing a render cache placeholder in '#markup'
- *   and a callback with context, keyed by a generated unique token in
- *   '#post_render_cache'.
- *
- * @see drupal_render_cache_generate_placeholder()
+ * Generates a unique token for use in a #post_render_cache placeholder.
  */
-function drupal_pre_render_render_cache_placeholder($element) {
-  $callback = $element['#callback'];
-  if (!is_callable($callback)) {
-    throw new Exception(t('#callback must be a callable function.'));
-  }
-  $context = $element['#context'];
-  if (!is_array($context)) {
-    throw new Exception(t('#context must be an array.'));
-  }
-  $token = \Drupal\Component\Utility\Crypt::randomBytesBase64(55);
-
-  // Generate placeholder markup and store #post_render_cache callback.
-  $element['#markup'] = drupal_render_cache_generate_placeholder($callback, $context, $token);
-  $element['#post_render_cache'][$callback][$token] = $context;
-
-  return $element;
+function drupal_render_cache_generate_token() {
+  return \Drupal\Component\Utility\Crypt::randomBytesBase64(55);
 }
 
 /**
@@ -3884,42 +3795,11 @@ function _drupal_render_process_post_render_cache(array &$elements) {
     // and if keyed by a number, no token is passed, otherwise, the token string
     // is passed to the callback as well. This token is used to uniquely
     // identify the placeholder in the markup.
-    $modified_elements = $elements;
     foreach ($elements['#post_render_cache'] as $callback => $options) {
       foreach ($elements['#post_render_cache'][$callback] as $token => $context) {
-        // The advanced option, when setting #post_render_cache directly.
-        if (is_numeric($token)) {
-          $modified_elements = call_user_func_array($callback, array($modified_elements, $context));
-        }
-        // The simple option, when using the standard placeholders, and hence
-        // also when using #type => render_cache_placeholder.
-        else {
-          // Call #post_render_cache callback to generate the element that will
-          // fill in the placeholder.
-          $generated_element = call_user_func_array($callback, array($context));
-
-          // Update #attached based on the generated element.
-          if (isset($generated_element['#attached'])) {
-            if (!isset($modified_elements['#attached'])) {
-              $modified_elements['#attached'] = array();
-            }
-            $modified_elements['#attached'] = drupal_merge_attached($modified_elements['#attached'], drupal_render_collect_attached($generated_element, TRUE));
-          }
-
-          // Replace the placeholder with the rendered markup of the generated
-          // element.
-          $placeholder = drupal_render_cache_generate_placeholder($callback, $context, $token);
-          $modified_elements['#markup'] = str_replace($placeholder, drupal_render($generated_element), $modified_elements['#markup']);
-        }
+        $elements = call_user_func_array($callback, array($elements, $context));
       }
     }
-    // Only retain changes to the #markup and #attached properties, as would be
-    // the case when the render cache was actually being used.
-    $elements['#markup'] = $modified_elements['#markup'];
-    if (isset($modified_elements['#attached'])) {
-      $elements['#attached'] = $modified_elements['#attached'];
-    }
-
     // Make sure that any attachments added in #post_render_cache callbacks are
     // also executed.
     if (isset($elements['#attached'])) {
@@ -3974,13 +3854,6 @@ function drupal_render_collect_post_render_cache(array &$elements, array $callba
       $elements['#post_render_cache'] = $cached_element['#post_render_cache'];
       $retrieved_from_cache = TRUE;
     }
-  }
-
-  // If this is a render cache placeholder that hasn't been rendered yet, then
-  // render it now, because we must be able to collect its #post_render_cache
-  // callback.
-  if (!isset($elements['#post_render_cache']) && isset($elements['#type']) && $elements['#type'] === 'render_cache_placeholder') {
-    $elements = drupal_pre_render_render_cache_placeholder($elements);
   }
 
   // Collect all #post_render_cache callbacks for this element.

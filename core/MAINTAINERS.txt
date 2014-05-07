@@ -92,6 +92,11 @@ Entity system
 Extension system
 - ?
 
+Field system
+- Yves Chedemois 'yched' http://drupal.org/user/39567
+- Kristof De Jaeger 'swentel' http://drupal.org/user/107403
+- Andrei Mateescu 'amateescu' http://drupal.org/user/729614
+
 File system
 - Andrew Morton 'drewish' http://drupal.org/user/34869
 - Aaron Winborn 'aaron' http://drupal.org/user/33420
@@ -187,9 +192,6 @@ Accessibility
 Documentation
 - Jennifer Hodgdon 'jhodgdon' http://drupal.org/user/155601
 
-Security
-- Greg Knaddison 'greggles' http://drupal.org/user/36762
-
 Translations
 - ?
 
@@ -201,6 +203,19 @@ Node Access
 - Moshe Weitzman 'moshe weitzman' http://drupal.org/user/23
 - Ken Rickard 'agentrickard' http://drupal.org/user/20975
 - Jess Myrbo 'xjm' http://drupal.org/user/65776
+
+
+Security team
+-----------------
+
+To report a security issue, see: https://drupal.org/security-team/report-issue
+
+The Drupal security team provides Security Advisories for vulnerabilities,
+assists developers in resolving security issues, and provides security
+documentation. See http://drupal.org/security-team for more information. The
+security team lead is:
+
+- Michael Hess 'mlhess' https://drupal.org/user/102818
 
 
 Module maintainers
@@ -269,10 +284,6 @@ DateTime module
 E-mail module
 - Nils Destoop 'zuuperman' https://drupal.org/user/361625
 
-Edit module
-- Wim Leers 'Wim Leers' http://drupal.org/user/99777
-- Théodore Biadala 'nod_' http://drupal.org/user/598310
-
 Editor module
 - Wim Leers 'Wim Leers' http://drupal.org/user/99777
 
@@ -281,11 +292,6 @@ Entity module
 
 Entity Reference module
 - Amitai Burstein 'Amitaibu' http://drupal.org/user/57511
-- Andrei Mateescu 'amateescu' http://drupal.org/user/729614
-
-Field module
-- Yves Chedemois 'yched' http://drupal.org/user/39567
-- Kristof De Jaeger 'swentel' http://drupal.org/user/107403
 - Andrei Mateescu 'amateescu' http://drupal.org/user/729614
 
 Field UI module
@@ -352,6 +358,10 @@ Path module
 
 Phone module
 - Dave Reid 'davereid' http://drupal.org/user/53892
+
+Quick Edit module
+- Wim Leers 'Wim Leers' http://drupal.org/user/99777
+- Théodore Biadala 'nod_' http://drupal.org/user/598310
 
 RDF module
 - Stéphane Corlosquet 'scor' http://drupal.org/user/52142

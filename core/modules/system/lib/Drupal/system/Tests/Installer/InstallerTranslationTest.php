@@ -44,6 +44,10 @@ class InstallerTranslationTest extends InstallerTestBase {
     $string = (string) current($elements);
     $this->assertNotEqual($string, 'Save and continue');
     $this->translations['Save and continue'] = $string;
+
+    // Check the language direction.
+    $direction = (string) current($this->xpath('/html/@dir'));
+    $this->assertEqual($direction, 'ltr');
   }
 
   /**

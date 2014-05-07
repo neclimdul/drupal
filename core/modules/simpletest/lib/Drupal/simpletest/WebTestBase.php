@@ -15,6 +15,7 @@ use Drupal\Component\Utility\Xss;
 use Drupal\Core\DrupalKernel;
 use Drupal\Core\Database\Database;
 use Drupal\Core\Database\ConnectionNotDefinedException;
+use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Language\Language;
 use Drupal\Core\Session\AccountInterface;
 use Drupal\Core\Session\AnonymousUserSession;
@@ -337,11 +338,54 @@ abstract class WebTestBase extends TestBase {
 
     $this->assertEqual($status, SAVED_NEW, String::format('Created content type %type.', array('%type' => $type->id())));
 
-    // Reset permissions so that permissions for this content type are
-    // available.
-    $this->checkPermissions(array(), TRUE);
-
     return $type;
+  }
+
+  /**
+   * Builds the renderable view of an entity.
+   *
+   * Entities postpone the composition of their renderable arrays to #pre_render
+   * functions in order to maximize cache efficacy. This means that the full
+   * rendable array for an entity is constructed in drupal_render(). Some tests
+   * require the complete renderable array for an entity outside of the
+   * drupal_render process in order to verify the presence of specific values.
+   * This method isolates the steps in the render process that produce an
+   * entity's renderable array.
+   *
+   * @param \Drupal\Core\Entity\EntityInterface $entity
+   *   The entity to prepare a renderable array for.
+   * @param string $view_mode
+   *   (optional) The view mode that should be used to build the entity.
+   * @param null $langcode
+   *   (optional) For which language the entity should be prepared, defaults to
+   *   the current content language.
+   * @param bool $reset
+   *   (optional) Whether to clear the cache for this entity.
+   * @return array
+   *
+   * @see drupal_render()
+   */
+  protected function drupalBuildEntityView(EntityInterface $entity, $view_mode = 'full', $langcode = NULL, $reset = FALSE) {
+    $render_controller = $this->container->get('entity.manager')->getViewBuilder($entity->getEntityTypeId());
+    if ($reset) {
+      $render_controller->resetCache(array($entity->id()));
+    }
+    $elements = $render_controller->view($entity, $view_mode, $langcode);
+    // If the default values for this element have not been loaded yet, populate
+    // them.
+    if (isset($elements['#type']) && empty($elements['#defaults_loaded'])) {
+      $elements += element_info($elements['#type']);
+    }
+
+    // Make any final changes to the element before it is rendered. This means
+    // that the $element or the children can be altered or corrected before the
+    // element is rendered into the final text.
+    if (isset($elements['#pre_render'])) {
+      foreach ($elements['#pre_render'] as $callable) {
+        $elements = call_user_func($callable, $elements);
+      }
+    }
+    return $elements;
   }
 
   /**
@@ -618,23 +662,16 @@ abstract class WebTestBase extends TestBase {
   }
 
   /**
-   * Check to make sure that the array of permissions are valid.
+   * Checks whether a given list of permission names is valid.
    *
-   * @param $permissions
-   *   Permissions to check.
-   * @param $reset
-   *   Reset cached available permissions.
+   * @param array $permissions
+   *   The permission names to check.
    *
-   * @return
-   *   TRUE or FALSE depending on whether the permissions are valid.
+   * @return bool
+   *   TRUE if the permissions are valid, FALSE otherwise.
    */
-  protected function checkPermissions(array $permissions, $reset = FALSE) {
-    $available = &drupal_static(__FUNCTION__);
-
-    if (!isset($available) || $reset) {
-      $available = array_keys(\Drupal::moduleHandler()->invokeAll('permission'));
-    }
-
+  protected function checkPermissions(array $permissions) {
+    $available = array_keys(\Drupal::moduleHandler()->invokeAll('permission'));
     $valid = TRUE;
     foreach ($permissions as $permission) {
       if (!in_array($permission, $available)) {
@@ -847,6 +884,11 @@ abstract class WebTestBase extends TestBase {
       ->set('interface.default', 'test_mail_collector')
       ->save();
 
+    // Ensure errors are displayed.
+    \Drupal::config('system.logging')
+      ->set('error_level', 'all')
+      ->save();
+
     // Restore the original Simpletest batch.
     $batch = &batch_get();
     $batch = $this->originalBatch;
@@ -893,6 +935,7 @@ abstract class WebTestBase extends TestBase {
   protected function installParameters() {
     $connection_info = Database::getConnectionInfo();
     $driver = $connection_info['default']['driver'];
+    $connection_info['default']['prefix'] = $connection_info['default']['prefix']['default'];
     unset($connection_info['default']['driver']);
     unset($connection_info['default']['namespace']);
     unset($connection_info['default']['pdo']);
@@ -1072,7 +1115,6 @@ abstract class WebTestBase extends TestBase {
 
     // Reset static variables and reload permissions.
     $this->refreshVariables();
-    $this->checkPermissions(array(), TRUE);
   }
 
   /**
