@@ -30,7 +30,7 @@ class DrupalKernelTest extends DrupalUnitTestBase {
     );
   }
 
-  public function setUp() {
+  function setUp() {
     // DrupalKernel relies on global $config_directories and requires those
     // directories to exist. Therefore, create the directories, but do not
     // invoke DrupalUnitTestBase::setUp(), since that would set up further
@@ -80,7 +80,7 @@ class DrupalKernelTest extends DrupalUnitTestBase {
   /**
    * Tests DIC compilation.
    */
-  public function testCompileDIC() {
+  function testCompileDIC() {
     // @todo: write a memory based storage backend for testing.
     $modules_enabled = array(
       'system' => 'system',
