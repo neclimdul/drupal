@@ -641,7 +641,7 @@ function drupal_install_system($install_state) {
   // modules.
   $kernel = \Drupal::service('kernel');
   $kernel->shutdown();
-  $kernel->preHandle(\Drupal::request());
+  $kernel->prepareLegacyRequest(\Drupal::request());
 
   // Install base system configuration.
   \Drupal::service('config.installer')->installDefaultConfig('core', 'core');
@@ -649,9 +649,10 @@ function drupal_install_system($install_state) {
   // Install System module.
   $kernel->getContainer()->get('module_handler')->install(array('system'), FALSE);
 
-  // DrupalKernel::preHandle() above calls into DrupalKernel::bootCode(), which
-  // primes file_get_stream_wrappers()'s static list of custom stream wrappers
-  // that are based on the currently enabled list of modules (none).
+  // DrupalKernel::prepareLegacyRequest() above calls into
+  // DrupalKernel::bootCode(), which primes file_get_stream_wrappers()'s static
+  // list of custom stream wrappers that are based on the currently enabled
+  // list of modules (none).
   // @todo Custom stream wrappers of a new module have to be registered as soon
   //   as the module is installed/enabled. Fix either ModuleHandler::install()
   //   and/or DrupalKernel::updateModules().

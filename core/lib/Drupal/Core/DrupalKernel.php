@@ -457,11 +457,11 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
   /**
    * {@inheritdoc}
    */
-  public function preHandle(Request $request) {
+  public function prepareLegacyRequest(Request $request) {
 
     $this->boot($request);
     $this->bootCode($request);
-    // Normally this is handled in the HttpKernel object but prehandle exists
+    // Normally this is handled in the HttpKernel object but this method exists
     // for pages that don't run through a http kernel.
     $this->container->enterScope('request');
     $this->container->set('request', $request);

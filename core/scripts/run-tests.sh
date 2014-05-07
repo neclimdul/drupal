@@ -29,7 +29,7 @@ simpletest_script_init();
 
 $request = Request::createFromGlobals();
 $kernel = new TestKernel($autoloader);
-$kernel->preHandle($request);
+$kernel->prepareLegacyRequest($request);
 
 if ($args['execute-test']) {
   simpletest_script_setup_database();

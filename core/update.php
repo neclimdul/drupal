@@ -326,7 +326,7 @@ if (db_table_exists('system')) {
 $GLOBALS['conf']['container_service_providers']['UpdateServiceProvider'] = 'Drupal\Core\DependencyInjection\UpdateServiceProvider';
 $GLOBALS['conf']['update_service_provider_overrides'] = TRUE;
 
-$kernel->preHandle($request);
+$kernel->prepareLegacyRequest($request);
 
 // Determine if the current user has access to run update.php.
 \Drupal::service('session_manager')->initialize();

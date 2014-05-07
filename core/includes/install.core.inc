@@ -371,7 +371,7 @@ function install_begin_request(&$install_state) {
   $container->get('string_translation')
     ->addTranslator($container->get('string_translator.file_translation'));
 
-  $kernel->preHandle($request);
+  $kernel->prepareLegacyRequest($request);
 
   // Set the default language to the selected language, if any.
   if (isset($install_state['parameters']['langcode'])) {

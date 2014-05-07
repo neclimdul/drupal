@@ -23,7 +23,7 @@ require_once __DIR__ . '/includes/utility.inc';
 
 $request = Request::createFromGlobals();
 $kernel = new DrupalKernel('prod', $autoloader);
-$response = $kernel->preHandle($request);
+$response = $kernel->prepareLegacyRequest($request);
 
 if (Settings::get('rebuild_access', FALSE) ||
   (isset($_GET['token'], $_GET['timestamp']) &&

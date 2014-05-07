@@ -55,7 +55,7 @@ function authorize_access_allowed() {
 
 $request = Request::createFromGlobals();
 $kernel = new DrupalKernel('prod', $autoloader);
-$kernel->preHandle($request);
+$kernel->prepareLegacyRequest($request);
 
 // We have to enable the user and system modules, even to check access and
 // display errors via the maintenance theme.

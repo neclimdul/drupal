@@ -79,20 +79,10 @@ interface DrupalKernelInterface extends HttpKernelInterface {
   /**
    * Prepare the kernel for handling a request without handling the request.
    *
-   * Because Drupal still provides so much outside of the Kernel as global state,
-   * there are standalone php files even within core that want to handle the page
-   * request entirely on their own but want to have access to this state. To do
-   * they can create a kernel and call this method to have the Kernel populate its
-   * state which will be mirrored in those global methods.
-   *
-   * Note: This is provided for backwards compatibility only. Many of those global
-   * methods are deprecated and the ones that are not are meant to be shortcuts for
-   * procedural methods, not for bypassing the kernel. Future code should extend the
-   * DrupalKernel or implement its own kernel and handle the page the request in
-   * that class.
+   * Note: This is provided for backwards compatibility only.
    *
    * @param \Symfony\Component\HttpFoundation\Request $request
    *   The current request.
    */
-  public function preHandle(Request $request);
+  public function prepareLegacyRequest(Request $request);
 }

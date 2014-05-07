@@ -1089,7 +1089,7 @@ abstract class WebTestBase extends TestBase {
     $this->kernel->boot($request);
     // Restore any modified settings before the container is built.
     new Settings($settings + Settings::getAll());
-    $this->kernel->preHandle($request);
+    $this->kernel->prepareLegacyRequest($request);
 
     // Replace the local container with the newly bootstrapped container.
     $this->container = $this->kernel->getContainer();

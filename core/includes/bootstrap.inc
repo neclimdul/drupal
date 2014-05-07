@@ -1171,7 +1171,7 @@ function drupal_bootstrap($phase = NULL) {
 
         case DRUPAL_BOOTSTRAP_CODE:
         case DRUPAL_BOOTSTRAP_FULL:
-          $kernel->preHandle($request);
+          $kernel->prepareLegacyRequest($request);
           break;
       }
     }
