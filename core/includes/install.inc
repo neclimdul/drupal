@@ -632,7 +632,6 @@ function drupal_verify_profile($install_state) {
  *   to set the default language.
  */
 function drupal_install_system($install_state) {
-
   // Remove the service provider adding alternative installer services to the
   // container.
   unset($GLOBALS['conf']['container_service_providers']['InstallerServiceProvider']);

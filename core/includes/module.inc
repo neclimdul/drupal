@@ -32,7 +32,6 @@ function system_list($type) {
       'theme' => array(),
       'filepaths' => array(),
     );
-
     // ThemeHandler maintains the 'system.theme.data' state record.
     $theme_data = \Drupal::state()->get('system.theme.data', array());
     foreach ($theme_data as $name => $theme) {

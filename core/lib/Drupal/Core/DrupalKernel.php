@@ -312,7 +312,6 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
    * @return $this
    */
   public function bootCode(Request $request) {
-
     require_once DRUPAL_ROOT . '/core/includes/common.inc';
     require_once DRUPAL_ROOT . '/core/includes/database.inc';
     require_once DRUPAL_ROOT . '/' . Settings::get('path_inc', 'core/includes/path.inc');
@@ -448,7 +447,6 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
    * {@inheritdoc}
    */
   public function handle(Request $request, $type = self::MASTER_REQUEST, $catch = TRUE) {
-
     $this->boot($request);
     $this->bootCode($request);
     return $this->getHttpKernel()->handle($request, $type, $catch);
@@ -458,7 +456,6 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
    * {@inheritdoc}
    */
   public function prepareLegacyRequest(Request $request) {
-
     $this->boot($request);
     $this->bootCode($request);
     // Normally this is handled in the HttpKernel object but this method exists
@@ -648,7 +645,6 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
    * correctly for security or just saneness.
    */
   protected function bootEnvironment() {
-
     if (static::$isEnvironmentInitialized) {
       return;
     }
