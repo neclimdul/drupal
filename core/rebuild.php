@@ -21,9 +21,12 @@ chdir('..');
 $autoloader = require_once __DIR__ . '/vendor/autoload.php';
 require_once __DIR__ . '/includes/utility.inc';
 
-// @todo Figure out how to convert this bootstrap to the new architecture.
 $request = Request::createFromGlobals();
-drupal_bootstrap(DRUPAL_BOOTSTRAP_CONFIGURATION);
+// Manually resemble early bootstrap of DrupalKernel::boot().
+require_once __DIR__ . '/includes/bootstrap.inc';
+DrupalKernel::bootEnvironment();
+Settings::initialize($request);
+DrupalKernel::initializeRequestGlobals($request);
 
 if (Settings::get('rebuild_access', FALSE) ||
   (isset($_GET['token'], $_GET['timestamp']) &&
@@ -31,7 +34,7 @@ if (Settings::get('rebuild_access', FALSE) ||
     ($_GET['token'] === Crypt::hmacBase64($_GET['timestamp'], Settings::get('hash_salt')))
   )) {
 
-  drupal_rebuild($request);
+  drupal_rebuild($autoloader, $request);
   drupal_set_message('Cache rebuild complete.');
 }
 

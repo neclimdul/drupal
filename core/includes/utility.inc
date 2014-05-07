@@ -10,6 +10,7 @@ use Drupal\Core\PhpStorage\PhpStorageFactory;
 use Drupal\Core\Cache\Cache;
 use Drupal\Core\DrupalKernel;
 use Symfony\Component\HttpFoundation\Request;
+use Composer\Autoload\ClassLoader;
 
 /**
  * Drupal-friendly var_export().
@@ -34,12 +35,14 @@ function drupal_var_export($var, $prefix = '') {
  *
  * Requires DRUPAL_BOOTSTRAP_CONFIGURATION.
  *
+ * @param \Composer\Autoload\ClassLoader $classloader
+ *   The classloader.
  * @param \Symfony\Component\HttpFoundation\Request $request
  *   The current request.
  *
  * @see rebuild.php
  */
-function drupal_rebuild(Request $request) {
+function drupal_rebuild(ClassLoader $classloader, Request $request) {
   // Remove Drupal's error and exception handlers; they rely on a working
   // service container and other subsystems and will only cause a fatal error
   // that hides the actual error.
@@ -50,14 +53,16 @@ function drupal_rebuild(Request $request) {
   PhpStorageFactory::get('service_container')->deleteAll();
   PhpStorageFactory::get('twig')->deleteAll();
 
-  // Disable the page cache.
-  drupal_page_is_cacheable(FALSE);
-
   // Bootstrap up to where caches exist and clear them.
-  drupal_bootstrap(DRUPAL_BOOTSTRAP_CODE);
+  $kernel = new DrupalKernel('prod', $classloader);
+  $kernel->prepareLegacyRequest($request);
+
   foreach (Cache::getBins() as $bin) {
     $bin->deleteAll();
   }
+
+  // Disable the page cache.
+  drupal_page_is_cacheable(FALSE);
 
   drupal_flush_all_caches();
 

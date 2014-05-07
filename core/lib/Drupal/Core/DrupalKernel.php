@@ -217,7 +217,7 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
       exit;
     }
 
-    $this->bootEnvironment();
+    static::bootEnvironment();
 
     // Get our most basic settings setup.
     Settings::initialize($request);
@@ -225,7 +225,7 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
     drupal_classloader($this->classLoader);
 
     // Initialize Request globals.
-    $this->initializeRequestGlobals($request);
+    static::initializeRequestGlobals($request);
 
     // Redirect the user to the installation script if Drupal has not been
     // installed yet (i.e., if no $databases array has been defined in the
@@ -651,7 +651,7 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
    * This method sets PHP environment options we want to be sure are set
    * correctly for security or just saneness.
    */
-  protected function bootEnvironment() {
+  public static function bootEnvironment() {
     if (static::$isEnvironmentInitialized) {
       return;
     }
@@ -715,7 +715,7 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
    *
    * @todo D8: Eliminate this entirely in favor of Request object.
    */
-  protected function initializeRequestGlobals(Request $request) {
+  public static function initializeRequestGlobals(Request $request) {
     // If we do this more then once per page request things go weird.
     // $globals--
     if (static::$isRequestInitialized) {
