@@ -237,6 +237,70 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
   }
 
   /**
+   * Finishes booting by loading remaining includes and enabled modules.
+   *
+   * @return $this
+   */
+  public function bootCode(Request $request) {
+    require_once DRUPAL_ROOT . '/core/includes/common.inc';
+    require_once DRUPAL_ROOT . '/core/includes/database.inc';
+    require_once DRUPAL_ROOT . '/' . Settings::get('path_inc', 'core/includes/path.inc');
+    require_once DRUPAL_ROOT . '/core/includes/module.inc';
+    require_once DRUPAL_ROOT . '/core/includes/theme.inc';
+    require_once DRUPAL_ROOT . '/core/includes/pager.inc';
+    require_once DRUPAL_ROOT . '/' . Settings::get('menu_inc', 'core/includes/menu.inc');
+    require_once DRUPAL_ROOT . '/core/includes/tablesort.inc';
+    require_once DRUPAL_ROOT . '/core/includes/file.inc';
+    require_once DRUPAL_ROOT . '/core/includes/unicode.inc';
+    require_once DRUPAL_ROOT . '/core/includes/form.inc';
+    require_once DRUPAL_ROOT . '/core/includes/mail.inc';
+    require_once DRUPAL_ROOT . '/core/includes/ajax.inc';
+    require_once DRUPAL_ROOT . '/core/includes/errors.inc';
+    require_once DRUPAL_ROOT . '/core/includes/schema.inc';
+    require_once DRUPAL_ROOT . '/core/includes/entity.inc';
+
+    // Ensure container is loaded.
+    $this->getContainer();
+
+    // Load all enabled modules.
+    $this->container->get('module_handler')->loadAll();
+
+    // Ensure container has a request scope so we can load file stream wrappers.
+    if (!$this->container->isScopeActive('request')) {
+      // Enter the request scope so that current_user service is available for
+      // locale/translation sake.
+      $this->container->enterScope('request');
+      $this->container->set('request', $request);
+      $this->container->get('request_stack')->push($request);
+    }
+
+    // Make sure all stream wrappers are registered.
+    file_get_stream_wrappers();
+
+    // Ensure mt_rand() is reseeded to prevent random values from one page load
+    // being exploited to predict random values in subsequent page loads.
+    $seed = unpack("L", Crypt::randomBytes(4));
+    mt_srand($seed[1]);
+
+    // Set the allowed protocols once we have the config available.
+    $allowed_protocols = $this->container->get('config.factory')->get('system.filter')->get('protocols');
+    if (!isset($allowed_protocols)) {
+      // \Drupal\Component\Utility\UrlHelper::filterBadProtocol() is called by
+      // the installer and update.php, in which case the configuration may not
+      // exist (yet). Provide a minimal default set of allowed protocols for
+      // these cases.
+      $allowed_protocols = array('http', 'https');
+    }
+    UrlHelper::setAllowedProtocols($allowed_protocols);
+
+    // Back out scope required to initialize the file stream wrappers.
+    if ($this->container->isScopeActive('request')) {
+      $this->container->leaveScope('request');
+    }
+    return $this;
+  }
+
+  /**
    * {@inheritdoc}
    */
   public function shutdown() {
@@ -304,70 +368,6 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
       else {
         drupal_add_http_header('X-Drupal-Cache', 'MISS');
       }
-    }
-    return $this;
-  }
-
-  /**
-   * Finishes booting by loading remaining includes and enabled modules.
-   *
-   * @return $this
-   */
-  public function bootCode(Request $request) {
-    require_once DRUPAL_ROOT . '/core/includes/common.inc';
-    require_once DRUPAL_ROOT . '/core/includes/database.inc';
-    require_once DRUPAL_ROOT . '/' . Settings::get('path_inc', 'core/includes/path.inc');
-    require_once DRUPAL_ROOT . '/core/includes/module.inc';
-    require_once DRUPAL_ROOT . '/core/includes/theme.inc';
-    require_once DRUPAL_ROOT . '/core/includes/pager.inc';
-    require_once DRUPAL_ROOT . '/' . Settings::get('menu_inc', 'core/includes/menu.inc');
-    require_once DRUPAL_ROOT . '/core/includes/tablesort.inc';
-    require_once DRUPAL_ROOT . '/core/includes/file.inc';
-    require_once DRUPAL_ROOT . '/core/includes/unicode.inc';
-    require_once DRUPAL_ROOT . '/core/includes/form.inc';
-    require_once DRUPAL_ROOT . '/core/includes/mail.inc';
-    require_once DRUPAL_ROOT . '/core/includes/ajax.inc';
-    require_once DRUPAL_ROOT . '/core/includes/errors.inc';
-    require_once DRUPAL_ROOT . '/core/includes/schema.inc';
-    require_once DRUPAL_ROOT . '/core/includes/entity.inc';
-
-    // Ensure container is loaded.
-    $this->getContainer();
-
-    // Load all enabled modules.
-    $this->container->get('module_handler')->loadAll();
-
-    // Ensure container has a request scope so we can load file stream wrappers.
-    if (!$this->container->isScopeActive('request')) {
-      // Enter the request scope so that current_user service is available for
-      // locale/translation sake.
-      $this->container->enterScope('request');
-      $this->container->set('request', $request);
-      $this->container->get('request_stack')->push($request);
-    }
-
-    // Make sure all stream wrappers are registered.
-    file_get_stream_wrappers();
-
-    // Ensure mt_rand() is reseeded to prevent random values from one page load
-    // being exploited to predict random values in subsequent page loads.
-    $seed = unpack("L", Crypt::randomBytes(4));
-    mt_srand($seed[1]);
-
-    // Set the allowed protocols once we have the config available.
-    $allowed_protocols = $this->container->get('config.factory')->get('system.filter')->get('protocols');
-    if (!isset($allowed_protocols)) {
-      // \Drupal\Component\Utility\UrlHelper::filterBadProtocol() is called by
-      // the installer and update.php, in which case the configuration may not
-      // exist (yet). Provide a minimal default set of allowed protocols for
-      // these cases.
-      $allowed_protocols = array('http', 'https');
-    }
-    UrlHelper::setAllowedProtocols($allowed_protocols);
-
-    // Back out scope required to initialize the file stream wrappers.
-    if ($this->container->isScopeActive('request')) {
-      $this->container->leaveScope('request');
     }
     return $this;
   }
