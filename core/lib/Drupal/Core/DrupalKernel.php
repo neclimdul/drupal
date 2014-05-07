@@ -220,6 +220,8 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
     // Get our most basic settings setup.
     Settings::initialize($request);
 
+    drupal_classloader($this->classLoader);
+
     // Initialize Request globals.
     $this->initializeRequestGlobals($request);
 
