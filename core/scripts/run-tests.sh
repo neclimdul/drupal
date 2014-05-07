@@ -7,11 +7,11 @@
 
 use Drupal\Component\Utility\Timer;
 use Drupal\Core\Database\Database;
-use Drupal\Core\DrupalKernel;
 use Drupal\Core\Site\Settings;
+use Drupal\Core\Test\TestKernel;
 use Symfony\Component\HttpFoundation\Request;
 
-$loader = require_once __DIR__ . '/../vendor/autoload.php';
+$autoloader = require_once __DIR__ . '/../vendor/autoload.php';
 
 const SIMPLETEST_SCRIPT_COLOR_PASS = 32; // Green.
 const SIMPLETEST_SCRIPT_COLOR_FAIL = 31; // Red.
@@ -26,7 +26,10 @@ if ($args['help'] || $count == 0) {
 }
 
 simpletest_script_init();
-simpletest_script_bootstrap($loader);
+
+$request = Request::createFromGlobals();
+$kernel = new TestKernel($autoloader);
+$kernel->preHandle($request);
 
 if ($args['execute-test']) {
   simpletest_script_setup_database();
@@ -350,51 +353,6 @@ function simpletest_script_init() {
   }
 
   chdir(realpath(__DIR__ . '/../..'));
-}
-
-/**
- * Bootstraps a minimal Drupal environment.
- *
- * @see install_begin_request()
- */
-function simpletest_script_bootstrap($loader) {
-
-  // Replace services with in-memory and null implementations.
-  $GLOBALS['conf']['container_service_providers']['InstallerServiceProvider'] = 'Drupal\Core\Installer\InstallerServiceProvider';
-
-  $request = Request::createFromGlobals();
-  $kernel = new DrupalKernel('testing', $loader, FALSE);
-  $kernel->boot($request);
-
-  // Remove Drupal's error/exception handlers; they are designed for HTML
-  // and there is no storage nor a (watchdog) logger here.
-  restore_error_handler();
-  restore_exception_handler();
-
-  // In addition, ensure that PHP errors are not hidden away in logs.
-  ini_set('display_errors', TRUE);
-
-  // Ensure that required Settings exist.
-  if (!Settings::getAll()) {
-    new Settings(array(
-      'hash_salt' => 'run-tests',
-    ));
-  }
-
-  // Manually enter set request scope since we can't use the handle methods yet.
-  $kernel->preHandle($request);
-
-  $module_handler = $kernel->getContainer()->get('module_handler');
-  // @todo Remove System module. Only needed because \Drupal\Core\Datetime\Date
-  //   has a (needless) dependency on the 'date_format' entity, so calls to
-  //   format_date()/format_interval() cause a plugin not found exception.
-  $module_handler->addModule('system', 'core/modules/system');
-  $module_handler->addModule('simpletest', 'core/modules/simpletest');
-  $module_handler->loadAll();
-  $module_filenames = $module_handler->getModuleList();
-  $kernel->updateModules($module_filenames, $module_filenames);
-
-  simpletest_classloader_register();
 }
 
 /**
