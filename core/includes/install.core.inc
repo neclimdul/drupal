@@ -276,7 +276,7 @@ function install_begin_request(&$install_state) {
   // This primes the site path to be used during installation. By not requiring
   // settings.php, a bare site folder can be prepared in the /sites directory,
   // which will be used for installing Drupal.
-  conf_path(FALSE, FALSE, $request);
+  Settings::confPath($request, FALSE);
 
   // If the hash salt leaks, it becomes possible to forge a valid testing user
   // agent, install a new copy of Drupal, and take over the original site.
