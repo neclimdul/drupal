@@ -32,14 +32,14 @@ function drupal_var_export($var, $prefix = '') {
 /**
  * Rebuilds all caches even when Drupal itself does not work.
  *
- * @param Drupal\Core\DrupalKernel $kernel
- *   The current kernel object.
+ * Requires DRUPAL_BOOTSTRAP_CONFIGURATION.
+ *
  * @param \Symfony\Component\HttpFoundation\Request $request
  *   The current request.
  *
  * @see rebuild.php
  */
-function drupal_rebuild(DrupalKernel $kernel, Request $request) {
+function drupal_rebuild(Request $request) {
   // Remove Drupal's error and exception handlers; they rely on a working
   // service container and other subsystems and will only cause a fatal error
   // that hides the actual error.
@@ -54,7 +54,7 @@ function drupal_rebuild(DrupalKernel $kernel, Request $request) {
   drupal_page_is_cacheable(FALSE);
 
   // Bootstrap up to where caches exist and clear them.
-  $kernel->boot($request);
+  drupal_bootstrap(DRUPAL_BOOTSTRAP_CODE);
   foreach (Cache::getBins() as $bin) {
     $bin->deleteAll();
   }
