@@ -226,7 +226,8 @@ define('DRUPAL_ROOT', dirname(dirname(__DIR__)));
  *   Force a full search for matching directories even if one had been
  *   found previously. Defaults to FALSE.
  * @param \Symfony\Component\HttpFoundation\Request $request
- *   The current request.
+ *   (optional) The current request. Defaults to \Drupal::request() or a new
+ *   request created from globals.
  *
  * @return
  *   The path of the matching directory.
@@ -237,6 +238,15 @@ define('DRUPAL_ROOT', dirname(dirname(__DIR__)));
  *   Use \Drupal\Core\Site\Settings::confPath().
  */
 function conf_path($require_settings = TRUE, $reset = FALSE, Request $request = NULL) {
+  if (!isset($request)) {
+    if (\Drupal::hasRequest()) {
+      $request = \Drupal::request();
+    }
+    // @todo Remove once external CLI scripts (Drush) are updated.
+    else {
+      $request = Request::createFromGlobals();
+    }
+  }
   return Settings::confPath($request, $require_settings, $reset);
 }
 
