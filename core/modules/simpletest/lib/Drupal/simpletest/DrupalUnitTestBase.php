@@ -152,8 +152,8 @@ abstract class DrupalUnitTestBase extends UnitTestBase {
     $this->container->set('request', $request);
     $this->container->get('request_stack')->push($request);
 
-    \Drupal::state()->set('system.module.files', $this->moduleFiles);
-    \Drupal::state()->set('system.theme.files', $this->themeFiles);
+    $this->container->get('state')->set('system.module.files', $this->moduleFiles);
+    $this->container->get('state')->set('system.theme.files', $this->themeFiles);
 
     // Create a minimal core.extension configuration object so that the list of
     // enabled modules can be maintained allowing
