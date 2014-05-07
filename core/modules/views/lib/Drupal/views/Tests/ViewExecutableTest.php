@@ -29,7 +29,7 @@ use Symfony\Component\HttpFoundation\Response;
  */
 class ViewExecutableTest extends ViewUnitTestBase {
 
-  public static $modules = array('system', 'node', 'comment', 'user', 'filter', 'entity', 'field', 'text');
+  public static $modules = array('system', 'node', 'comment', 'user', 'filter', 'entity', 'field', 'field_sql_storage', 'text');
 
   /**
    * Views used by this test.

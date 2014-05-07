@@ -73,9 +73,6 @@ interface ModuleHandlerInterface {
    *   The module name; e.g., 'node'.
    * @param string $path
    *   The module path; e.g., 'core/modules/node'.
-   *
-   * @throws \InvalidArgumentException
-   *   If the specified module path does not exist.
    */
   public function addModule($name, $path);
 
@@ -86,9 +83,6 @@ interface ModuleHandlerInterface {
    *   The profile name; e.g., 'standard'.
    * @param string $path
    *   The profile path; e.g., 'core/profiles/standard'.
-   *
-   * @throws \InvalidArgumentException
-   *   If the specified installation profile path does not exist.
    */
   public function addProfile($name, $path);
 
