@@ -18,16 +18,10 @@ if (!isset($_SERVER['argv']) || !is_array($_SERVER['argv'])) {
   return;
 }
 
-$autoloader = require_once __DIR__ . '/../vendor/autoload.php';
+$autoloader = require __DIR__ . '/../vendor/autoload.php';
 $request = Request::createFromGlobals();
 $kernel = new DrupalKernel('prod', $autoloader);
 $kernel->boot($request);
-
-$core = dirname(__DIR__);
-require_once $core . '/vendor/autoload.php';
-require_once $core . '/includes/bootstrap.inc';
-
-drupal_bootstrap(DRUPAL_BOOTSTRAP_CONFIGURATION);
 
 $timestamp = time();
 $token = Crypt::hmacBase64($timestamp, Settings::get('hash_salt'));

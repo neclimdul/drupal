@@ -57,7 +57,7 @@ EOF;
 // Password list to be processed.
 $passwords = $_SERVER['argv'];
 
-$autoloader = require_once dirname(__DIR__) . '/vendor/autoload.php';
+$autoloader = require __DIR__ . '/../vendor/autoload.php';
 
 $request = Request::createFromGlobals();
 $kernel = new DrupalKernel('prod', $autoloader, FALSE);
