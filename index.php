@@ -15,8 +15,9 @@ use Drupal\Core\Site\Settings;
 $autoloader = require_once __DIR__ . '/core/vendor/autoload.php';
 
 try {
+
   $request = Request::createFromGlobals();
-  $kernel = new DrupalKernel('prod', $autoloader);
+  $kernel = DrupalKernel::createFromRequest($request, 'prod', $autoloader);
   $response = $kernel
     ->handlePageCache($request)
     ->handle($request)

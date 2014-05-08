@@ -1157,12 +1157,11 @@ function drupal_bootstrap($phase = NULL) {
 
       switch ($current_phase) {
         case DRUPAL_BOOTSTRAP_CONFIGURATION:
-          Settings::initialize($request);
+          $kernel = DrupalKernel::createFromRequest($request, 'prod', drupal_classloader());
           break;
 
         case DRUPAL_BOOTSTRAP_KERNEL:
-          $kernel = new DrupalKernel('prod', drupal_classloader());
-          $kernel->boot($request);
+          $kernel->boot();
           break;
 
         case DRUPAL_BOOTSTRAP_PAGE_CACHE:

@@ -167,9 +167,55 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
   protected static $isEnvironmentInitialized = FALSE;
 
   /**
-   * Whether the DrupalKernel object is for testing purposes.
+   * Create a DrupalKernel object from a request.
+   *
+   * @param \Symfony\Component\HttpFoundation\Request $request
+   * @param string $environment
+   *   String indicating the environment, e.g. 'prod' or 'dev'.
+   * @param \Composer\Autoload\ClassLoader $class_loader
+   *   (optional) The classloader is only used if $storage is not given or
+   *   the load from storage fails and a container rebuild is required. In
+   *   this case, the loaded modules will be registered with this loader in
+   *   order to be able to find the module serviceProviders.
+   * @param bool $allow_dumping
+   *   (optional) FALSE to stop the container from being written to or read
+   *   from disk. Defaults to TRUE.
+   * @param bool $test_only
+   *   (optional) Whether the DrupalKernel object is for testing purposes only.
+   *   Defaults to FALSE.
+   * @return \Drupal\Core\DrupalKernel
    */
-  protected $testOnly = FALSE;
+  public static function createFromRequest(Request $request, $environment, ClassLoader $class_loader, $allow_dumping = TRUE, $test_only = FALSE) {
+    // Include our bootstrap file.
+    require_once dirname(dirname(dirname(__DIR__))) . '/includes/bootstrap.inc';
+
+    // Exit if we should be in a test environment but aren't.
+    if ($test_only && !drupal_valid_test_ua()) {
+      header($request->server->get('SERVER_PROTOCOL') . ' 403 Forbidden');
+      exit;
+    }
+
+    static::bootEnvironment();
+
+    // Get our most basic settings setup.
+    Settings::initialize($request);
+
+    // Initialize legacy request globals.
+    static::initializeRequestGlobals($request);
+
+    drupal_classloader($class_loader);
+
+    // Redirect the user to the installation script if Drupal has not been
+    // installed yet (i.e., if no $databases array has been defined in the
+    // settings.php file) and we are not already installing.
+    if (!Database::getConnectionInfo() && !drupal_installation_attempted() && !drupal_is_cli()) {
+      include_once DRUPAL_ROOT . '/core/includes/install.inc';
+      install_goto('core/install.php');
+    }
+
+    return new DrupalKernel($environment, $class_loader, $allow_dumping, $test_only);
+
+  }
 
   /**
    * Constructs a DrupalKernel object.
@@ -184,64 +230,26 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
    * @param bool $allow_dumping
    *   (optional) FALSE to stop the container from being written to or read
    *   from disk. Defaults to TRUE.
-   * @param bool $test_only
-   *   (optional) Whether the DrupalKernel object is for testing purposes only.
-   *   Defaults to FALSE.
    */
-  public function __construct($environment, ClassLoader $class_loader, $allow_dumping = TRUE, $test_only = FALSE) {
+  public function __construct($environment, ClassLoader $class_loader, $allow_dumping = TRUE) {
     $this->environment = $environment;
     $this->allowDumping = $allow_dumping;
-    $this->testOnly = $test_only;
     $this->classLoader = $class_loader;
   }
 
   /**
    * {@inheritdoc}
    */
-  public function boot(Request $request) {
+  public function boot() {
     if ($this->booted) {
-      return;
+      return $this;
     }
 
     // Start a page timer:
     Timer::start('page');
 
-    // Include our bootstrap file.
-    require_once dirname(dirname(dirname(__DIR__))) . '/includes/bootstrap.inc';
-
-    // Exit if we should be in a test environment but aren't.
-    if ($this->testOnly && !drupal_valid_test_ua()) {
-      header($request->server->get('SERVER_PROTOCOL') . ' 403 Forbidden');
-      exit;
-    }
-
-    $this->bootEnvironment();
-
-    // Get our most basic settings setup.
-    Settings::initialize($request);
-
-    drupal_classloader($this->classLoader);
-
-    // Initialize Request globals.
-    $this->initializeRequestGlobals($request);
-
-    // Redirect the user to the installation script if Drupal has not been
-    // installed yet (i.e., if no $databases array has been defined in the
-    // settings.php file) and we are not already installing.
-    if (!Database::getConnectionInfo() && !drupal_installation_attempted() && !drupal_is_cli()) {
-      include_once DRUPAL_ROOT . '/core/includes/install.inc';
-      install_goto('core/install.php');
-    }
-
     $this->booted = TRUE;
-  }
 
-  /**
-   * Finishes booting by loading remaining includes and enabled modules.
-   *
-   * @return $this
-   */
-  public function bootCode(Request $request) {
     require_once DRUPAL_ROOT . '/core/includes/common.inc';
     require_once DRUPAL_ROOT . '/core/includes/database.inc';
     require_once DRUPAL_ROOT . '/' . Settings::get('path_inc', 'core/includes/path.inc');
@@ -265,38 +273,11 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
     // Load all enabled modules.
     $this->container->get('module_handler')->loadAll();
 
-    // Ensure container has a request scope so we can load file stream wrappers.
-    if (!$this->container->isScopeActive('request')) {
-      // Enter the request scope so that current_user service is available for
-      // locale/translation sake.
-      $this->container->enterScope('request');
-      $this->container->set('request', $request);
-      $this->container->get('request_stack')->push($request);
-    }
-
-    // Make sure all stream wrappers are registered.
-    file_get_stream_wrappers();
-
     // Ensure mt_rand() is reseeded to prevent random values from one page load
     // being exploited to predict random values in subsequent page loads.
     $seed = unpack("L", Crypt::randomBytes(4));
     mt_srand($seed[1]);
 
-    // Set the allowed protocols once we have the config available.
-    $allowed_protocols = $this->container->get('config.factory')->get('system.filter')->get('protocols');
-    if (!isset($allowed_protocols)) {
-      // \Drupal\Component\Utility\UrlHelper::filterBadProtocol() is called by
-      // the installer and update.php, in which case the configuration may not
-      // exist (yet). Provide a minimal default set of allowed protocols for
-      // these cases.
-      $allowed_protocols = array('http', 'https');
-    }
-    UrlHelper::setAllowedProtocols($allowed_protocols);
-
-    // Back out scope required to initialize the file stream wrappers.
-    if ($this->container->isScopeActive('request')) {
-      $this->container->leaveScope('request');
-    }
     return $this;
   }
 
@@ -327,6 +308,37 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
     return $this->container;
   }
 
+  function preHandle(Request $request) {
+
+    // Ensure container has a request scope so we can load file stream wrappers.
+    if (!$this->container->isScopeActive('request')) {
+      // Enter the request scope so that current_user service is available for
+      // locale/translation sake.
+      $this->container->enterScope('request');
+      $this->container->set('request', $request, 'request');
+      $this->container->get('request_stack')->push($request);
+    }
+
+    // Make sure all stream wrappers are registered.
+    file_get_stream_wrappers();
+
+    // Back out scope required to initialize the file stream wrappers.
+    if ($this->container->isScopeActive('request')) {
+      $this->container->leaveScope('request');
+    }
+
+    // Set the allowed protocols once we have the config available.
+    $allowed_protocols = $this->container->get('config.factory')->get('system.filter')->get('protocols');
+    if (!isset($allowed_protocols)) {
+      // \Drupal\Component\Utility\UrlHelper::filterBadProtocol() is called by
+      // the installer and update.php, in which case the configuration may not
+      // exist (yet). Provide a minimal default set of allowed protocols for
+      // these cases.
+      $allowed_protocols = array('http', 'https');
+    }
+    UrlHelper::setAllowedProtocols($allowed_protocols);
+  }
+
   /**
    * {@inheritdoc}
    */
@@ -334,7 +346,8 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
     // @todo Use the current_user proxy.
     global $user;
 
-    $this->boot($request);
+    $this->boot();
+    $this->preHandle($request);
 
     // Check for a cache mode force from settings.php.
     if (Settings::get('page_cache_without_database')) {
@@ -373,10 +386,7 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
   }
 
   /**
-   * Returns an array of available bundles.
-   *
-   * @return array
-   *   The available bundles.
+   * {@inheritdoc}
    */
   public function discoverServiceProviders() {
     $serviceProviders = array(
@@ -449,8 +459,8 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
    * {@inheritdoc}
    */
   public function handle(Request $request, $type = self::MASTER_REQUEST, $catch = TRUE) {
-    $this->boot($request);
-    $this->bootCode($request);
+    $this->boot();
+    $this->preHandle($request);
     return $this->getHttpKernel()->handle($request, $type, $catch);
   }
 
@@ -458,12 +468,12 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
    * {@inheritdoc}
    */
   public function prepareLegacyRequest(Request $request) {
-    $this->boot($request);
-    $this->bootCode($request);
-    // Normally this is handled in the HttpKernel object but this method exists
-    // for pages that don't run through a http kernel.
+    $this->boot();
+    $this->preHandle($request);
+    // Enter the request scope so that current_user service is available for
+    // locale/translation sake.
     $this->container->enterScope('request');
-    $this->container->set('request', $request);
+    $this->container->set('request', $request, 'request');
     $this->container->get('request_stack')->push($request);
   }
 
@@ -646,7 +656,7 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
    * This method sets PHP environment options we want to be sure are set
    * correctly for security or just saneness.
    */
-  protected function bootEnvironment() {
+  protected static function bootEnvironment() {
     if (static::$isEnvironmentInitialized) {
       return;
     }
@@ -710,7 +720,7 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
    *
    * @todo D8: Eliminate this entirely in favor of Request object.
    */
-  protected function initializeRequestGlobals(Request $request) {
+  protected static function initializeRequestGlobals(Request $request) {
     // If we do this more then once per page request things go weird.
     // $globals--
     if (static::$isRequestInitialized) {

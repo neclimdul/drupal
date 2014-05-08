@@ -356,8 +356,8 @@ function install_begin_request(&$install_state) {
     $environment = 'prod';
   }
 
-  $kernel = new DrupalKernel($environment, drupal_classloader(), FALSE);
-  $kernel->boot($request);
+  $kernel = DrupalKernel::createFromRequest($request, $environment, drupal_classloader(), FALSE);
+  $kernel->boot();
   $container = $kernel->getContainer();
 
   // Register the file translation service.

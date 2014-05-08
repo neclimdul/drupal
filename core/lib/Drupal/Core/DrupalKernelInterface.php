@@ -20,8 +20,10 @@ interface DrupalKernelInterface extends HttpKernelInterface {
 
   /**
    * Boots the current kernel.
+   *
+   * @return $this
    */
-  public function boot(Request $request);
+  public function boot();
 
   /**
    * Shuts down the kernel.
