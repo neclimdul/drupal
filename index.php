@@ -20,8 +20,8 @@ try {
   $response = $kernel
     ->handlePageCache($request)
     ->handle($request)
-    ->prepare($request)
-    ->send();
+      // Handle the response object.
+      ->prepare($request)->send();
   $kernel->terminate($request, $response);
 }
 catch (Exception $e) {
