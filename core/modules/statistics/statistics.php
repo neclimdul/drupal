@@ -12,8 +12,8 @@ chdir('../../..');
 
 $autoloader = require_once dirname(dirname(__DIR__)) . '/vendor/autoload.php';
 
-$kernel = new DrupalKernel('prod', $autoloader);
-$kernel->boot(Request::createFromGlobals());
+$kernel = DrupalKernel::createFromRequest(Request::createFromGlobals(), 'prod', $autoloader);
+$kernel->boot();
 
 $views = $kernel->getContainer()
   ->get('config.factory')
