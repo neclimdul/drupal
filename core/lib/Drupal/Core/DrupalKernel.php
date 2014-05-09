@@ -20,7 +20,6 @@ use Drupal\Core\DependencyInjection\YamlFileLoader;
 use Drupal\Core\Extension\ExtensionDiscovery;
 use Drupal\Core\Language\Language;
 use Drupal\Core\PhpStorage\PhpStorageFactory;
-use Drupal\Core\Session\AnonymousUserSession;
 use Drupal\Core\Site\Settings;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBag;
 use Symfony\Component\DependencyInjection\Dumper\PhpDumper;
@@ -341,8 +340,6 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
    * @todo Invoke proper request/response/terminate events.
    */
   public function handlePageCache(Request $request) {
-    // @todo Use the current_user proxy.
-    global $user;
 
     $this->boot();
     $this->preHandle($request);
@@ -356,28 +353,21 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
       $cache_enabled = $config->get('cache.page.use_internal');
     }
 
-    // If there is no session cookie and cache is enabled (or forced), try
-    // to serve a cached page.
-    if (!$request->cookies->has(session_name()) && $cache_enabled) {
-      // Make sure there is a user object because its timestamp will be checked.
-      $user = new AnonymousUserSession();
+    // If there is no session cookie and cache is enabled (or forced), try to
+    // serve a cached page.
+    if (!$request->cookies->has(session_name()) && $cache_enabled && drupal_page_is_cacheable()) {
       // Get the page from the cache.
-      $cache = drupal_page_get_cache($request);
+      $response = drupal_page_get_cache($request);
       // If there is a cached page, display it.
-      if (is_object($cache)) {
-        $response = new Response();
+      if ($response) {
         $response->headers->set('X-Drupal-Cache', 'HIT');
-        date_default_timezone_set(drupal_get_user_timezone());
 
-        drupal_serve_page_from_cache($cache, $response, $request);
+        drupal_serve_page_from_cache($response, $request);
 
         // We are done.
         $response->prepare($request);
         $response->send();
         exit;
-      }
-      else {
-        drupal_add_http_header('X-Drupal-Cache', 'MISS');
       }
     }
     return $this;
