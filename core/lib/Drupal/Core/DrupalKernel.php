@@ -200,9 +200,6 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
     // Get our most basic settings setup.
     Settings::initialize($request);
 
-    // Initialize legacy request globals.
-    static::initializeRequestGlobals($request);
-
     // Redirect the user to the installation script if Drupal has not been
     // installed yet (i.e., if no $databases array has been defined in the
     // settings.php file) and we are not already installing.
@@ -303,7 +300,19 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
     return $this->container;
   }
 
-  function preHandle(Request $request) {
+  /**
+   * Helper method that does request related initialization.
+   *
+   * @param \Symfony\Component\HttpFoundation\Request $request
+   *   The current request.
+   */
+  protected function preHandle(Request $request) {
+
+    // Initialize legacy request globals.
+    $this->initializeRequestGlobals($request);
+
+    // Initialize cookie globals.
+    $this->initializeCookieGlobals($request);
 
     // Ensure container has a request scope so we can load file stream wrappers.
     if (!$this->container->isScopeActive('request')) {
@@ -715,20 +724,12 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
    *
    * @todo D8: Eliminate this entirely in favor of Request object.
    */
-  protected static function initializeRequestGlobals(Request $request) {
-    // If we do this more then once per page request things go weird.
-    // $globals--
-    if (static::$isRequestInitialized) {
-      return;
-    }
-
+  protected function initializeRequestGlobals(Request $request) {
     // Provided by settings.php.
-    global $base_url, $cookie_domain;
+    global $base_url;
     // Set and derived from $base_url by this function.
     global $base_path, $base_root, $script_path;
     global $base_secure_url, $base_insecure_url;
-
-    $is_https = $request->isSecure();
 
     // @todo Refactor with the Symfony Request object.
     _current_path(request_path());
@@ -745,7 +746,7 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
     }
     else {
       // Create base URL.
-      $http_protocol = $is_https ? 'https' : 'http';
+      $http_protocol = $request->isSecure() ? 'https' : 'http';
       $base_root = $http_protocol . '://' . $request->server->get('HTTP_HOST');
 
       $base_url = $base_root;
@@ -799,6 +800,24 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
       }
     }
 
+  }
+
+  /**
+   * Initialize cookie settings.
+   *
+   * @param \Symfony\Component\HttpFoundation\Request $request
+   *   The current request.
+   *
+   * @todo D8: Eliminate this entirely in favor of a session object.
+   */
+  protected function initializeCookieGlobals(Request $request) {
+    // If we do this more then once per page request we are likely to cause
+    // errors.
+    if (static::$isRequestInitialized) {
+      return;
+    }
+    global $base_url, $cookie_domain;
+
     if ($cookie_domain) {
       // If the user specifies the cookie domain, also use it for session name.
       $session_name = $cookie_domain;
@@ -831,12 +850,13 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
     // separate session cookies for the HTTPS and HTTP versions of the site. So
     // we must use different session identifiers for HTTPS and HTTP to prevent a
     // cookie collision.
-    if ($is_https) {
+    if ($request->isSecure()) {
       ini_set('session.cookie_secure', TRUE);
     }
     $prefix = ini_get('session.cookie_secure') ? 'SSESS' : 'SESS';
 
     session_name($prefix . substr(hash('sha256', $session_name), 0, 32));
+
     static::$isRequestInitialized = TRUE;
   }
 
