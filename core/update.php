@@ -297,7 +297,6 @@ ini_set('display_errors', FALSE);
 
 // We prepare a minimal bootstrap for the update requirements check to avoid
 // reaching the PHP memory limit.
-require_once __DIR__ . '/includes/bootstrap.inc';
 require_once __DIR__ . '/includes/update.inc';
 require_once __DIR__ . '/includes/common.inc';
 require_once __DIR__ . '/includes/file.inc';

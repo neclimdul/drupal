@@ -19,6 +19,7 @@ $views = $kernel->getContainer()
   ->get('config.factory')
   ->get('statistics.settings')
   ->get('count_content_views');
+
 if ($views) {
   $nid = filter_input(INPUT_POST, 'nid', FILTER_VALIDATE_INT);
   if ($nid) {
@@ -34,3 +35,4 @@ if ($views) {
       ->execute();
   }
 }
+

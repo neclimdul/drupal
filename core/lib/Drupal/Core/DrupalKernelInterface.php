@@ -69,8 +69,6 @@ interface DrupalKernelInterface extends HttpKernelInterface {
   /**
    * Attempts to serve a page from the cache.
    *
-   * @todo Invoke proper request/response/terminate events.
-   *
    * @param \Symfony\Component\HttpFoundation\Request $request
    *   The current request.
    *
@@ -81,10 +79,14 @@ interface DrupalKernelInterface extends HttpKernelInterface {
   /**
    * Prepare the kernel for handling a request without handling the request.
    *
-   * Note: This is provided for backwards compatibility only.
-   *
    * @param \Symfony\Component\HttpFoundation\Request $request
    *   The current request.
+   *
+   * @return $this
+   *
+   * @deprecated 8.x
+   *   Only used by legacy front-controller scripts.
    */
   public function prepareLegacyRequest(Request $request);
+
 }

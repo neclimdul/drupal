@@ -920,7 +920,7 @@ abstract class WebTestBase extends TestBase {
     // to synchronize all data structures and caches between the test runner and
     // the child site.
     // Affects e.g. file_get_stream_wrappers().
-    // @see \Drupal\Core\DrupalKernel::bootKernel()
+    // @see \Drupal\Core\DrupalKernel::bootCode()
     // @todo Test-specific setUp() methods may set up further fixtures; find a
     //   way to execute this after setUp() is done, or to eliminate it entirely.
     $this->resetAll();
@@ -1084,13 +1084,13 @@ abstract class WebTestBase extends TestBase {
 
     // Rebuild the kernel and bring it back to a fully bootstrapped state.
     $this->kernel->shutdown();
-    $this->kernel->boot();
     $this->kernel->prepareLegacyRequest($request);
 
-    // Replace the local container with the newly bootstrapped container.
+    // DrupalKernel replaces the container in \Drupal::getContainer() with a
+    // different object, so we need to replace the instance on this test class.
     $this->container = $this->kernel->getContainer();
 
-    // Ensure container has the correct user stored in the proxy.
+    // Re-set the current user proxy.
     $this->container->get('current_user')->setAccount(\Drupal::currentUser());
 
     // The request context is normally set by the router_listener from within

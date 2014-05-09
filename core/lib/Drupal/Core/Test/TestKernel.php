@@ -7,9 +7,9 @@
 
 namespace Drupal\Core\Test;
 
-use Composer\Autoload\ClassLoader;
 use Drupal\Core\DrupalKernel;
 use Symfony\Component\HttpFoundation\Request;
+use Composer\Autoload\ClassLoader;
 
 /**
  * Kernel to mock requests to test simpletest.

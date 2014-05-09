@@ -9,8 +9,8 @@
  */
 
 use Drupal\Core\DrupalKernel;
-use Symfony\Component\HttpFoundation\Request;
 use Drupal\Core\Site\Settings;
+use Symfony\Component\HttpFoundation\Request;
 
 $autoloader = require_once __DIR__ . '/core/vendor/autoload.php';
 

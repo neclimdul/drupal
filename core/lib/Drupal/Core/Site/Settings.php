@@ -31,9 +31,8 @@ final class Settings {
    */
   private static $instance;
 
-
   /**
-   * The conf path for the given request.
+   * The site directory from which to read settings.php.
    *
    * @var string
    */
@@ -117,7 +116,6 @@ final class Settings {
     new Settings($settings);
   }
 
-
   /**
    * Returns the appropriate configuration directory.
    *
@@ -127,8 +125,7 @@ final class Settings {
    * converted to a directory.
    *
    * @param \Symfony\Component\HttpFoundation\Request $request
-   *   (optional) The current request. If not passed, defaults to request as
-   *   stored in the container at \Drupal::request().
+   *   The current request.
    * @param bool $require_settings
    *   Only configuration directories with an existing settings.php file
    *   will be recognized. Defaults to TRUE. During initial installation,
@@ -143,20 +140,9 @@ final class Settings {
    *
    * @see default.settings.php
    */
-  public static function confPath(Request $request = NULL, $require_settings = TRUE, $reset = FALSE) {
+  public static function confPath(Request $request, $require_settings = TRUE, $reset = FALSE) {
     if (isset(static::$confPath) && !$reset) {
       return static::$confPath;
-    }
-
-    // Ideally we make this required but it isn't for the moment.
-    if (!isset($request)) {
-      if (\Drupal::hasRequest()) {
-        $request = \Drupal::request();
-      }
-      // @todo Remove once external CLI scripts (Drush) are updated.
-      else {
-        $request = Request::createFromGlobals();
-      }
     }
 
     // Check for a simpletest override.
@@ -174,4 +160,5 @@ final class Settings {
     static::$confPath = find_conf_path($http_host, $script_name, $require_settings);
     return static::$confPath;
   }
+
 }

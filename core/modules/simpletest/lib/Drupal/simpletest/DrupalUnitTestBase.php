@@ -130,17 +130,19 @@ abstract class DrupalUnitTestBase extends UnitTestBase {
     // Create and set new configuration directories.
     $this->prepareConfigDirectories();
 
-    // Make sure it survives kernel rebuilds.
+    // Add this test class as a service provider.
+    // @todo Remove the indirection; implement ServiceProviderInterface instead.
     $GLOBALS['conf']['container_service_providers']['TestServiceProvider'] = 'Drupal\simpletest\TestServiceProvider';
 
+    // Back up settings from TestBase::prepareEnvironment().
     $settings = Settings::getAll();
     // Bootstrap a new kernel. Don't use createFromRequest so we don't mess with settings.
-    $this->kernel = new DrupalKernel('prod', drupal_classloader(), FALSE);
+    $this->kernel = new DrupalKernel('testing', drupal_classloader(), FALSE);
     $this->kernel->boot();
 
-    // Merge in settings from TestBase::prepareEnvironment().
-    // This is weird but Kernel boot resets settings and containerBuilder() methods
-    // set some settings so we merge them together.
+    // Restore and merge settings.
+    // DrupalKernel::boot() initializes new Settings, and the containerBuild()
+    // method sets additional settings.
     new Settings($settings + Settings::getAll());
 
     // Set the request scope.
@@ -149,8 +151,8 @@ abstract class DrupalUnitTestBase extends UnitTestBase {
     $this->container->set('request', $request);
     $this->container->get('request_stack')->push($request);
 
-    \Drupal::state()->set('system.module.files', $this->moduleFiles);
-    \Drupal::state()->set('system.theme.files', $this->themeFiles);
+    $this->container->get('state')->set('system.module.files', $this->moduleFiles);
+    $this->container->get('state')->set('system.theme.files', $this->themeFiles);
 
     // Create a minimal core.extension configuration object so that the list of
     // enabled modules can be maintained allowing

@@ -632,12 +632,10 @@ function drupal_verify_profile($install_state) {
  *   to set the default language.
  */
 function drupal_install_system($install_state) {
-  // Remove the service provider adding alternative installer services to the
-  // container.
+  // Remove the service provider of the early installer.
   unset($GLOBALS['conf']['container_service_providers']['InstallerServiceProvider']);
 
-  // Reboot the kernel into a full Drupal environment to continue installing
-  // modules.
+  // Reboot into a full production environment to continue the installation.
   $kernel = \Drupal::service('kernel');
   $kernel->shutdown();
   $kernel->prepareLegacyRequest(\Drupal::request());

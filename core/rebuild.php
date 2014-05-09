@@ -12,8 +12,8 @@
 
 use Drupal\Component\Utility\Crypt;
 use Drupal\Core\DrupalKernel;
-use Symfony\Component\HttpFoundation\Request;
 use Drupal\Core\Site\Settings;
+use Symfony\Component\HttpFoundation\Request;
 
 // Change the directory to the Drupal root.
 chdir('..');
@@ -22,8 +22,11 @@ $autoloader = require_once __DIR__ . '/vendor/autoload.php';
 require_once __DIR__ . '/includes/utility.inc';
 
 $request = Request::createFromGlobals();
-$kernel = new DrupalKernel('prod', $autoloader);
-$response = $kernel->prepareLegacyRequest($request);
+// Manually resemble early bootstrap of DrupalKernel::boot().
+require_once __DIR__ . '/includes/bootstrap.inc';
+DrupalKernel::bootEnvironment();
+Settings::initialize($request);
+DrupalKernel::initializeRequestGlobals($request);
 
 if (Settings::get('rebuild_access', FALSE) ||
   (isset($_GET['token'], $_GET['timestamp']) &&
@@ -31,7 +34,7 @@ if (Settings::get('rebuild_access', FALSE) ||
     ($_GET['token'] === Crypt::hmacBase64($_GET['timestamp'], Settings::get('hash_salt')))
   )) {
 
-  drupal_rebuild($kernel, $request);
+  drupal_rebuild($autoloader, $request);
   drupal_set_message('Cache rebuild complete.');
 }
 
