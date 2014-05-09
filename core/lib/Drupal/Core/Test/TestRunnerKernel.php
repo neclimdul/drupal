@@ -63,13 +63,6 @@ class TestRunnerKernel extends DrupalKernel {
     ini_set('display_errors', TRUE);
 
     parent::boot();
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function bootCode(Request $request) {
-    parent::bootCode($request);
 
     simpletest_classloader_register();
   }
