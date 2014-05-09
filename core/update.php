@@ -307,8 +307,13 @@ require_once __DIR__ . '/includes/schema.inc';
 require_once __DIR__ . '/includes/database.inc';
 
 $request = Request::createFromGlobals();
-$kernel = new DrupalKernel('update', $autoloader, FALSE);
-$kernel->boot($request);
+$kernel = DrupalKernel::createFromRequest($request, 'update', $autoloader, FALSE);
+
+// Enable UpdateServiceProvider service overrides.
+// @see update_flush_all_caches()
+$GLOBALS['conf']['container_service_providers']['UpdateServiceProvider'] = 'Drupal\Core\DependencyInjection\UpdateServiceProvider';
+$GLOBALS['conf']['update_service_provider_overrides'] = TRUE;
+$kernel->boot();
 
 // Updating from a site schema version prior to 8000 should block the update
 // process. Ensure that the site is not attempting to update a database
@@ -320,11 +325,6 @@ if (db_table_exists('system')) {
     exit;
   }
 }
-
-// Enable UpdateServiceProvider service overrides.
-// @see update_flush_all_caches()
-$GLOBALS['conf']['container_service_providers']['UpdateServiceProvider'] = 'Drupal\Core\DependencyInjection\UpdateServiceProvider';
-$GLOBALS['conf']['update_service_provider_overrides'] = TRUE;
 
 $kernel->prepareLegacyRequest($request);
 

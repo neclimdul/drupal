@@ -54,7 +54,7 @@ function authorize_access_allowed() {
 }
 
 $request = Request::createFromGlobals();
-$kernel = new DrupalKernel('prod', $autoloader);
+$kernel = DrupalKernel::createFromRequest($request, 'prod', $autoloader);
 $kernel->prepareLegacyRequest($request);
 
 // We have to enable the user and system modules, even to check access and
