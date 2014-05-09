@@ -64,6 +64,7 @@ class DrupalKernelTest extends DrupalUnitTestBase {
    * @return DrupalKernel
    */
   protected function getTestKernel(Request $request, array $modules_enabled, $read_only = FALSE) {
+    // Manually create kernel to avoid replacing settings.
     $kernel = new DrupalKernel('testing', $this->classloader);
     $kernel->updateModules($modules_enabled);
     $kernel->boot($request);
