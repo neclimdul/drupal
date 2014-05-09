@@ -279,6 +279,8 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
     }
     $this->booted = FALSE;
     $this->container = NULL;
+    $this->moduleList = NULL;
+    $this->moduleData = array();
   }
 
   /**
