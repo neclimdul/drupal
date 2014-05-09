@@ -9,6 +9,7 @@ namespace Drupal\Core;
 
 use Drupal\Component\Utility\Crypt;
 use Drupal\Core\Database\Database;
+use Drupal\Core\Routing\UrlGenerator;
 use Drupal\Core\Site\Settings;
 use Drupal\Component\Utility\Timer;
 use Drupal\Component\Utility\Unicode;
@@ -24,6 +25,7 @@ use Drupal\Core\PhpStorage\PhpStorageFactory;
 use Drupal\Core\Session\AnonymousUserSession;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBag;
 use Symfony\Component\DependencyInjection\Dumper\PhpDumper;
+use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\TerminableInterface;
@@ -200,6 +202,14 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
     // Get our most basic settings setup.
     Settings::initialize($request);
 
+    // Redirect the user to the installation script if Drupal has not been
+    // installed yet (i.e., if no $databases array has been defined in the
+    // settings.php file) and we are not already installing.
+    if (!Database::getConnectionInfo() && !drupal_installation_attempted() && !drupal_is_cli()) {
+      $response = new RedirectResponse($request->getBasePath() . '/core/install.php');
+      $response->prepare($request)->send();
+    }
+
     return new static($environment, $class_loader, $allow_dumping, $test_only);
   }
 
@@ -229,14 +239,6 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
   public function boot() {
     if ($this->booted) {
       return $this;
-    }
-
-    // Redirect the user to the installation script if Drupal has not been
-    // installed yet (i.e., if no $databases array has been defined in the
-    // settings.php file) and we are not already installing.
-    if (!Database::getConnectionInfo() && !drupal_installation_attempted() && !drupal_is_cli()) {
-      include_once DRUPAL_ROOT . '/core/includes/install.inc';
-      install_goto('core/install.php');
     }
 
     // Start a page timer:
