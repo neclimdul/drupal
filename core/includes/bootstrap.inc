@@ -115,35 +115,35 @@ const WATCHDOG_DEBUG = 7;
 /**
  * First bootstrap phase: initialize configuration.
  *
- * @deprecated 8.x
+ * @deprecated in Drupal 8.x-dev, will be removed before Drupal 8.0.
  */
 const DRUPAL_BOOTSTRAP_CONFIGURATION = 0;
 
 /**
  * Second bootstrap phase, initialize a kernel.
  *
- * @deprecated 8.x
+ * @deprecated in Drupal 8.x-dev, will be removed before Drupal 8.0.
  */
 const DRUPAL_BOOTSTRAP_KERNEL = 1;
 
 /**
  * Third bootstrap phase: try to serve a cached page.
  *
- * @deprecated 8.x
+ * @deprecated in Drupal 8.x-dev, will be removed before Drupal 8.0.
  */
 const DRUPAL_BOOTSTRAP_PAGE_CACHE = 2;
 
 /**
  * Fourth bootstrap phase: load code for subsystems and modules.
  *
- * @deprecated 8.x
+ * @deprecated in Drupal 8.x-dev, will be removed before Drupal 8.0.
  */
 const DRUPAL_BOOTSTRAP_CODE = 3;
 
 /**
  * Final bootstrap phase: initialize language, path, theme, and modules.
  *
- * @deprecated 8.x
+ * @deprecated in Drupal 8.x-dev, will be removed before Drupal 8.0.
  */
 const DRUPAL_BOOTSTRAP_FULL = 4;
 
@@ -234,7 +234,7 @@ define('DRUPAL_ROOT', dirname(dirname(__DIR__)));
  *
  * @see default.settings.php
  *
- * @deprecated 8.x
+ * @deprecated in Drupal 8.x-dev, will be removed before Drupal 8.0.
  *   Use \Drupal\Core\Site\Settings::confPath().
  */
 function conf_path($require_settings = TRUE, $reset = FALSE, Request $request = NULL) {
@@ -1106,7 +1106,7 @@ function drupal_anonymous_user() {
  * @return int
  *   The most recently completed phase.
  *
- * @deprecated 8.x
+ * @deprecated in Drupal 8.x-dev, will be removed before Drupal 8.0.
  *   Interact directly with the kernel.
  *
  * @todo Obsolete. Remove once Drush has been updated.
@@ -1232,7 +1232,7 @@ function _drupal_exception_handler($exception) {
  *
  * @see drupal_bootstrap()
  *
- * @deprecated 8.x
+ * @deprecated in Drupal 8.x-dev, will be removed before Drupal 8.0.
  */
 function drupal_get_bootstrap_phase() {
   return drupal_bootstrap();
@@ -1535,7 +1535,7 @@ function language_default() {
  *
  * @see current_path()
  *
- * @deprecated 8.x
+ * @deprecated in Drupal 8.x-dev, will be removed before Drupal 8.0.
  */
 function request_path() {
   static $path;
