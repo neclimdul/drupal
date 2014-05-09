@@ -863,7 +863,11 @@ abstract class WebTestBase extends TestBase {
     // Not using File API; a potential error must trigger a PHP warning.
     chmod(DRUPAL_ROOT . '/' . $this->siteDirectory, 0777);
 
-    $this->kernel = DrupalKernel::createFromRequest(\Drupal::request(), 'prod', drupal_classloader(), FALSE);
+    $request = \Drupal::request();
+    $this->kernel = DrupalKernel::createFromRequest($request, 'prod', drupal_classloader(), FALSE);
+    $this->kernel->prepareLegacyRequest($request);
+    $container = $this->kernel->getContainer();
+    $config = $container->get('config.factory');
 
     // Manually create and configure private and temporary files directories.
     // While these could be preset/enforced in settings.php like the public
@@ -871,7 +875,7 @@ abstract class WebTestBase extends TestBase {
     // UI. If declared in settings.php, they would no longer be configurable.
     file_prepare_directory($this->private_files_directory, FILE_CREATE_DIRECTORY);
     file_prepare_directory($this->temp_files_directory, FILE_CREATE_DIRECTORY);
-    \Drupal::config('system.file')
+    $config->get('system.file')
       ->set('path.private', $this->private_files_directory)
       ->set('path.temporary', $this->temp_files_directory)
       ->save();
@@ -880,7 +884,7 @@ abstract class WebTestBase extends TestBase {
     // tests from sending out e-mails and collect them in state instead.
     // While this should be enforced via settings.php prior to installation,
     // some tests expect to be able to test mail system implementations.
-    \Drupal::config('system.mail')
+    $config->get('system.mail')
       ->set('interface.default', 'test_mail_collector')
       ->save();
 
@@ -888,10 +892,10 @@ abstract class WebTestBase extends TestBase {
     // environment optimizations for all tests to avoid needless overhead and
     // ensure a sane default experience for test authors.
     // @see https://drupal.org/node/2259167
-    \Drupal::config('system.logging')
+    $config->get('system.logging')
       ->set('error_level', 'verbose')
       ->save();
-    \Drupal::config('system.performance')
+    $config->get('system.performance')
       ->set('css.preprocess', FALSE)
       ->set('js.preprocess', FALSE)
       ->save();
@@ -911,7 +915,7 @@ abstract class WebTestBase extends TestBase {
     }
     if ($modules) {
       $modules = array_unique($modules);
-      $success = \Drupal::moduleHandler()->install($modules, TRUE);
+      $success = $container->get('module_handler')->install($modules, TRUE);
       $this->assertTrue($success, String::format('Enabled modules: %modules', array('%modules' => implode(', ', $modules))));
       $this->rebuildContainer();
     }
@@ -924,6 +928,7 @@ abstract class WebTestBase extends TestBase {
     // @todo Test-specific setUp() methods may set up further fixtures; find a
     //   way to execute this after setUp() is done, or to eliminate it entirely.
     $this->resetAll();
+    $this->kernel->prepareLegacyRequest($request);
 
     // Temporary fix so that when running from run-tests.sh we don't get an
     // empty current path which would indicate we're on the home page.

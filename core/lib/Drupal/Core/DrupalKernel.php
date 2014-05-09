@@ -461,7 +461,7 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
     // Enter the request scope so that current_user service is available for
     // locale/translation sake.
     $this->container->enterScope('request');
-    $this->container->set('request', $request, 'request');
+    $this->container->set('request', $request);
     $this->container->get('request_stack')->push($request);
     return $this;
   }
