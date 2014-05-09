@@ -182,21 +182,13 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
    * @param bool $allow_dumping
    *   (optional) FALSE to stop the container from being written to or read
    *   from disk. Defaults to TRUE.
-   * @param bool $test_only
-   *   (optional) Whether the DrupalKernel object is for testing purposes only.
-   *   Defaults to FALSE.
    * @return static
    */
-  public static function createFromRequest(Request $request, $environment, ClassLoader $class_loader, $allow_dumping = TRUE, $test_only = FALSE) {
+  public static function createFromRequest(Request $request, $environment, ClassLoader $class_loader, $allow_dumping = TRUE) {
     // Include our bootstrap file.
     require_once dirname(dirname(dirname(__DIR__))) . '/includes/bootstrap.inc';
 
     // Exit if we should be in a test environment but aren't.
-    if ($test_only && !drupal_valid_test_ua()) {
-      header($request->server->get('SERVER_PROTOCOL') . ' 403 Forbidden');
-      exit;
-    }
-
     static::bootEnvironment();
 
     // Get our most basic settings setup.
@@ -210,7 +202,7 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
       $response->prepare($request)->send();
     }
 
-    return new static($environment, $class_loader, $allow_dumping, $test_only);
+    return new static($environment, $class_loader, $allow_dumping);
   }
 
   /**

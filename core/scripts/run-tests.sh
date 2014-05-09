@@ -8,7 +8,7 @@
 use Drupal\Component\Utility\Timer;
 use Drupal\Core\Database\Database;
 use Drupal\Core\Site\Settings;
-use Drupal\Core\Test\TestKernel;
+use Drupal\Core\Test\TestRunnerKernel;
 use Symfony\Component\HttpFoundation\Request;
 
 $autoloader = require_once __DIR__ . '/../vendor/autoload.php';
@@ -28,7 +28,7 @@ if ($args['help'] || $count == 0) {
 simpletest_script_init();
 
 $request = Request::createFromGlobals();
-$kernel = TestKernel::createFromRequest($request, $autoloader);
+$kernel = TestRunnerKernel::createFromRequest($request, $autoloader);
 $kernel->prepareLegacyRequest($request);
 
 if ($args['execute-test']) {

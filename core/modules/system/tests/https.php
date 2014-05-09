@@ -8,7 +8,7 @@
  *   see http.php.
  */
 
-use Drupal\Core\DrupalKernel;
+use Drupal\Core\Test\TestKernel;
 use Symfony\Component\HttpFoundation\Request;
 
 chdir('../../../..');
@@ -26,7 +26,7 @@ foreach ($_SERVER as &$value) {
 }
 
 $request = Request::createFromGlobals();
-$kernel = new DrupalKernel('testing', $autoloader, TRUE, TRUE);
+$kernel = TestKernel::createFromRequest($request, 'testing', $autoloader, TRUE);
 $response = $kernel
   ->handlePageCache($request)
   ->handle($request)
