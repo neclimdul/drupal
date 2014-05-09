@@ -2003,7 +2003,7 @@ function template_preprocess_html(&$variables) {
   // Construct page title.
   if ($page->hasTitle()) {
     $head_title = array(
-      'title' => strip_tags($page->getTitle()),
+      'title' => trim(strip_tags($page->getTitle())),
       'name' => String::checkPlain($site_config->get('name')),
     );
   }
@@ -2667,9 +2667,6 @@ function drupal_common_theme() {
     'form_element' => array(
       'render element' => 'element',
       'template' => 'form-element',
-    ),
-    'form_required_marker' => array(
-      'render element' => 'element',
     ),
     'form_element_label' => array(
       'render element' => 'element',
