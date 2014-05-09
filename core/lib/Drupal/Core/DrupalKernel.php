@@ -200,14 +200,6 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
     // Get our most basic settings setup.
     Settings::initialize($request);
 
-    // Redirect the user to the installation script if Drupal has not been
-    // installed yet (i.e., if no $databases array has been defined in the
-    // settings.php file) and we are not already installing.
-    if (!Database::getConnectionInfo() && !drupal_installation_attempted() && !drupal_is_cli()) {
-      include_once DRUPAL_ROOT . '/core/includes/install.inc';
-      install_goto('core/install.php');
-    }
-
     return new static($environment, $class_loader, $allow_dumping, $test_only);
   }
 
@@ -237,6 +229,14 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
   public function boot() {
     if ($this->booted) {
       return $this;
+    }
+
+    // Redirect the user to the installation script if Drupal has not been
+    // installed yet (i.e., if no $databases array has been defined in the
+    // settings.php file) and we are not already installing.
+    if (!Database::getConnectionInfo() && !drupal_installation_attempted() && !drupal_is_cli()) {
+      include_once DRUPAL_ROOT . '/core/includes/install.inc';
+      install_goto('core/install.php');
     }
 
     // Start a page timer:
