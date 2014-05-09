@@ -203,8 +203,6 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
     // Initialize legacy request globals.
     static::initializeRequestGlobals($request);
 
-    drupal_classloader($class_loader);
-
     // Redirect the user to the installation script if Drupal has not been
     // installed yet (i.e., if no $databases array has been defined in the
     // settings.php file) and we are not already installing.
@@ -248,8 +246,9 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
     // Start a page timer:
     Timer::start('page');
 
-    $this->booted = TRUE;
+    drupal_classloader($this->classLoader);
 
+    // Load legacy and other functional code.
     require_once DRUPAL_ROOT . '/core/includes/common.inc';
     require_once DRUPAL_ROOT . '/core/includes/database.inc';
     require_once DRUPAL_ROOT . '/' . Settings::get('path_inc', 'core/includes/path.inc');
@@ -277,6 +276,8 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
     // being exploited to predict random values in subsequent page loads.
     $seed = unpack("L", Crypt::randomBytes(4));
     mt_srand($seed[1]);
+
+    $this->booted = TRUE;
 
     return $this;
   }
