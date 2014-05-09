@@ -183,7 +183,7 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
    * @param bool $test_only
    *   (optional) Whether the DrupalKernel object is for testing purposes only.
    *   Defaults to FALSE.
-   * @return \Drupal\Core\DrupalKernel
+   * @return static
    */
   public static function createFromRequest(Request $request, $environment, ClassLoader $class_loader, $allow_dumping = TRUE, $test_only = FALSE) {
     // Include our bootstrap file.
@@ -208,8 +208,7 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
       install_goto('core/install.php');
     }
 
-    return new DrupalKernel($environment, $class_loader, $allow_dumping, $test_only);
-
+    return new static($environment, $class_loader, $allow_dumping, $test_only);
   }
 
   /**
