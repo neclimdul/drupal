@@ -134,10 +134,9 @@ abstract class DrupalUnitTestBase extends UnitTestBase {
     $GLOBALS['conf']['container_service_providers']['TestServiceProvider'] = 'Drupal\simpletest\TestServiceProvider';
 
     $settings = Settings::getAll();
-    // Bootstrap the kernel.
-    $request = Request::create('/');
-    $this->kernel = new DrupalKernel('testing', drupal_classloader(), FALSE);
-    $this->kernel->boot($request);
+    // Bootstrap a new kernel. Don't use createFromRequest so we don't mess with settings.
+    $this->kernel = new DrupalKernel('prod', drupal_classloader(), FALSE);
+    $this->kernel->boot();
 
     // Merge in settings from TestBase::prepareEnvironment().
     // This is weird but Kernel boot resets settings and containerBuilder() methods
@@ -145,6 +144,7 @@ abstract class DrupalUnitTestBase extends UnitTestBase {
     new Settings($settings + Settings::getAll());
 
     // Set the request scope.
+    $request = Request::create('/');
     $this->container = $this->kernel->getContainer();
     $this->container->set('request', $request);
     $this->container->get('request_stack')->push($request);
@@ -372,8 +372,7 @@ abstract class DrupalUnitTestBase extends UnitTestBase {
     // Ensure isLoaded() is TRUE in order to make _theme() work.
     // Note that the kernel has rebuilt the container; this $module_handler is
     // no longer the $module_handler instance from above.
-    $module_handler = $this->container->get('module_handler');
-    $module_handler->reload();
+    $this->container->get('module_handler')->reload();
     $this->pass(format_string('Enabled modules: %modules.', array(
       '%modules' => implode(', ', $modules),
     )));

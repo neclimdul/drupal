@@ -863,7 +863,7 @@ abstract class WebTestBase extends TestBase {
     // Not using File API; a potential error must trigger a PHP warning.
     chmod(DRUPAL_ROOT . '/' . $this->siteDirectory, 0777);
 
-    $this->rebuildContainer();
+    $this->kernel = DrupalKernel::createFromRequest(\Drupal::request(), 'prod', drupal_classloader(), FALSE);
 
     // Manually create and configure private and temporary files directories.
     // While these could be preset/enforced in settings.php like the public
@@ -1078,17 +1078,13 @@ abstract class WebTestBase extends TestBase {
    *   tests can invoke this workaround when requiring services from newly
    *   enabled modules to be immediately available in the same request.
    */
-  protected function rebuildContainer($environment = 'prod') {
-    // Preserve the request object after the container rebuild.
+  protected function rebuildContainer() {
+    // Maintain the current global request object.
     $request = \Drupal::request();
 
-    // Store global settings.
-    $settings = Settings::getAll();
     // Rebuild the kernel and bring it back to a fully bootstrapped state.
-    $this->kernel = new DrupalKernel($environment, drupal_classloader(), FALSE);
-    $this->kernel->boot($request);
-    // Restore any modified settings before the container is built.
-    new Settings($settings + Settings::getAll());
+    $this->kernel->shutdown();
+    $this->kernel->boot();
     $this->kernel->prepareLegacyRequest($request);
 
     // Replace the local container with the newly bootstrapped container.

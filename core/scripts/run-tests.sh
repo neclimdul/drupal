@@ -28,7 +28,7 @@ if ($args['help'] || $count == 0) {
 simpletest_script_init();
 
 $request = Request::createFromGlobals();
-$kernel = new TestKernel($autoloader);
+$kernel = TestKernel::createFromRequest($request, $autoloader);
 $kernel->prepareLegacyRequest($request);
 
 if ($args['execute-test']) {

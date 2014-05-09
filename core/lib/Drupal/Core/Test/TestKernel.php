@@ -19,14 +19,15 @@ use Symfony\Component\HttpFoundation\Request;
  */
 class TestKernel extends DrupalKernel {
 
+  public static function createFromRequest(Request $request, ClassLoader $class_loader) {
+    return parent::createFromRequest($request, 'test_runner', $class_loader);
+  }
+
   /**
-   * Constructs a TestKernel.
-   *
-   * @param \Composer\Autoload\ClassLoader $class_loader
-   *   The classloader.
+   * {@inheritdoc}
    */
-  public function __construct(ClassLoader $class_loader) {
-    parent::__construct('test_runner', $class_loader, FALSE);
+  public function __construct($environment, ClassLoader $class_loader) {
+    parent::__construct($environment, $class_loader, FALSE);
 
     // Prime the module list and corresponding Extension objects.
     // @todo Remove System module. Needed because \Drupal\Core\Datetime\Date
@@ -45,8 +46,13 @@ class TestKernel extends DrupalKernel {
   /**
    * {@inheritdoc}
    */
-  public function boot(Request $request) {
-    parent::boot($request);
+  public function boot() {
+    // Ensure that required Settings exist.
+    if (!Settings::getAll()) {
+      new Settings(array(
+        'hash_salt' => 'run-tests',
+      ));
+    }
 
     // Remove Drupal's error/exception handlers; they are designed for HTML
     // and there is no storage nor a (watchdog) logger here.
@@ -56,12 +62,7 @@ class TestKernel extends DrupalKernel {
     // In addition, ensure that PHP errors are not hidden away in logs.
     ini_set('display_errors', TRUE);
 
-    // Ensure that required Settings exist.
-    if (!Settings::getAll()) {
-      new Settings(array(
-        'hash_salt' => 'run-tests',
-      ));
-    }
+    parent::boot();
   }
 
   /**
