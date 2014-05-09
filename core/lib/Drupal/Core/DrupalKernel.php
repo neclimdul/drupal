@@ -266,8 +266,8 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
     require_once DRUPAL_ROOT . '/core/includes/schema.inc';
     require_once DRUPAL_ROOT . '/core/includes/entity.inc';
 
-    // Ensure container is loaded.
-    $this->getContainer();
+    // Intialize the container.
+    $this->initializeContainer();
 
     // Load all enabled modules.
     $this->container->get('module_handler')->loadAll();
@@ -297,12 +297,6 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
    * {@inheritdoc}
    */
   public function getContainer() {
-    // Container should probably always be built during boot() but because of
-    // the way Settings are loaded we need to delay it to facilitate
-    // modification for testing. globals --
-    if (!isset($this->container)) {
-      $this->initializeContainer();
-    }
     if ($this->containerNeedsDumping && !$this->dumpDrupalContainer($this->container, static::CONTAINER_BASE_CLASS)) {
       watchdog('DrupalKernel', 'Container cannot be written to disk');
     }
