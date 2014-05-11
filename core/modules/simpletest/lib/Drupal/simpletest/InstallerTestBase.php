@@ -7,6 +7,7 @@
 
 namespace Drupal\simpletest;
 
+use Drupal\Core\DrupalKernel;
 use Drupal\Core\Session\UserSession;
 use Drupal\Core\Site\Settings;
 use Symfony\Component\HttpFoundation\Request;
@@ -111,7 +112,8 @@ abstract class InstallerTestBase extends WebTestBase {
     $this->setUpSite();
 
     // Import new settings.php written by the installer.
-    Settings::initialize(Request::create('/install.php'));
+    $request = Request::create('/install.php');
+    Settings::initialize($request);
     foreach ($GLOBALS['config_directories'] as $type => $path) {
       $this->configDirectories[$type] = $path;
     }
@@ -123,12 +125,14 @@ abstract class InstallerTestBase extends WebTestBase {
     // WebTestBase::tearDown() will delete the entire test site directory.
     // Not using File API; a potential error must trigger a PHP warning.
     chmod(DRUPAL_ROOT . '/' . $this->siteDirectory, 0777);
-
-    $this->rebuildContainer();
+    $this->kernel = DrupalKernel::createFromRequest($request, 'prod', drupal_classloader(), FALSE);
+    $this->kernel->prepareLegacyRequest($request);
+    $this->container = $this->kernel->getContainer();
+    $config = $this->container->get('config.factory');
 
     // Manually configure the test mail collector implementation to prevent
     // tests from sending out e-mails and collect them in state instead.
-    \Drupal::config('system.mail')
+    $config->get('system.mail')
       ->set('interface.default', 'test_mail_collector')
       ->save();
 
