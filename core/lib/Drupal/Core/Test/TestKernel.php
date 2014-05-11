@@ -21,7 +21,7 @@ class TestKernel extends DrupalKernel {
    */
   public static function createFromRequest(Request $request, $environment, ClassLoader $class_loader, $allow_dumping = TRUE) {
     // Include our bootstrap file.
-    require_once dirname(dirname(dirname(__DIR__))) . '/includes/bootstrap.inc';
+    require_once __DIR__ . '/../../../../includes/bootstrap.inc';
 
     // Exit if we should be in a test environment but aren't.
     if (!drupal_valid_test_ua()) {
