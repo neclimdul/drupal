@@ -38,7 +38,7 @@ abstract class InstallerTestBase extends WebTestBase {
    *
    * @var string
    */
-  protected $profile = 'minimal';
+  protected $profile = 'testing';
 
   /**
    * Additional parameters to use for installer screens.

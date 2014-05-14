@@ -3130,7 +3130,7 @@ abstract class WebTestBase extends TestBase {
             // Input element with correct value.
             $found = TRUE;
           }
-          elseif (isset($field->option)) {
+          elseif (isset($field->option) || isset($field->optgroup)) {
             // Select element found.
             $selected = $this->getSelectedItem($field);
             if ($selected === FALSE) {
