@@ -112,7 +112,7 @@ abstract class InstallerTestBase extends WebTestBase {
     $this->setUpSite();
 
     // Import new settings.php written by the installer.
-    $request = Request::create('/install.php');
+    $request = Request::createFromGlobals();
     Settings::initialize($request);
     foreach ($GLOBALS['config_directories'] as $type => $path) {
       $this->configDirectories[$type] = $path;
