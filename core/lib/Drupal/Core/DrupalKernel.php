@@ -332,7 +332,7 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
    * @see default.settings.php
    * @see example.sites.php
    */
-  protected function findSitePath($http_host, $script_name, $require_settings = TRUE) {
+  protected static function findSitePath($http_host, $script_name, $require_settings = TRUE) {
     // Determine whether multi-site functionality is enabled.
     if (!file_exists(DRUPAL_ROOT . '/sites/sites.php')) {
       return 'sites/default';
