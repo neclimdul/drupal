@@ -202,13 +202,13 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
    * @return static
    */
   public static function createFromRequest(Request $request, ClassLoader $class_loader, $environment, $allow_dumping = TRUE) {
+    // Include our bootstrap file.
+    require_once dirname(dirname(dirname(__DIR__))) . '/includes/bootstrap.inc';
+
     $site_path = static::sitePath($request);
 
     $kernel = new static($environment, $class_loader, $allow_dumping);
     $kernel->setSitePath($site_path);
-
-    // Include our bootstrap file.
-    require_once dirname(dirname(dirname(__DIR__))) . '/includes/bootstrap.inc';
 
     // Ensure sane php environment variables..
     static::bootEnvironment();
@@ -789,7 +789,7 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
    * This method sets PHP environment options we want to be sure are set
    * correctly for security or just saneness.
    */
-  protected static function bootEnvironment() {
+  public static function bootEnvironment() {
     if (static::$isEnvironmentInitialized) {
       return;
     }
