@@ -8,6 +8,7 @@
 namespace Drupal\Core\Site;
 
 use Drupal\Core\Database\Database;
+use Drupal\Core\DrupalKernel;
 use Symfony\Component\HttpFoundation\Request;
 
 /**
@@ -30,13 +31,6 @@ final class Settings {
    * @var \Drupal\Core\Site\Settings
    */
   private static $instance;
-
-  /**
-   * The site directory from which to read settings.php.
-   *
-   * @var string
-   */
-  private static $confPath;
 
   /**
    * Constructor.
@@ -104,7 +98,7 @@ final class Settings {
     $databases = array();
 
     // Make conf_path() available as local variable in settings.php.
-    $conf_path = static::confPath($request);
+    $conf_path = DrupalKernel::sitePath($request);
     if (is_readable(DRUPAL_ROOT . '/' . $conf_path . '/settings.php')) {
       require DRUPAL_ROOT . '/' . $conf_path . '/settings.php';
     }
@@ -114,51 +108,6 @@ final class Settings {
 
     // Initialize Settings.
     new Settings($settings);
-  }
-
-  /**
-   * Returns the appropriate configuration directory.
-   *
-   * Returns the configuration path based on the site's hostname, port, and
-   * pathname. Uses find_conf_path() to find the current configuration
-   * directory. See default.settings.php for examples on how the URL is
-   * converted to a directory.
-   *
-   * @param \Symfony\Component\HttpFoundation\Request $request
-   *   The current request.
-   * @param bool $require_settings
-   *   Only configuration directories with an existing settings.php file
-   *   will be recognized. Defaults to TRUE. During initial installation,
-   *   this is set to FALSE so that Drupal can detect a matching directory,
-   *   then create a new settings.php file in it.
-   * @param bool $reset
-   *   Force a full search for matching directories even if one had been
-   *   found previously. Defaults to FALSE.
-   *
-   * @return string
-   *   The path of the matching directory.
-   *
-   * @see default.settings.php
-   */
-  public static function confPath(Request $request, $require_settings = TRUE, $reset = FALSE) {
-    if (isset(static::$confPath) && !$reset) {
-      return static::$confPath;
-    }
-
-    // Check for a simpletest override.
-    if ($test_prefix = drupal_valid_test_ua()) {
-      static::$confPath = 'sites/simpletest/' . substr($test_prefix, 10);
-      return static::$confPath;
-    }
-
-    // Otherwise, use the normal $conf_path.
-    $script_name = $request->server->get('SCRIPT_NAME');
-    if (!$script_name) {
-      $script_name = $request->server->get('SCRIPT_FILENAME');
-    }
-    $http_host = $request->server->get('HTTP_HOST');
-    static::$confPath = find_conf_path($http_host, $script_name, $require_settings);
-    return static::$confPath;
   }
 
   /**

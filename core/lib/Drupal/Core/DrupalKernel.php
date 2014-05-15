@@ -179,6 +179,13 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
   protected static $isEnvironmentInitialized = FALSE;
 
   /**
+   * The site directory.
+   *
+   * @var string
+   */
+  private static $sitePath;
+
+  /**
    * Create a DrupalKernel object from a request.
    *
    * @param \Symfony\Component\HttpFoundation\Request $request
@@ -221,7 +228,7 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
    * @param string $environment
    *   String indicating the environment, e.g. 'prod' or 'dev'.
    * @param \Composer\Autoload\ClassLoader $class_loader
-   *   (optional) The classloader is only used if $storage is not given or
+   *   (optional) The class loader is only used if $storage is not given or
    *   the load from storage fails and a container rebuild is required. In
    *   this case, the loaded modules will be registered with this loader in
    *   order to be able to find the module serviceProviders.
@@ -234,6 +241,119 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
     $this->allowDumping = $allow_dumping;
     $this->classLoader = $class_loader;
   }
+
+  /**
+   * Returns the appropriate site directory.
+   *
+   * Site directories contain all site specific code. This includes settings.php
+   * for bootstrap level configuration, file configuration stores, public file
+   * storage and site specific modules and themes.
+   *
+   * See default.settings.php for examples on how the URL is converted to a
+   * directory based on hostname, port and path.
+   *
+   * @param \Symfony\Component\HttpFoundation\Request $request
+   *   The current request.
+   * @param bool $require_settings
+   *   Only directories with an existing settings.php file will be recognized.
+   *   Defaults to TRUE. During initial installation, this is set to FALSE so that
+   *   Drupal can detect a matching directory, then create a new settings.php file
+   *   in it.
+   * @param bool $reset
+   *   Force a full search for matching directories even if one had been
+   *   found previously. Defaults to FALSE.
+   *
+   * @return string
+   *   The path of the matching directory.
+   *
+   * @see self::findSitePath()
+   * @see default.settings.php
+   */
+  public static function sitePath(Request $request, $require_settings = TRUE, $reset = FALSE) {
+    if (isset(static::$sitePath) && !$reset) {
+      return static::$sitePath;
+    }
+
+    // Check for a simpletest override.
+    if ($test_prefix = drupal_valid_test_ua()) {
+      static::$sitePath = 'sites/simpletest/' . substr($test_prefix, 10);
+      return static::$sitePath;
+    }
+
+    // Otherwise, use the normal $conf_path.
+    $script_name = $request->server->get('SCRIPT_NAME');
+    if (!$script_name) {
+      $script_name = $request->server->get('SCRIPT_FILENAME');
+    }
+    $http_host = $request->server->get('HTTP_HOST');
+    static::$sitePath = static::findSitePath($http_host, $script_name, $require_settings);
+    return static::$sitePath;
+  }
+
+  /**
+   * Finds the appropriate site directory for a given host and path.
+   *
+   * Finds a matching site directory file by stripping the website's hostname from
+   * left to right and pathname from right to left. By default, the directory must
+   * contain a 'settings.php' file for it to match. If the parameter
+   * $require_settings is set to FALSE, then a directory without a 'settings.php'
+   * file will match as well. The first configuration file found will be used and the
+   * remaining ones will be ignored. If no configuration file is found, returns a
+   * default value '$confdir/default'. See default.settings.php for examples on how
+   * the URL is converted to a directory.
+   *
+   * If a file named sites.php is present in the $confdir, it will be loaded
+   * prior to scanning for directories. That file can define aliases in an
+   * associative array named $sites. The array is written in the format
+   * '<port>.<domain>.<path>' => 'directory'. As an example, to create a
+   * directory alias for http://www.drupal.org:8080/mysite/test whose configuration
+   * file is in sites/example.com, the array should be defined as:
+   * @code
+   * $sites = array(
+   *   '8080.www.drupal.org.mysite.test' => 'example.com',
+   * );
+   * @endcode
+   *
+   * @param $http_host
+   *   The hostname and optional port number, e.g. "www.example.com" or
+   *   "www.example.com:8080".
+   * @param $script_name
+   *   The part of the URL following the hostname, including the leading slash.
+   * @param bool $require_settings
+   *   Defaults to TRUE. If TRUE, then only match directories with a 'settings.php'
+   *   file. Otherwise match any directory.
+   *
+   * @return string
+   *   The path of the matching site directory.
+   *
+   * @see default.settings.php
+   * @see example.sites.php
+   */
+  protected function findSitePath($http_host, $script_name, $require_settings = TRUE) {
+    // Determine whether multi-site functionality is enabled.
+    if (!file_exists(DRUPAL_ROOT . '/sites/sites.php')) {
+      return 'sites/default';
+    }
+
+    $sites = array();
+    include DRUPAL_ROOT . '/sites/sites.php';
+
+    $uri = explode('/', $script_name);
+    $server = explode('.', implode('.', array_reverse(explode(':', rtrim($http_host, '.')))));
+    for ($i = count($uri) - 1; $i > 0; $i--) {
+      for ($j = count($server); $j > 0; $j--) {
+        $dir = implode('.', array_slice($server, -$j)) . implode('.', array_slice($uri, 0, $i));
+        if (isset($sites[$dir]) && file_exists(DRUPAL_ROOT . '/sites/' . $sites[$dir])) {
+          $dir = $sites[$dir];
+        }
+        if (file_exists(DRUPAL_ROOT . '/sites/' . $dir . '/settings.php') || (!$require_settings && file_exists(DRUPAL_ROOT . '/sites/' . $dir))) {
+          return "sites/$dir";
+        }
+      }
+    }
+    return 'sites/default';
+  }
+
 
   /**
    * {@inheritdoc}

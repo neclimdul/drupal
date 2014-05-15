@@ -276,7 +276,7 @@ function install_begin_request(&$install_state) {
   // This primes the site path to be used during installation. By not requiring
   // settings.php, a bare site folder can be prepared in the /sites directory,
   // which will be used for installing Drupal.
-  Settings::confPath($request, FALSE);
+  DrupalKernel::sitePath($request, FALSE);
 
   // If the hash salt leaks, it becomes possible to forge a valid testing user
   // agent, install a new copy of Drupal, and take over the original site.
@@ -365,7 +365,7 @@ function install_begin_request(&$install_state) {
     $directory = $GLOBALS['config']['locale.settings']['translation.path'];
   }
   else {
-    $directory = Settings::confPath($request) . '/files/translations';
+    $directory = DrupalKernel::sitePath($request) . '/files/translations';
   }
   $container->set('string_translator.file_translation', new FileTranslation($directory));
   $container->get('string_translation')
