@@ -272,12 +272,6 @@ function install_begin_request(&$install_state) {
   // Allow command line scripts to override server variables used by Drupal.
   require_once __DIR__ . '/bootstrap.inc';
 
-  // Initialize conf_path().
-  // This primes the site path to be used during installation. By not requiring
-  // settings.php, a bare site folder can be prepared in the /sites directory,
-  // which will be used for installing Drupal.
-  DrupalKernel::sitePath($request, FALSE);
-
   // If the hash salt leaks, it becomes possible to forge a valid testing user
   // agent, install a new copy of Drupal, and take over the original site.
   // The user agent header is used to pass a database prefix in the request when
@@ -288,7 +282,7 @@ function install_begin_request(&$install_state) {
     exit;
   }
 
-  Settings::initialize($request);
+  Settings::initialize(DrupalKernel::sitePath($request, FALSE));
 
   // Ensure that procedural dependencies are loaded as early as possible,
   // since the error/exception handlers depend on them.
