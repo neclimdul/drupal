@@ -125,7 +125,7 @@ abstract class InstallerTestBase extends WebTestBase {
     // WebTestBase::tearDown() will delete the entire test site directory.
     // Not using File API; a potential error must trigger a PHP warning.
     chmod(DRUPAL_ROOT . '/' . $this->siteDirectory, 0777);
-    $this->kernel = DrupalKernel::createFromRequest($request, 'prod', drupal_classloader(), FALSE);
+    $this->kernel = DrupalKernel::createFromRequest($request, drupal_classloader(), 'prod', FALSE);
     $this->kernel->prepareLegacyRequest($request);
     $this->container = $this->kernel->getContainer();
     $config = $this->container->get('config.factory');

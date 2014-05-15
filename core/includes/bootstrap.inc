@@ -1123,7 +1123,7 @@ function drupal_bootstrap($phase = NULL) {
 
       switch ($current_phase) {
         case DRUPAL_BOOTSTRAP_CONFIGURATION:
-          $kernel = DrupalKernel::createFromRequest($request, 'prod', drupal_classloader());
+          $kernel = DrupalKernel::createFromRequest($request, drupal_classloader(), 'prod');
           break;
 
         case DRUPAL_BOOTSTRAP_KERNEL:

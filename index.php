@@ -17,7 +17,7 @@ $autoloader = require_once __DIR__ . '/core/vendor/autoload.php';
 try {
 
   $request = Request::createFromGlobals();
-  $kernel = DrupalKernel::createFromRequest($request, 'prod', $autoloader);
+  $kernel = DrupalKernel::createFromRequest($request, $autoloader, 'prod');
   $response = $kernel
     ->handlePageCache($request)
     ->handle($request)

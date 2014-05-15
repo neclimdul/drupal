@@ -306,7 +306,7 @@ require_once __DIR__ . '/includes/schema.inc';
 require_once __DIR__ . '/includes/database.inc';
 
 $request = Request::createFromGlobals();
-$kernel = DrupalKernel::createFromRequest($request, 'update', $autoloader, FALSE);
+$kernel = DrupalKernel::createFromRequest($request, $autoloader, 'update', FALSE);
 
 // Enable UpdateServiceProvider service overrides.
 // @see update_flush_all_caches()

@@ -182,19 +182,19 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
    * Create a DrupalKernel object from a request.
    *
    * @param \Symfony\Component\HttpFoundation\Request $request
-   * @param string $environment
-   *   String indicating the environment, e.g. 'prod' or 'dev'.
    * @param \Composer\Autoload\ClassLoader $class_loader
    *   (optional) The classloader is only used if $storage is not given or
    *   the load from storage fails and a container rebuild is required. In
    *   this case, the loaded modules will be registered with this loader in
    *   order to be able to find the module serviceProviders.
+   * @param string $environment
+   *   String indicating the environment, e.g. 'prod' or 'dev'.
    * @param bool $allow_dumping
    *   (optional) FALSE to stop the container from being written to or read
    *   from disk. Defaults to TRUE.
    * @return static
    */
-  public static function createFromRequest(Request $request, $environment, ClassLoader $class_loader, $allow_dumping = TRUE) {
+  public static function createFromRequest(Request $request, ClassLoader $class_loader, $environment, $allow_dumping = TRUE) {
     // Include our bootstrap file.
     require_once dirname(dirname(dirname(__DIR__))) . '/includes/bootstrap.inc';
 

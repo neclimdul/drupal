@@ -19,8 +19,8 @@ use Symfony\Component\HttpFoundation\Request;
  */
 class TestRunnerKernel extends DrupalKernel {
 
-  public static function createFromRequest(Request $request, ClassLoader $class_loader) {
-    return parent::createFromRequest($request, 'test_runner', $class_loader);
+  public static function createFromRequest(Request $request, ClassLoader $class_loader, $environment = 'test_runner') {
+    return parent::createFromRequest($request, $class_loader, $environment);
   }
 
   /**

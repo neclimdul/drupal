@@ -12,7 +12,7 @@ chdir('../../..');
 
 $autoloader = require_once dirname(dirname(__DIR__)) . '/vendor/autoload.php';
 
-$kernel = DrupalKernel::createFromRequest(Request::createFromGlobals(), 'prod', $autoloader);
+$kernel = DrupalKernel::createFromRequest(Request::createFromGlobals(), $autoloader, 'prod');
 $kernel->boot();
 
 $views = $kernel->getContainer()

@@ -19,7 +19,7 @@ class TestKernel extends DrupalKernel {
   /**
    * {@inheritdoc}
    */
-  public static function createFromRequest(Request $request, $environment, ClassLoader $class_loader, $allow_dumping = TRUE) {
+  public static function createFromRequest(Request $request, ClassLoader $class_loader, $environment, $allow_dumping = TRUE) {
     // Include our bootstrap file.
     require_once __DIR__ . '/../../../../includes/bootstrap.inc';
 
@@ -29,7 +29,7 @@ class TestKernel extends DrupalKernel {
       exit;
     }
 
-    return parent::createFromRequest($request, $environment, $class_loader, $allow_dumping);
+    return parent::createFromRequest($request, $class_loader, $environment, $allow_dumping);
   }
 
 }
