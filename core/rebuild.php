@@ -25,17 +25,16 @@ $request = Request::createFromGlobals();
 // Manually resemble early bootstrap of DrupalKernel::boot().
 require_once __DIR__ . '/includes/bootstrap.inc';
 DrupalKernel::bootEnvironment();
-Settings::initialize($request);
-DrupalKernel::initializeRequestGlobals($request);
+Settings::initialize(DrupalKernel::sitePath($request));
 
 if (Settings::get('rebuild_access', FALSE) ||
-  (isset($_GET['token'], $_GET['timestamp']) &&
-    ((REQUEST_TIME - $_GET['timestamp']) < 300) &&
-    ($_GET['token'] === Crypt::hmacBase64($_GET['timestamp'], Settings::get('hash_salt')))
+  ($request->get('token') && $request->get('timestamp') &&
+    ((REQUEST_TIME - $request->get('timestamp')) < 300) &&
+    ($request->get('token') === Crypt::hmacBase64($request->get('timestamp'), Settings::get('hash_salt')))
   )) {
 
   drupal_rebuild($autoloader, $request);
   drupal_set_message('Cache rebuild complete.');
 }
-
-header('Location: ' . $GLOBALS['base_url']);
+$base_path = dirname(dirname($request->getBaseUrl()));
+header('Location: ' . $base_path);
