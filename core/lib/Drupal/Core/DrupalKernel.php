@@ -480,6 +480,7 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
     $this->container->enterScope('request');
     $this->container->set('request', $request);
     $this->container->get('request_stack')->push($request);
+    $this->container->get('router.request_context')->fromRequest($request);
     return $this;
   }
 
