@@ -183,7 +183,7 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
    *
    * @var string
    */
-  private static $sitePath;
+  protected $sitePath;
 
   /**
    * Create a DrupalKernel object from a request.
@@ -202,14 +202,19 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
    * @return static
    */
   public static function createFromRequest(Request $request, ClassLoader $class_loader, $environment, $allow_dumping = TRUE) {
+    $site_path = static::sitePath($request);
+
+    $kernel = new static($environment, $class_loader, $allow_dumping);
+    $kernel->setSitePath($site_path);
+
     // Include our bootstrap file.
     require_once dirname(dirname(dirname(__DIR__))) . '/includes/bootstrap.inc';
 
-    // Exit if we should be in a test environment but aren't.
+    // Ensure sane php environment variables..
     static::bootEnvironment();
 
     // Get our most basic settings setup.
-    Settings::initialize($request);
+    Settings::initialize($site_path);
 
     // Redirect the user to the installation script if Drupal has not been
     // installed yet (i.e., if no $databases array has been defined in the
@@ -219,7 +224,8 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
       $response->prepare($request)->send();
     }
 
-    return new static($environment, $class_loader, $allow_dumping);
+
+    return $kernel;
   }
 
   /**
@@ -270,9 +276,6 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
    * @see default.settings.php
    */
   public static function sitePath(Request $request, $require_settings = TRUE, $reset = FALSE) {
-    if (isset(static::$sitePath) && !$reset) {
-      return static::$sitePath;
-    }
 
     // Check for a simpletest override.
     if ($test_prefix = drupal_valid_test_ua()) {
@@ -286,8 +289,8 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
       $script_name = $request->server->get('SCRIPT_FILENAME');
     }
     $http_host = $request->server->get('HTTP_HOST');
-    static::$sitePath = static::findSitePath($http_host, $script_name, $require_settings);
-    return static::$sitePath;
+
+    return static::findSitePath($http_host, $script_name, $require_settings);
   }
 
   /**
@@ -354,6 +357,9 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
     return 'sites/default';
   }
 
+  public function setSitePath($path) {
+    $this->sitePath = $path;
+  }
 
   /**
    * {@inheritdoc}

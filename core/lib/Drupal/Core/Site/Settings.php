@@ -87,10 +87,10 @@ final class Settings {
   /**
    * Bootstraps settings.php and the Settings singleton.
    *
-   * @param \Symfony\Component\HttpFoundation\Request $request
-   *   The current request.
+   * @param string $site_path
+   *   The current site path.
    */
-  public static function initialize(Request $request) {
+  public static function initialize($site_path) {
     // Export these settings.php variables to the global namespace.
     global $base_url, $cookie_domain, $config_directories, $config;
     $settings = array();
@@ -98,9 +98,8 @@ final class Settings {
     $databases = array();
 
     // Make conf_path() available as local variable in settings.php.
-    $conf_path = DrupalKernel::sitePath($request);
-    if (is_readable(DRUPAL_ROOT . '/' . $conf_path . '/settings.php')) {
-      require DRUPAL_ROOT . '/' . $conf_path . '/settings.php';
+    if (is_readable(DRUPAL_ROOT . '/' . $site_path . '/settings.php')) {
+      require DRUPAL_ROOT . '/' . $site_path . '/settings.php';
     }
 
     // Initialize Database.
