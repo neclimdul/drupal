@@ -279,8 +279,7 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
 
     // Check for a simpletest override.
     if ($test_prefix = drupal_valid_test_ua()) {
-      static::$sitePath = 'sites/simpletest/' . substr($test_prefix, 10);
-      return static::$sitePath;
+      return 'sites/simpletest/' . substr($test_prefix, 10);
     }
 
     // Otherwise, use the normal $conf_path.
