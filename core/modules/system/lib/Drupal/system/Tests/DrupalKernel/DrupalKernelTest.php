@@ -57,14 +57,19 @@ class DrupalKernelTest extends DrupalUnitTestBase {
    *
    * @param \Symfony\Component\HttpFoundation\Request $request
    *   A request object to use in booting the kernel.
+   * @param array $modules_enabled
+   *   A list of modules to enable on the kernel.
    * @param bool $read_only
    *   Build the kernel in a read only state.
    * @return DrupalKernel
    */
-  protected function getTestKernel(Request $request, $read_only = FALSE) {
+  protected function getTestKernel(Request $request, array $modules_enabled = NULL, $read_only = FALSE) {
     // Manually create kernel to avoid replacing settings.
     $kernel = DrupalKernel::createFromRequest($request, drupal_classloader(), 'testing');
     $this->settingsSet('hash_salt', $this->databasePrefix);
+    if (isset($modules_enabled)) {
+      $kernel->updateModules($modules_enabled);
+    }
     $kernel->boot();
 
     if ($read_only) {
@@ -86,8 +91,7 @@ class DrupalKernelTest extends DrupalUnitTestBase {
     );
 
     $request = Request::createFromGlobals();
-    $this->getTestKernel($request)
-      ->getContainer();
+    $this->getTestKernel($request, $modules_enabled);
 
     // Instantiate it a second time and we should get the compiled Container
     // class.
@@ -105,7 +109,7 @@ class DrupalKernelTest extends DrupalUnitTestBase {
 
     // Now use the read-only storage implementation, simulating a "production"
     // environment.
-    $container = $this->getTestKernel($request, TRUE)
+    $container = $this->getTestKernel($request, NULL, TRUE)
       ->getContainer();
 
     $refClass = new \ReflectionClass($container);
@@ -133,20 +137,19 @@ class DrupalKernelTest extends DrupalUnitTestBase {
     // Add another module so that we can test that the new module's bundle is
     // registered to the new container.
     $modules_enabled['service_provider_test'] = 'service_provider_test';
-    $this->getTestKernel($request, TRUE)
-      ->getContainer();
+    $this->getTestKernel($request, $modules_enabled, TRUE);
 
     // Instantiate it a second time and we should still get a ContainerBuilder
     // class because we are using the read-only PHP storage.
-    $container = $this->getTestKernel($request, TRUE)
-      ->getContainer();
+    $kernel = $this->getTestKernel($request, $modules_enabled, TRUE);
+    $container = $kernel->getContainer();
 
     $refClass = new \ReflectionClass($container);
     $is_container_builder = $refClass->isSubclassOf('Symfony\Component\DependencyInjection\ContainerBuilder');
-    $this->assertTrue($is_container_builder);
+    $this->assertTrue($is_container_builder, 'Container is a builder');
 
     // Assert that the new module's bundle was registered to the new container.
-    $this->assertTrue($container->has('service_provider_test_class'));
+    $this->assertTrue($container->has('service_provider_test_class'), 'Container has test service');
 
     // Test that our synthetic services are there.
     $classloader = $container->get('class_loader');
