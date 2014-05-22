@@ -9,7 +9,7 @@ services:
     arguments: ['@service_container', '%cache_contexts%' ]
   cache_context.url:
     class: Drupal\Core\Cache\UrlCacheContext
-    arguments: ['@request']
+    arguments: ['@request_stack']
     tags:
       - { name: cache.context}
   cache_context.language:
@@ -19,12 +19,14 @@ services:
       - { name: cache.context}
   cache_context.theme:
     class: Drupal\Core\Cache\ThemeCacheContext
-    arguments: ['@request', '@theme.negotiator']
+    arguments: ['@request_stack', '@theme.negotiator']
     tags:
       - { name: cache.context}
   cache.backend.database:
     class: Drupal\Core\Cache\DatabaseBackendFactory
     arguments: ['@database']
+  cache.backend.apcu:
+    class: Drupal\Core\Cache\ApcuBackendFactory
   cache.backend.php:
     class: Drupal\Core\Cache\PhpBackendFactory
   cache.backend.memory:
@@ -520,9 +522,11 @@ services:
   csrf_token:
     class: Drupal\Core\Access\CsrfTokenGenerator
     arguments: ['@private_key']
+  access_arguments_resolver:
+    class: Drupal\Core\Access\AccessArgumentsResolver
   access_manager:
     class: Drupal\Core\Access\AccessManager
-    arguments: ['@router.route_provider', '@url_generator', '@paramconverter_manager']
+    arguments: ['@router.route_provider', '@url_generator', '@paramconverter_manager', '@access_arguments_resolver']
     calls:
       - [setContainer, ['@service_container']]
       - [setRequest, ['@?request']]
@@ -557,7 +561,7 @@ services:
       - { name: access_check, applies_to: _access_theme }
   access_check.custom:
     class: Drupal\Core\Access\CustomAccessCheck
-    arguments: ['@controller_resolver']
+    arguments: ['@controller_resolver', '@access_arguments_resolver']
     tags:
       - { name: access_check, applies_to: _custom_access }
   access_check.csrf:
