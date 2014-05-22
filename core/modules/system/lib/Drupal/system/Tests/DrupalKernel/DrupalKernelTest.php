@@ -63,9 +63,9 @@ class DrupalKernelTest extends DrupalUnitTestBase {
    */
   protected function getTestKernel(Request $request, $read_only = FALSE) {
     // Manually create kernel to avoid replacing settings.
-    $kernel = new DrupalKernel('testing', $this->classloader);
-    $kernel->boot($request);
+    $kernel = DrupalKernel::createFromRequest($request, drupal_classloader(), 'testing');
     $this->settingsSet('hash_salt', $this->databasePrefix);
+    $kernel->boot();
 
     if ($read_only) {
       $php_storage = Settings::get('php_storage');
