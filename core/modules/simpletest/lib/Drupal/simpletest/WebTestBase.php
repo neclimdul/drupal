@@ -864,7 +864,7 @@ abstract class WebTestBase extends TestBase {
     chmod(DRUPAL_ROOT . '/' . $this->siteDirectory, 0777);
 
     $request = \Drupal::request();
-    $this->kernel = DrupalKernel::createFromRequest($request, drupal_classloader(), 'prod', FALSE);
+    $this->kernel = DrupalKernel::createFromRequest($request, drupal_classloader(), 'prod', TRUE);
     $this->kernel->prepareLegacyRequest($request);
     $container = $this->kernel->getContainer();
     $config = $container->get('config.factory');
