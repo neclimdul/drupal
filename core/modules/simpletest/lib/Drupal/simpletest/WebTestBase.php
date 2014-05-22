@@ -780,16 +780,6 @@ abstract class WebTestBase extends TestBase {
   }
 
   /**
-   * Return the session name in use on the child site.
-   *
-   * @return string
-   *   The name of the session cookie.
-   */
-  public function getSessionName() {
-    return $this->session_name;
-  }
-
-  /**
    * Sets up a Drupal site for running functional and integration tests.
    *
    * Installs Drupal with the installation profile specified in
@@ -819,12 +809,6 @@ abstract class WebTestBase extends TestBase {
       'mail' => 'admin@example.com',
       'pass_raw' => $this->randomName(),
     ));
-
-    // The simpletest child site currently uses the same session name as the
-    // execution environment.
-    // @todo: Introduce a setting such that the session name can be customized
-    // for the child site.
-    $this->session_name = $this->originalSessionName;
 
     // Reset the static batch to remove Simpletest's batch operations.
     $batch = &batch_get();
@@ -1111,6 +1095,8 @@ abstract class WebTestBase extends TestBase {
     // different object, so we need to replace the instance on this test class.
     $this->container = $this->kernel->getContainer();
 
+    $this->container->get('current_user')->setAccount(\Drupal::currentUser());
+
     // The request context is normally set by the router_listener from within
     // its KernelEvents::REQUEST listener. In the simpletest parent site this
     // event is not fired, therefore it is necessary to updated the request
@@ -1226,6 +1212,9 @@ abstract class WebTestBase extends TestBase {
       if (!$result) {
         throw new \UnexpectedValueException('One or more cURL options could not be set.');
       }
+
+      // By default, the child session name should be the same as the parent.
+      $this->session_name = session_name();
     }
     // We set the user agent header on each request so as to use the current
     // time and a new uniqid.
