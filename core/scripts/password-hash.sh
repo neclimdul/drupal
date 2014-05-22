@@ -60,8 +60,8 @@ $passwords = $_SERVER['argv'];
 $autoloader = require __DIR__ . '/../vendor/autoload.php';
 
 $request = Request::createFromGlobals();
-$kernel = new DrupalKernel('prod', $autoloader, FALSE);
-$kernel->boot($request);
+$kernel = DrupalKernel::createFromRequest($request, $autoloader, 'prod', FALSE);
+$kernel->boot();
 
 $password_hasher = $kernel->getContainer()->get('password');
 
