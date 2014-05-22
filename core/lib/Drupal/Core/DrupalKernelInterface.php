@@ -57,6 +57,22 @@ interface DrupalKernelInterface extends HttpKernelInterface {
   public function getContainer();
 
   /**
+   * Set the current site path.
+   *
+   * @param $path
+   *   The current site path.
+   */
+  public function setSitePath($path);
+
+  /**
+   * Get the site path.
+   *
+   * @return string
+   *   The current site path.
+   */
+  public function getSitePath();
+
+  /**
    * Updates the kernel's list of modules to the new list.
    *
    * The kernel needs to update its bundle list and container to match the new

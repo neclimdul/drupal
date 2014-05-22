@@ -228,7 +228,7 @@ define('DRUPAL_ROOT', dirname(dirname(__DIR__)));
  *   The path of the matching directory.@see default.settings.php
  *
  * @deprecated in Drupal 8.x-dev, will be removed before Drupal 8.0.
- *   Use \Drupal\Core\DrupalKernel::sitePath().
+ *   Use \Drupal\Core\DrupalKernel::getSitePath() or Drupal\Core\DrupalKernel::SitePath().
  */
 function conf_path($require_settings = TRUE, $reset = FALSE, Request $request = NULL) {
   if (!isset($request)) {
@@ -240,7 +240,8 @@ function conf_path($require_settings = TRUE, $reset = FALSE, Request $request = 
       $request = Request::createFromGlobals();
     }
   }
-  return DrupalKernel::sitePath($request, $require_settings, $reset);
+
+  return DrupalKernel::sitePath($request, $require_settings);
 }
 
 /**

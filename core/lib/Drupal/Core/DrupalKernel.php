@@ -212,9 +212,9 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
     // Include our bootstrap file.
     require_once dirname(dirname(dirname(__DIR__))) . '/includes/bootstrap.inc';
 
-    $site_path = static::sitePath($request);
 
     $kernel = new static($environment, $class_loader, $allow_dumping);
+    $site_path = static::sitePath($request);
     $kernel->setSitePath($site_path);
 
     // Ensure sane php environment variables..
@@ -276,9 +276,6 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
    *   Defaults to TRUE. During initial installation, this is set to FALSE so that
    *   Drupal can detect a matching directory, then create a new settings.php file
    *   in it.
-   * @param bool $reset
-   *   Force a full search for matching directories even if one had been
-   *   found previously. Defaults to FALSE.
    *
    * @return string
    *   The path of the matching directory.
@@ -286,7 +283,7 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
    * @see self::findSitePath()
    * @see default.settings.php
    */
-  public static function sitePath(Request $request, $require_settings = TRUE, $reset = FALSE) {
+  public static function sitePath(Request $request, $require_settings = TRUE) {
 
     // Check for a simpletest override.
     if ($test_prefix = drupal_valid_test_ua()) {
@@ -367,8 +364,18 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
     return 'sites/default';
   }
 
+  /**
+   * {@inheritdoc}
+   */
   public function setSitePath($path) {
     $this->sitePath = $path;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getSitePath() {
+    return $this->sitePath;
   }
 
   /**
