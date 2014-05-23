@@ -214,13 +214,13 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
 
 
     $kernel = new static($environment, $class_loader, $allow_dumping);
-    $site_path = static::sitePath($request);
-    $kernel->setSitePath($site_path);
 
     // Ensure sane php environment variables..
     static::bootEnvironment();
 
     // Get our most basic settings setup.
+    $site_path = static::sitePath($request);
+    $kernel->setSitePath($site_path);
     Settings::initialize($site_path);
 
     // Redirect the user to the installation script if Drupal has not been
