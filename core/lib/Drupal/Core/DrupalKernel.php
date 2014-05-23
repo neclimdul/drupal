@@ -554,14 +554,14 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
     $this->registerNamespacesPsr4($this->getModuleNamespacesPsr4($module_filenames));
 
     // Load each module's serviceProvider class.
-    foreach ($this->moduleList as $module => $weight) {
+    foreach ($module_filenames as $module => $filename) {
       $camelized = ContainerBuilder::camelize($module);
       $name = "{$camelized}ServiceProvider";
       $class = "Drupal\\{$module}\\{$name}";
       if (class_exists($class)) {
         $this->serviceProviderClasses['app'][$module] = $class;
       }
-      $filename = dirname($module_filenames[$module]) . "/$module.services.yml";
+      $filename = dirname($filename) . "/$module.services.yml";
       if (file_exists($filename)) {
         $this->serviceYamls['app'][$module] = $filename;
       }
