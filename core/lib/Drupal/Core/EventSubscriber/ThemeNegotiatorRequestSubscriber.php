@@ -19,23 +19,6 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 class ThemeNegotiatorRequestSubscriber implements EventSubscriberInterface {
 
   /**
-   * The theme negotiator service.
-   *
-   * @var \Drupal\Core\Theme\ThemeNegotiatorInterface
-   */
-  protected $themeNegotiator;
-
-  /**
-   * Constructs a ThemeNegotiatorRequestSubscriber object.
-   *
-   * @param \Drupal\Core\Theme\ThemeNegotiatorInterface $theme_negotiator
-   *   The theme negotiator service.
-   */
-  public function __construct(ThemeNegotiatorInterface $theme_negotiator) {
-    $this->themeNegotiator = $theme_negotiator;
-  }
-
-  /**
    * Initializes the theme system after the routing system.
    *
    * @param \Symfony\Component\HttpKernel\Event\GetResponseEvent $event

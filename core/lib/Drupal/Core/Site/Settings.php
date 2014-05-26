@@ -8,8 +8,6 @@
 namespace Drupal\Core\Site;
 
 use Drupal\Core\Database\Database;
-use Drupal\Core\DrupalKernel;
-use Symfony\Component\HttpFoundation\Request;
 
 /**
  * Read only settings that are initialized with the class.
