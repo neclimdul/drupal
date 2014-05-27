@@ -18,10 +18,11 @@ if (!isset($_SERVER['argv']) || !is_array($_SERVER['argv'])) {
   return;
 }
 
-$autoloader = require __DIR__ . '/../vendor/autoload.php';
+require __DIR__ . '/../vendor/autoload.php';
+require_once __DIR__ . '/../includes/bootstrap.inc';
+
 $request = Request::createFromGlobals();
-$kernel = new DrupalKernel('prod', $autoloader);
-$kernel->boot($request);
+Settings::initialize(DrupalKernel::findSitePath($request));
 
 $timestamp = time();
 $token = Crypt::hmacBase64($timestamp, Settings::get('hash_salt'));
