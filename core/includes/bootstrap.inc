@@ -1422,8 +1422,6 @@ function language_default() {
  *   The requested Drupal URL path.
  *
  * @see current_path()
- *
- * @deprecated in Drupal 8.x-dev, will be removed before Drupal 8.0.
  */
 function request_path() {
   static $path;
