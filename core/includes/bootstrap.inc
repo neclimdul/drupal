@@ -221,7 +221,9 @@ define('DRUPAL_ROOT', dirname(dirname(__DIR__)));
  *   The path of the matching directory.@see default.settings.php
  *
  * @deprecated in Drupal 8.x-dev, will be removed before Drupal 8.0.
- *   Use \Drupal\Core\DrupalKernel::getSitePath() or Drupal\Core\DrupalKernel::SitePath().
+ *   Use \Drupal\Core\DrupalKernel::getSitePath() instead. If the kernel is
+ *   unavailable or the site path needs to be recalculated then
+ *   Drupal\Core\DrupalKernel::findSitePath() can be used.
  */
 function conf_path($require_settings = TRUE, $reset = FALSE, Request $request = NULL) {
   if (!isset($request)) {
@@ -233,10 +235,14 @@ function conf_path($require_settings = TRUE, $reset = FALSE, Request $request = 
       $request = Request::createFromGlobals();
     }
   }
-
-  return DrupalKernel::sitePath($request, $require_settings);
+  if (\Drupal::hasService('kernel')) {
+    $site_path = \Drupal::service('kernel')->getSitePath();
+  }
+  if (!isset($site_path) || empty($site_path)) {
+    $site_path = DrupalKernel::findSitePath($request, $require_settings);
+  }
+  return $site_path;
 }
-
 /**
  * Returns the path of a configuration directory.
  *

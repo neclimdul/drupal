@@ -138,6 +138,8 @@ abstract class KernelTestBase extends UnitTestBase {
     $settings = Settings::getAll();
     // Bootstrap a new kernel. Don't use createFromRequest so we don't mess with settings.
     $this->kernel = new DrupalKernel('testing', drupal_classloader(), FALSE);
+    $request = Request::create('/');
+    $this->kernel->setSitePath($this->kernel->findSitePath($request));
     $this->kernel->boot();
 
     // Restore and merge settings.
@@ -146,7 +148,6 @@ abstract class KernelTestBase extends UnitTestBase {
     new Settings($settings + Settings::getAll());
 
     // Set the request scope.
-    $request = Request::create('/');
     $this->container = $this->kernel->getContainer();
     $this->container->set('request', $request);
     $this->container->get('request_stack')->push($request);

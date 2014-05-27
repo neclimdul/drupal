@@ -113,7 +113,7 @@ abstract class InstallerTestBase extends WebTestBase {
 
     // Import new settings.php written by the installer.
     $request = Request::createFromGlobals();
-    Settings::initialize(DrupalKernel::sitePath($request));
+    Settings::initialize(DrupalKernel::findSitePath($request));
     foreach ($GLOBALS['config_directories'] as $type => $path) {
       $this->configDirectories[$type] = $path;
     }

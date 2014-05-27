@@ -282,7 +282,8 @@ function install_begin_request(&$install_state) {
     exit;
   }
 
-  Settings::initialize(DrupalKernel::sitePath($request, FALSE));
+  $site_path = DrupalKernel::findSitePath($request, FALSE);
+  Settings::initialize($site_path);
 
   // Ensure that procedural dependencies are loaded as early as possible,
   // since the error/exception handlers depend on them.
@@ -351,6 +352,7 @@ function install_begin_request(&$install_state) {
   }
 
   $kernel = DrupalKernel::createFromRequest($request, drupal_classloader(), $environment, FALSE);
+  $kernel->setSitePath($site_path);
   $kernel->boot();
   $container = $kernel->getContainer();
 
@@ -359,7 +361,7 @@ function install_begin_request(&$install_state) {
     $directory = $GLOBALS['config']['locale.settings']['translation.path'];
   }
   else {
-    $directory = DrupalKernel::sitePath($request) . '/files/translations';
+    $directory = $site_path . '/files/translations';
   }
   $container->set('string_translator.file_translation', new FileTranslation($directory));
   $container->get('string_translation')

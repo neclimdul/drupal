@@ -212,14 +212,13 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
     // Include our bootstrap file.
     require_once dirname(dirname(dirname(__DIR__))) . '/includes/bootstrap.inc';
 
-
     $kernel = new static($environment, $class_loader, $allow_dumping);
 
     // Ensure sane php environment variables..
     static::bootEnvironment();
 
     // Get our most basic settings setup.
-    $site_path = static::sitePath($request);
+    $site_path = static::findSitePath($request);
     $kernel->setSitePath($site_path);
     Settings::initialize($site_path);
 
@@ -230,7 +229,6 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
       $response = new RedirectResponse($request->getBasePath() . '/core/install.php');
       $response->prepare($request)->send();
     }
-
 
     return $kernel;
   }
@@ -260,90 +258,25 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
   }
 
   /**
-   * Returns the appropriate site directory.
-   *
-   * Site directories contain all site specific code. This includes settings.php
-   * for bootstrap level configuration, file configuration stores, public file
-   * storage and site specific modules and themes.
-   *
-   * See default.settings.php for examples on how the URL is converted to a
-   * directory based on hostname, port and path.
-   *
-   * @param \Symfony\Component\HttpFoundation\Request $request
-   *   The current request.
-   * @param bool $require_settings
-   *   Only directories with an existing settings.php file will be recognized.
-   *   Defaults to TRUE. During initial installation, this is set to FALSE so that
-   *   Drupal can detect a matching directory, then create a new settings.php file
-   *   in it.
-   *
-   * @return string
-   *   The path of the matching directory.
-   *
-   * @see self::findSitePath()
-   * @see default.settings.php
+   * {@inheritdoc}
    */
-  public static function sitePath(Request $request, $require_settings = TRUE) {
-
+  public static function findSitePath(Request $request, $require_settings = TRUE) {
     // Check for a simpletest override.
     if ($test_prefix = drupal_valid_test_ua()) {
       return 'sites/simpletest/' . substr($test_prefix, 10);
     }
 
-    // Otherwise, use the normal $conf_path.
+    // Determine whether multi-site functionality is enabled.
+    if (!file_exists(DRUPAL_ROOT . '/sites/sites.php')) {
+      return 'sites/default';
+    }
+
+    // Otherwise, use find the site path using the request.
     $script_name = $request->server->get('SCRIPT_NAME');
     if (!$script_name) {
       $script_name = $request->server->get('SCRIPT_FILENAME');
     }
     $http_host = $request->server->get('HTTP_HOST');
-
-    return static::findSitePath($http_host, $script_name, $require_settings);
-  }
-
-  /**
-   * Finds the appropriate site directory for a given host and path.
-   *
-   * Finds a matching site directory file by stripping the website's hostname from
-   * left to right and pathname from right to left. By default, the directory must
-   * contain a 'settings.php' file for it to match. If the parameter
-   * $require_settings is set to FALSE, then a directory without a 'settings.php'
-   * file will match as well. The first configuration file found will be used and the
-   * remaining ones will be ignored. If no configuration file is found, returns a
-   * default value '$confdir/default'. See default.settings.php for examples on how
-   * the URL is converted to a directory.
-   *
-   * If a file named sites.php is present in the $confdir, it will be loaded
-   * prior to scanning for directories. That file can define aliases in an
-   * associative array named $sites. The array is written in the format
-   * '<port>.<domain>.<path>' => 'directory'. As an example, to create a
-   * directory alias for http://www.drupal.org:8080/mysite/test whose configuration
-   * file is in sites/example.com, the array should be defined as:
-   * @code
-   * $sites = array(
-   *   '8080.www.drupal.org.mysite.test' => 'example.com',
-   * );
-   * @endcode
-   *
-   * @param $http_host
-   *   The hostname and optional port number, e.g. "www.example.com" or
-   *   "www.example.com:8080".
-   * @param $script_name
-   *   The part of the URL following the hostname, including the leading slash.
-   * @param bool $require_settings
-   *   Defaults to TRUE. If TRUE, then only match directories with a 'settings.php'
-   *   file. Otherwise match any directory.
-   *
-   * @return string
-   *   The path of the matching site directory.
-   *
-   * @see default.settings.php
-   * @see example.sites.php
-   */
-  protected static function findSitePath($http_host, $script_name, $require_settings = TRUE) {
-    // Determine whether multi-site functionality is enabled.
-    if (!file_exists(DRUPAL_ROOT . '/sites/sites.php')) {
-      return 'sites/default';
-    }
 
     $sites = array();
     include DRUPAL_ROOT . '/sites/sites.php';
@@ -409,6 +342,10 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
     require_once DRUPAL_ROOT . '/core/includes/schema.inc';
     require_once DRUPAL_ROOT . '/core/includes/entity.inc';
 
+    // Ensure that findSitePath is set.
+    if (!$this->sitePath) {
+      throw new \Exception('Kernel does not have site path set before calling boot()');
+    }
     // Intialize the container.
     $this->initializeContainer();
 
@@ -455,7 +392,6 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
    *   The current request.
    */
   protected function preHandle(Request $request) {
-
     // Initialize legacy request globals.
     $this->initializeRequestGlobals($request);
 
@@ -497,7 +433,6 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
    * @todo Invoke proper request/response/terminate events.
    */
   public function handlePageCache(Request $request) {
-
     $this->boot();
     $this->preHandle($request);
 
@@ -578,7 +513,7 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
     if (!empty($GLOBALS['conf']['container_yamls'])) {
       $this->serviceYamls['site'] = $GLOBALS['conf']['container_yamls'];
     }
-    if (file_exists($site_services_yml = conf_path() . '/services.yml')) {
+    if (file_exists($site_services_yml = $this->getSitePath() . '/services.yml')) {
       $this->serviceYamls['site'][] = $site_services_yml;
     }
   }
