@@ -322,7 +322,7 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
     // Start a page timer:
     Timer::start('page');
 
-    drupal_classloader($this->classLoader);
+    drupal_classloader();
 
     // Load legacy and other functional code.
     require_once DRUPAL_ROOT . '/core/includes/common.inc';
