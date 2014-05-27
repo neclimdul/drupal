@@ -196,7 +196,6 @@ services:
       - { name: service_collector, tag: theme_negotiator, call: addNegotiator }
   theme.negotiator.request_subscriber:
     class: Drupal\Core\EventSubscriber\ThemeNegotiatorRequestSubscriber
-    arguments: ['@theme.negotiator']
     tags:
       - { name: event_subscriber }
   theme.negotiator.default:
