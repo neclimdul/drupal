@@ -434,6 +434,7 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
    */
   public function handlePageCache(Request $request) {
     $this->boot();
+    $this->initializeCookieGlobals($request);
 
     // Check for a cache mode force from settings.php.
     if (Settings::get('page_cache_without_database')) {
@@ -886,7 +887,7 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
     if (static::$isRequestInitialized) {
       return;
     }
-    global $base_url, $cookie_domain;
+    global $cookie_domain;
 
     if ($cookie_domain) {
       // If the user specifies the cookie domain, also use it for session name.
@@ -895,7 +896,9 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
     else {
       // Otherwise use $base_url as session name, without the protocol
       // to use the same session identifiers across HTTP and HTTPS.
-      list(, $session_name) = explode('://', $base_url, 2);
+      $session_name = isset($base_url) ?
+        explode('://', $base_url, 2) :
+        $request->server->get('HTTP_HOST');
       // HTTP_HOST can be modified by a visitor, but has been sanitized already
       // in DrupalKernel::bootEnvironment().
       if ($cookie_domain = $request->server->get('HTTP_HOST')) {
