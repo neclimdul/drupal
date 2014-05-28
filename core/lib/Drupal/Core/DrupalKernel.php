@@ -349,9 +349,6 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
     // Intialize the container.
     $this->initializeContainer();
 
-    // Load all enabled modules.
-    $this->container->get('module_handler')->loadAll();
-
     // Ensure mt_rand() is reseeded to prevent random values from one page load
     // being exploited to predict random values in subsequent page loads.
     $seed = unpack("L", Crypt::randomBytes(4));
@@ -392,6 +389,9 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
    *   The current request.
    */
   protected function preHandle(Request $request) {
+    // Load all enabled modules.
+    $this->container->get('module_handler')->loadAll();
+
     // Initialize legacy request globals.
     $this->initializeRequestGlobals($request);
 
@@ -434,7 +434,6 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
    */
   public function handlePageCache(Request $request) {
     $this->boot();
-    $this->preHandle($request);
 
     // Check for a cache mode force from settings.php.
     if (Settings::get('page_cache_without_database')) {
