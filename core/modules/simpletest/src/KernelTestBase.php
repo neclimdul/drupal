@@ -7,12 +7,14 @@
 
 namespace Drupal\simpletest;
 
+use Drupal\Component\Utility\String;
 use Drupal\Core\Database\Database;
 use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\Core\DrupalKernel;
 use Drupal\Core\KeyValueStore\KeyValueMemoryFactory;
 use Drupal\Core\Language\Language;
 use Drupal\Core\Site\Settings;
+use Drupal\Core\Entity\Schema\EntitySchemaProviderInterface;
 use Symfony\Component\DependencyInjection\Reference;
 use Symfony\Component\HttpFoundation\Request;
 
@@ -178,10 +180,10 @@ abstract class KernelTestBase extends UnitTestBase {
     // Modules have been collected in reverse class hierarchy order; modules
     // defined by base classes should be sorted first. Then, merge the results
     // together.
+    $modules = array_reverse($modules);
+    $modules = call_user_func_array('array_merge_recursive', $modules);
     if ($modules) {
-      $modules = array_reverse($modules);
-      $modules = call_user_func_array('array_merge_recursive', $modules);
-      $this->enableModules($modules, FALSE);
+      $this->enableModules($modules);
     }
     // In order to use theme functions default theme config needs to exist.
     \Drupal::config('system.theme')->set('default', 'stark');
@@ -345,6 +347,39 @@ abstract class KernelTestBase extends UnitTestBase {
       '%tables' => '{' . implode('}, {', $tables) . '}',
       '%module' => $module,
     )));
+  }
+
+
+
+  /**
+   * Installs the tables for a specific entity type.
+   *
+   * @param string $entity_type_id
+   *   The ID of the entity type.
+   */
+  protected function installEntitySchema($entity_type_id) {
+    /** @var \Drupal\Core\Entity\EntityManagerInterface $entity_manager */
+    $entity_manager = $this->container->get('entity.manager');
+    /** @var \Drupal\Core\Database\Schema $schema_handler */
+    $schema_handler = $this->container->get('database')->schema();
+
+    $storage = $entity_manager->getStorage($entity_type_id);
+    if ($storage instanceof EntitySchemaProviderInterface) {
+      $schema = $storage->getSchema();
+      foreach ($schema as $table_name => $table_schema) {
+        $schema_handler->createTable($table_name, $table_schema);
+      }
+
+      $this->pass(String::format('Installed entity type tables for the %entity_type entity type: %tables', array(
+        '%entity_type' => $entity_type_id,
+        '%tables' => '{' . implode('}, {', array_keys($schema)) . '}',
+      )));
+    }
+    else {
+      throw new \RuntimeException(String::format('Entity type %entity_type does not support automatic schema installation.', array(
+        '%entity-type' => $entity_type_id,
+      )));
+    }
   }
 
   /**
