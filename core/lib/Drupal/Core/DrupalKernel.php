@@ -941,9 +941,9 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
     else {
       // Otherwise use $base_url as session name, without the protocol
       // to use the same session identifiers across HTTP and HTTPS.
-      $session_name = isset($base_url) ?
-        explode('://', $base_url, 2) :
-        $request->server->get('HTTP_HOST');
+      $session_name = $request->getHost() . $request->getBasePath();
+      // Replace core out of session name so core
+      $session_name = preg_replace('/\/core$/', '', $session_name);
       // HTTP_HOST can be modified by a visitor, but has been sanitized already
       // in DrupalKernel::bootEnvironment().
       if ($cookie_domain = $request->server->get('HTTP_HOST')) {
