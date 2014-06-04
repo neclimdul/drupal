@@ -57,56 +57,6 @@ interface DrupalKernelInterface extends HttpKernelInterface {
   public function getContainer();
 
   /**
-   * Returns the appropriate site directory for a request.
-   *
-   * Once the kernel has been created DrupalKernelInterface::getSitePath() is
-   * preferred since it gets the statically cached result of this method.
-   *
-   * Site directories contain all site specific code. This includes settings.php
-   * for bootstrap level configuration, file configuration stores, public file
-   * storage and site specific modules and themes.
-   *
-   * Finds a matching site directory file by stripping the website's hostname
-   * from left to right and pathname from right to left. By default, the
-   * directory must contain a 'settings.php' file for it to match. If the
-   * parameter $require_settings is set to FALSE, then a directory without a
-   * 'settings.php' file will match as well. The first configuration file found
-   * will be used and the remaining ones will be ignored. If no configuration
-   * file is found, returns a default value 'sites/default'. See
-   * default.settings.php for examples on how the URL is converted to a
-   * directory.
-   *
-   * If a file named sites.php is present in the sites directory, it will be
-   * loaded prior to scanning for directories. That file can define aliases in
-   * an associative array named $sites. The array is written in the format
-   * '<port>.<domain>.<path>' => 'directory'. As an example, to create a
-   * directory alias for http://www.drupal.org:8080/mysite/test whose
-   * configuration file is in sites/example.com, the array should be defined as:
-   * @code
-   * $sites = array(
-   *   '8080.www.drupal.org.mysite.test' => 'example.com',
-   * );
-   * @endcode
-   *
-   * @param \Symfony\Component\HttpFoundation\Request $request
-   *   The current request.
-   * @param bool $require_settings
-   *   Only directories with an existing settings.php file will be recognized.
-   *   Defaults to TRUE. During initial installation, this is set to FALSE so
-   *   that Drupal can detect a matching directory, then create a new
-   *   settings.php file in it.
-   *
-   * @return string
-   *   The path of the matching directory.
-   *
-   * @see \Drupal\Core\DrupalKernelInterface::getSitePath()
-   * @see \Drupal\Core\DrupalKernelInterface::setSitePath()
-   * @see default.settings.php
-   * @see example.sites.php
-   */
-  public static function findSitePath(Request $request, $require_settings = TRUE);
-
-  /**
    * Set the current site path.
    *
    * @param $path

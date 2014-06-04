@@ -141,7 +141,7 @@ abstract class KernelTestBase extends UnitTestBase {
     // Bootstrap a new kernel. Don't use createFromRequest so we don't mess with settings.
     $this->kernel = new DrupalKernel('testing', drupal_classloader(), FALSE);
     $request = Request::create('/');
-    $this->kernel->setSitePath($this->kernel->findSitePath($request));
+    $this->kernel->setSitePath(DrupalKernel::findSitePath($request));
     $this->kernel->boot();
 
     // Restore and merge settings.
