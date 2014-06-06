@@ -9,6 +9,7 @@ use Drupal\Core\Database\Install\TaskException;
 use Drupal\Core\Installer\Exception\AlreadyInstalledException;
 use Drupal\Core\Installer\Exception\InstallerException;
 use Drupal\Core\Installer\Exception\NoProfilesException;
+use Drupal\Core\Installer\InstallerKernel;
 use Drupal\Core\Language\Language;
 use Drupal\Core\Language\LanguageManager;
 use Drupal\Core\Page\DefaultHtmlPageRenderer;
@@ -351,7 +352,7 @@ function install_begin_request(&$install_state) {
     $environment = 'prod';
   }
 
-  $kernel = DrupalKernel::createFromRequest($request, drupal_classloader(), $environment, FALSE);
+  $kernel = InstallerKernel::createFromRequest($request, drupal_classloader(), $environment);
   $kernel->setSitePath($site_path);
   $kernel->boot();
   $container = $kernel->getContainer();
@@ -366,8 +367,6 @@ function install_begin_request(&$install_state) {
   $container->set('string_translator.file_translation', new FileTranslation($directory));
   $container->get('string_translation')
     ->addTranslator($container->get('string_translator.file_translation'));
-
-  $kernel->prepareLegacyRequest($request);
 
   // Set the default language to the selected language, if any.
   if (isset($install_state['parameters']['langcode'])) {
@@ -407,6 +406,8 @@ function install_begin_request(&$install_state) {
   // ModuleHandler::isLoaded() returns TRUE, since that is a condition being
   // checked by other subsystems (e.g., the theme system).
   $module_handler->loadAll();
+
+  $kernel->prepareLegacyRequest($request);
 
   // Prepare for themed output. We need to run this at the beginning of the
   // page request to avoid a different theme accidentally getting set. (We also

@@ -866,8 +866,10 @@ abstract class WebTestBase extends TestBase {
 
     $request = \Drupal::request();
     $this->kernel = DrupalKernel::createFromRequest($request, drupal_classloader(), 'prod', TRUE);
+    // Force the container to be built from scratch instead of loaded from the
+    // disk. This forces us to not accidently load the parent site.
+    $container = $this->kernel->rebuildContainer();
     $this->kernel->prepareLegacyRequest($request);
-    $container = $this->kernel->getContainer();
     $config = $container->get('config.factory');
 
     // Manually create and configure private and temporary files directories.
@@ -1087,15 +1089,8 @@ abstract class WebTestBase extends TestBase {
   protected function rebuildContainer() {
     // Maintain the current global request object.
     $request = \Drupal::request();
-
     // Rebuild the kernel and bring it back to a fully bootstrapped state.
-    $this->kernel->shutdown();
-    $this->kernel->prepareLegacyRequest($request);
-
-    // DrupalKernel replaces the container in \Drupal::getContainer() with a
-    // different object, so we need to replace the instance on this test class.
-    $this->container = $this->kernel->getContainer();
-
+    $this->container = $this->kernel->rebuildContainer();
     $this->container->get('current_user')->setAccount(\Drupal::currentUser());
 
     // The request context is normally set by the router_listener from within

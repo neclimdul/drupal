@@ -635,10 +635,14 @@ function drupal_install_system($install_state) {
   // Remove the service provider of the early installer.
   unset($GLOBALS['conf']['container_service_providers']['InstallerServiceProvider']);
 
+  $request = \Drupal::request();
   // Reboot into a full production environment to continue the installation.
+  /** @var \Drupal\Core\Installer\InstallerKernel $kernel */
   $kernel = \Drupal::service('kernel');
   $kernel->shutdown();
-  $kernel->prepareLegacyRequest(\Drupal::request());
+  // Have installer rebuild from the disk, rather then building from scratch.
+  $kernel->rebuildContainer(FALSE);
+  $kernel->prepareLegacyRequest($request);
 
   // Install base system configuration.
   \Drupal::service('config.installer')->installDefaultConfig('core', 'core');

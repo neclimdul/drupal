@@ -21,10 +21,12 @@ use Drupal\Core\Extension\ExtensionDiscovery;
 use Drupal\Core\Language\Language;
 use Drupal\Core\PhpStorage\PhpStorageFactory;
 use Drupal\Core\Site\Settings;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBag;
 use Symfony\Component\DependencyInjection\Dumper\PhpDumper;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\TerminableInterface;
 use Composer\Autoload\ClassLoader;
@@ -77,15 +79,6 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
   protected $moduleList;
 
   /**
-   * Holds an updated list of enabled modules.
-   *
-   * @var array
-   *   An associative array whose keys are module names and whose values are
-   *   ignored.
-   */
-  protected $newModuleList;
-
-  /**
    * List of available modules and installation profiles.
    *
    * @var \Drupal\Core\Extension\Extension[]
@@ -119,13 +112,6 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
    * @var bool
    */
   protected $allowDumping;
-
-  /**
-   * Whether the container can be loaded.
-   *
-   * @var bool
-   */
-  protected $allowLoading;
 
   /**
    * Whether the container needs to be dumped once booting is complete.
@@ -246,15 +232,11 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
    * @param bool $allow_dumping
    *   (optional) FALSE to stop the container from being written to or read
    *   from disk. Defaults to TRUE.
-   * @param bool $allow_loading
-   *   (optional) FALSE to prevent the kernel attempting to read the dependency
-   *   injection container from disk. Defaults to $allow_dumping.
    */
-  public function __construct($environment, ClassLoader $class_loader, $allow_dumping = TRUE, $allow_loading = NULL) {
+  public function __construct($environment, ClassLoader $class_loader, $allow_dumping = TRUE) {
     $this->environment = $environment;
     $this->classLoader = $class_loader;
     $this->allowDumping = $allow_dumping;
-    $this->allowLoading = isset($allow_loading) ? $allow_loading : $allow_dumping;
   }
 
   /**
@@ -652,22 +634,17 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
    *   needed.
    */
   public function updateModules(array $module_list, array $module_filenames = array()) {
-    $this->newModuleList = $module_list;
+    $this->moduleList = $module_list;
     foreach ($module_filenames as $name => $extension) {
       $this->moduleData[$name] = $extension;
     }
 
-    // This method is called whenever the list of modules changed. Therefore
-    // disable loading of a dumped container from the disk, because it is
-    // guaranteed to be out of date and needs to be rebuilt anyway.
-    $this->allowLoading = FALSE;
-
     // If we haven't yet booted, we don't need to do anything: the new module
     // list will take effect when boot() is called. If we have already booted,
-    // then reboot in order to refresh the serviceProvider list and container.
+    // then rebuild the container in order to refresh the serviceProvider list
+    // and container.
     if ($this->booted) {
-      $this->booted = FALSE;
-      $this->boot();
+      $this->initializeContainer(TRUE);
     }
   }
 
@@ -696,13 +673,17 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
 
   /**
    * Initializes the service container.
+   *
+   * @param bool $rebuild
+   *   Force a container rebuild.
+   * @return \Symfony\Component\DependencyInjection\ContainerInterface
    */
-  protected function initializeContainer() {
+  protected function initializeContainer($rebuild = FALSE) {
     $this->containerNeedsDumping = FALSE;
-    $persist = $this->getServicesToPersist();
     // The request service requires custom persisting logic, since it is also
     // potentially scoped.
     $request_scope = FALSE;
+    $request_stack = $request = NULL;
     if (isset($this->container)) {
       if ($this->container->isScopeActive('request')) {
         $request_scope = TRUE;
@@ -710,12 +691,18 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
       if ($this->container->initialized('request')) {
         $request = $this->container->get('request');
       }
+      if ($this->container->initialized('request_stack')) {
+        $request_stack = $this->container->get('request_stack');
+      }
     }
     $this->container = NULL;
-    $class = $this->getClassName();
-    $cache_file = $class . '.php';
 
-    if ($this->allowLoading) {
+    // If the module list hasn't already been set in updateModules and we are
+    // not forcing a rebuild, the try and load the container from the disk.
+    if (empty($this->moduleList) && !$rebuild) {
+      $class = $this->getClassName();
+      $cache_file = $class . '.php';
+
       // First, try to load.
       if (!class_exists($class, FALSE)) {
         $this->storage()->load($cache_file);
@@ -724,50 +711,17 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
       if (class_exists($class, FALSE)) {
         $fully_qualified_class_name = '\\' . $class;
         $this->container = new $fully_qualified_class_name;
-        $this->persistServices($persist);
       }
     }
-    // First check whether the list of modules changed in this request.
-    if (isset($this->newModuleList)) {
-      if (isset($this->container) && isset($this->moduleList) && array_keys($this->moduleList) !== array_keys($this->newModuleList)) {
-        unset($this->container);
-      }
-      $this->moduleList = $this->newModuleList;
-      unset($this->newModuleList);
-    }
-    if (isset($this->container)) {
-      // All namespaces must be registered before we attempt to use any service
-      // from the container.
-      $this->classLoaderAddMultiplePsr4($this->container->getParameter('container.namespaces'));
-    }
-    else {
+
+    if (!isset($this->container)) {
       $this->container = $this->buildContainer();
-      $this->persistServices($persist);
-
-      // The namespaces are marked as persistent, so objects like the annotated
-      // class discovery still has the right object. We may have updated the
-      // list of modules, so set it.
-      if ($this->container->initialized('container.namespaces')) {
-        $this->container->get('container.namespaces')->exchangeArray($this->container->getParameter('container.namespaces'));
-      }
-
-      if ($this->allowDumping) {
-        $this->containerNeedsDumping = TRUE;
-      }
     }
 
-    $this->container->set('kernel', $this);
+    $this->attachShit($this->container, $request, $request_stack, $request_scope);
 
-    // Set the class loader which was registered as a synthetic service.
-    $this->container->set('class_loader', $this->classLoader);
-    // If we have a request set it back to the new container.
-    if ($request_scope) {
-      $this->container->enterScope('request');
-    }
-    if (isset($request)) {
-      $this->container->set('request', $request);
-    }
     \Drupal::setContainer($this->container);
+    return $this->container;
   }
 
   /**
@@ -982,14 +936,12 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
   /**
    * Returns service instances to persist from an old container to a new one.
    */
-  protected function getServicesToPersist() {
+  protected function getServicesToPersist(ContainerInterface $container) {
     $persist = array();
-    if (isset($this->container)) {
-      foreach ($this->container->getParameter('persistIds') as $id) {
-        // It's pointless to persist services not yet initialized.
-        if ($this->container->initialized($id)) {
-          $persist[$id] = $this->container->get($id);
-        }
+    foreach ($container->getParameter('persistIds') as $id) {
+      // It's pointless to persist services not yet initialized.
+      if ($container->initialized($id)) {
+        $persist[$id] = $container->get($id);
       }
     }
     return $persist;
@@ -998,22 +950,83 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
   /**
    * Moves persistent service instances into a new container.
    */
-  protected function persistServices(array $persist) {
+  protected function persistServices(ContainerInterface $container, array $persist) {
     foreach ($persist as $id => $object) {
       // Do not override services already set() on the new container, for
       // example 'service_container'.
-      if (!$this->container->initialized($id)) {
-        $this->container->set($id, $object);
+      if (!$container->initialized($id)) {
+        $container->set($id, $object);
       }
     }
   }
 
   /**
-   * Builds the service container.
+   * Force a container rebuild.
+   *
+   * @return \Symfony\Component\DependencyInjection\ContainerInterface
+   */
+  public function rebuildContainer() {
+    return $this->initializeContainer(TRUE);
+  }
+
+  /**
+   * Build a new container.
+   */
+  protected function buildContainer(Request $request = NULL, $request_scope = NULL) {
+    // We are forcing a container build so it is reasonable to assume that the
+    // calling method knows something about the system has changed requiring the
+    // container to be dumped to the filesystem.
+    if ($this->allowDumping) {
+      $this->containerNeedsDumping = TRUE;
+    }
+
+    $container = $this->compileContainer();
+    $container = $this->attachShit($container, $request, $request_scope);
+
+    return $container;
+  }
+
+  protected function attachShit(ContainerInterface $container, Request $request = NULL, RequestStack $request_stack = NULL, $request_scope = NULL) {
+
+    $persist = array();
+    if (isset($this->container)) {
+      $persist = $this->getServicesToPersist($this->container);
+    }
+    $this->persistServices($container, $persist);
+
+    // All namespaces must be registered before we attempt to use any service
+    // from the container.
+    $this->classLoaderAddMultiplePsr4($container->getParameter('container.namespaces'));
+
+    // The namespaces are marked as persistent, so objects like the annotated
+    // class discovery still has the right object. We may have updated the
+    // list of modules, so set it.
+    if ($container->initialized('container.namespaces')) {
+      $container->get('container.namespaces')->exchangeArray($container->getParameter('container.namespaces'));
+    }
+    $container->set('kernel', $this);
+
+    // Set the class loader which was registered as a synthetic service.
+    $container->set('class_loader', $this->classLoader);
+    // If we have a request set it back to the new container.
+    if ($request_scope) {
+      $container->enterScope('request');
+    }
+    if (isset($request)) {
+      $container->set('request', $request);
+    }
+    if (isset($request_stack)) {
+      $container->set('request_stack', $request_stack);
+    }
+    return $container;
+  }
+
+  /**
+   * Compiles a new service container.
    *
    * @return ContainerBuilder The compiled service container
    */
-  protected function buildContainer() {
+  protected function compileContainer() {
     $this->initializeServiceProviders();
     $container = $this->getContainerBuilder();
     $container->set('kernel', $this);
