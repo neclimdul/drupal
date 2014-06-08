@@ -822,7 +822,8 @@ abstract class WebTestBase extends TestBase {
     // Copy and prepare an actual settings.php, so as to resemble a regular
     // installation.
     // Not using File API; a potential error must trigger a PHP warning.
-    copy(DRUPAL_ROOT . '/sites/default/default.settings.php', DRUPAL_ROOT . '/' . $this->siteDirectory . '/settings.php');
+    $directory = DRUPAL_ROOT . '/' . $this->siteDirectory;
+    copy(DRUPAL_ROOT . '/sites/default/default.settings.php', $directory . '/settings.php');
 
     // All file system paths are created by System module during installation.
     // @see system_requirements()
@@ -862,7 +863,7 @@ abstract class WebTestBase extends TestBase {
     // directory has to be writable.
     // TestBase::restoreEnvironment() will delete the entire site directory.
     // Not using File API; a potential error must trigger a PHP warning.
-    chmod(DRUPAL_ROOT . '/' . $this->siteDirectory, 0777);
+    chmod($directory, 0777);
 
     $request = \Drupal::request();
     $this->kernel = DrupalKernel::createFromRequest($request, drupal_classloader(), 'prod', TRUE);
