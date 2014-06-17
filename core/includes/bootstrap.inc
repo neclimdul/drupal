@@ -15,8 +15,7 @@ use Drupal\Core\Utility\Error;
 use Symfony\Component\ClassLoader\ApcClassLoader;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Drupal\Core\Language\Language;
-use Drupal\Core\Session\AnonymousUserSession;
+use Drupal\Core\Language\LanguageInterface;
 
 /**
  * Minimum supported version of PHP.
@@ -970,21 +969,14 @@ function drupal_get_messages($type = NULL, $clear_queue = TRUE) {
 }
 
 /**
- * Generates a default anonymous $user object.
+ * Ensures Drupal is bootstrapped to the specified phase.
  *
- * @return \Drupal\Core\Session\AccountInterface
- *   The user session object.
- *
- * @deprecated in Drupal 8.x-dev. Will be removed before Drupal 8.0 by
- *   https://drupal.org/node/2185315. Use
- *   \Drupal\Core\Session\AnonymousUserSession.
- */
-function drupal_anonymous_user() {
-  return new AnonymousUserSession();
-}
-
-/**
- * Bootstraps DrupalKernel to a given boot level.
+ * In order to bootstrap Drupal from another PHP script, you can use this code:
+ * @code
+ *   require_once '/path/to/drupal/core/vendor/autoload.php';
+ *   require_once '/path/to/drupal/core/includes/bootstrap.inc';
+ *   drupal_bootstrap(DRUPAL_BOOTSTRAP_FULL);
+ * @endcode
  *
  * @param $phase
  *   A constant telling which phase to bootstrap to. Possible values:
@@ -996,8 +988,6 @@ function drupal_anonymous_user() {
  *
  * @deprecated in Drupal 8.x-dev, will be removed before Drupal 8.0.
  *   Interact directly with the kernel.
- *
- * @todo Obsolete. Remove once Drush has been updated.
  */
 function drupal_bootstrap($phase = NULL) {
   // Temporary variables used for booting later legacy phases.
@@ -1359,8 +1349,8 @@ function language($type) {
  *
  * @param $flags
  *   (optional) Specifies the state of the languages that have to be returned.
- *   It can be: Language::STATE_CONFIGURABLE, Language::STATE_LOCKED,
- *   Language::STATE_ALL.
+ *   It can be: LanguageInterface::STATE_CONFIGURABLE,
+ *   LanguageInterface::STATE_LOCKED, LanguageInterface::STATE_ALL.
  *
  * @return array
  *   An associative array of languages, keyed by the language code, ordered by
@@ -1369,7 +1359,7 @@ function language($type) {
  * @deprecated in Drupal 8.x-dev, will be removed before Drupal 8.0.
  *   Use \Drupal::languageManager()->getLanguages().
  */
-function language_list($flags = Language::STATE_CONFIGURABLE) {
+function language_list($flags = LanguageInterface::STATE_CONFIGURABLE) {
   return \Drupal::languageManager()->getLanguages($flags);
 }
 
@@ -1379,7 +1369,7 @@ function language_list($flags = Language::STATE_CONFIGURABLE) {
  * @param string $langcode
  *   The language code.
  *
- * @return \Drupal\core\Language\Language|null
+ * @return \Drupal\core\Language\LanguageInterface|null
  *   A fully-populated language object or NULL.
  *
  * @see \Drupal\Core\Language\LanguageManager::getLanguage()
@@ -1394,7 +1384,7 @@ function language_load($langcode) {
 /**
  * Returns the default language used on the site.
  *
- * @return \Drupal\Core\Language\Language
+ * @return \Drupal\Core\Language\LanguageInterface
  *   A language object.
  *
  * @see \Drupal\Core\Language\LanguageManager::getLanguage()

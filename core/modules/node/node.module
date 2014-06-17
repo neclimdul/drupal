@@ -9,7 +9,7 @@
  */
 
 use Drupal\Component\Utility\Xss;
-use Drupal\Core\Language\Language;
+use Drupal\Core\Language\LanguageInterface;
 use Drupal\Core\Render\Element;
 use Drupal\Core\Url;
 use Symfony\Component\HttpFoundation\Request;
@@ -117,7 +117,7 @@ function node_help($route_name, Request $request) {
       $output .= '<dt>' . t('Creating custom content types') . '</dt>';
       $output .= '<dd>' . t('The Node module gives users with the <em>Administer content types</em> permission the ability to <a href="!content-new">create new content types</a> in addition to the default ones already configured. Creating custom content types allows you the flexibility to add <a href="!field">fields</a> and configure default settings that suit the differing needs of various site content.', array('!content-new' => \Drupal::url('node.type_add'), '!field' => \Drupal::url('help.page', array('name' => 'field')))) . '</dd>';
       $output .= '<dt>' . t('Administering content') . '</dt>';
-      $output .= '<dd>' . t('The <a href="!content">Content administration page</a> allows you to review and bulk manage your site content.', array('!content' => \Drupal::url('node.content_overview'))) . '</dd>';
+      $output .= '<dd>' . t('The <a href="!content">Content administration page</a> allows you to review and bulk manage your site content.', array('!content' => \Drupal::url('system.admin_content'))) . '</dd>';
       $output .= '<dt>' . t('Creating revisions') . '</dt>';
       $output .= '<dd>' . t('The Node module also enables you to create multiple versions of any content, and revert to older versions using the <em>Revision information</em> settings.') . '</dd>';
       $output .= '<dt>' . t('User permissions') . '</dt>';
@@ -209,11 +209,6 @@ function node_entity_view_display_alter(EntityViewDisplayInterface $display, $co
 function node_entity_form_display_alter(EntityFormDisplayInterface $form_display, $context) {
   if ($context['entity_type'] == 'node') {
     $node_type = node_type_load($context['bundle']);
-    // @todo Reconsider when per-bundle overrides of field definitions are
-    //   possible - https://drupal.org/node/2114707.
-    if (!$node_type->has_title) {
-      $form_display->removeComponent('title');
-    }
   }
 }
 
@@ -391,8 +386,7 @@ function node_add_body_field(NodeTypeInterface $type, $label = 'Body') {
   }
   if (empty($instance)) {
     $instance = entity_create('field_instance_config', array(
-      'field_name' => 'body',
-      'entity_type' => 'node',
+      'field' => $field,
       'bundle' => $type->id(),
       'label' => $label,
       'settings' => array('display_summary' => TRUE),
@@ -708,6 +702,7 @@ function node_permission() {
     ),
     'administer content types' => array(
       'title' => t('Administer content types'),
+      'description' => t('Promote, change ownership, edit revisions, and perform other tasks across all content types.'),
       'restrict access' => TRUE,
     ),
     'administer nodes' => array(
@@ -938,71 +933,6 @@ function node_get_recent($number = 10) {
 }
 
 /**
- * Implements hook_form_FORM_ID_alter() for block_form().
- *
- * Adds node-type specific visibility options to block configuration form.
- */
-function node_form_block_form_alter(&$form, &$form_state) {
-  $block = $form_state['controller']->getEntity();
-  $visibility = $block->get('visibility');
-  $form['visibility']['node_type'] = array(
-    '#type' => 'details',
-    '#title' => t('Content types'),
-    '#group' => 'visibility',
-    '#weight' => 5,
-  );
-  $form['visibility']['node_type']['types'] = array(
-    '#type' => 'checkboxes',
-    '#title' => t('Show block for specific content types'),
-    '#default_value' => !empty($visibility['node_type']['types']) ? $visibility['node_type']['types'] : array(),
-    '#options' => node_type_get_names(),
-    '#description' => t('Show this block only on pages that display content of the given type(s). If you select no types, there will be no type-specific limitation.'),
-  );
-}
-
-/**
- * Implements hook_block_access().
- *
- * Checks the content type specific visibility settings and removes the block
- * if the visibility conditions are not met.
- */
-function node_block_access(Block $block, $operation, AccountInterface $account, $langcode) {
-  // Only affect access when viewing the block.
-  if ($operation != 'view') {
-    return;
-  }
-  $visibility = $block->get('visibility');
-  if (!empty($visibility)) {
-    if (!empty($visibility['node_type']['types'])) {
-      $allowed_types = array_filter($visibility['node_type']['types']);
-    }
-    if (empty($allowed_types)) {
-      // There are no node types selected in visibility settings so there is
-      // nothing to do.
-      // @see node_form_block_form_alter()
-      return;
-    }
-
-    // For blocks with node types associated, if the node type does not match
-    // the settings from this block, deny access to it.
-    $request = \Drupal::request();
-    if ($node = $request->attributes->get('node')) {
-      // Page has node.
-      return in_array($node->bundle(), $allowed_types);
-    }
-    // This is a node creation page.
-    // $request->attributes->has('node_type') would also match administration
-    // configuration pages, which the previous URI path options did not.
-    if ($request->attributes->get(RouteObjectInterface::ROUTE_NAME) == 'node.add') {
-      $node_type = $request->attributes->get('node_type');
-      return in_array($node_type->id(), $allowed_types);
-    }
-
-    return FALSE;
-  }
-}
-
-/**
  * Page callback: Generates and prints an RSS feed.
  *
  * Generates an RSS feed from an array of node IDs, and prints it with an HTTP
@@ -1029,7 +959,7 @@ function node_block_access(Block $block, $operation, AccountInterface $account, 
  */
 function node_feed($nids = FALSE, $channel = array()) {
   global $base_url;
-  $language_content = \Drupal::languageManager()->getCurrentLanguage(Language::TYPE_CONTENT);
+  $language_content = \Drupal::languageManager()->getCurrentLanguage(LanguageInterface::TYPE_CONTENT);
   $rss_config = \Drupal::config('system.rss');
 
   if ($nids === FALSE) {

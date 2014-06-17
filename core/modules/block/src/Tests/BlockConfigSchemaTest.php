@@ -8,17 +8,20 @@
 namespace Drupal\block\Tests;
 
 use Drupal\block\Entity\Block;
-use Drupal\config\Tests\ConfigSchemaTestBase;
+use Drupal\config\Tests\SchemaCheckTestTrait;
+use Drupal\simpletest\WebTestBase;
 
 /**
  * Tests the block config schema.
  */
-class BlockConfigSchemaTest extends ConfigSchemaTestBase {
+class BlockConfigSchemaTest extends WebTestBase {
+
+  use SchemaCheckTestTrait;
 
   /**
    * {@inheritdoc}
    */
-  public static $modules = array('block', 'aggregator', 'book', 'custom_block', 'forum', 'statistics');
+  public static $modules = array('block', 'aggregator', 'book', 'block_content', 'forum', 'statistics');
 
   /**
    * The typed config manager.

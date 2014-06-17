@@ -12,22 +12,6 @@ use Symfony\Cmf\Component\Routing\RouteObjectInterface;
 use Symfony\Component\HttpFoundation\Request;
 
 /**
- * Shows this block on every page except the listed pages.
- */
-const BLOCK_VISIBILITY_NOTLISTED = 0;
-
-/**
- * Shows this block on only the listed pages.
- */
-const BLOCK_VISIBILITY_LISTED = 1;
-
-/**
- * Shows this block if the associated PHP code returns TRUE.
- */
-const BLOCK_VISIBILITY_PHP = 2;
-
-
-/**
  * Implements hook_help().
  */
 function block_help($route_name, Request $request) {
@@ -49,7 +33,7 @@ function block_help($route_name, Request $request) {
       $output .= '<dt>' . t('Controlling visibility') . '</dt>';
       $output .= '<dd>' . t('You can control the visibility of a block by restricting it to specific pages, content types, and/or roles by setting the appropriate options under <em>Visibility settings</em> of the block configuration.') . '</dd>';
       $output .= '<dt>' . t('Adding custom blocks') . '</dt>';
-      $output .= '<dd>' . t('You can add custom blocks, if the the <em>Custom Block</em> module is enabled on the <a href="!extend">Extend page</a>. For more information, see the <a href="!customblock-help">Custom Block help page</a>.', array('!extend' => \Drupal::url('system.modules_list'), '!customblock-help' => \Drupal::url('help.page', array('name' => 'custom_block')))) . '</dd>';
+      $output .= '<dd>' . t('You can add custom blocks, if the the <em>Custom Block</em> module is enabled on the <a href="!extend">Extend page</a>. For more information, see the <a href="!blockcontent-help">Custom Block help page</a>.', array('!extend' => \Drupal::url('system.modules_list'), '!blockcontent-help' => \Drupal::url('help.page', array('name' => 'block_content')))) . '</dd>';
       $output .= '</dl>';
       return $output;
   }
@@ -382,6 +366,13 @@ function template_preprocess_block(&$variables) {
   if ($id = $variables['elements']['#block']->id()) {
     $variables['attributes']['id'] = drupal_html_id('block-' . $id);
   }
+
+  // Proactively add aria-describedby if possible to improve accessibility.
+  if (isset($variables['elements']['#block']->subject) && isset($variables['attributes']['role'])) {
+    $variables['title_attributes']['id'] = drupal_html_id($variables['elements']['#block']->subject);
+    $variables['attributes']['aria-describedby'] =  $variables['title_attributes']['id'];
+  }
+
 }
 
 /**
@@ -391,10 +382,11 @@ function template_preprocess_block(&$variables) {
  */
 function block_user_role_delete($role) {
   foreach (entity_load_multiple('block') as $block) {
-    $visibility = $block->get('visibility');
-    if (isset($visibility['roles']['roles'][$role->id()])) {
-      unset($visibility['roles']['roles'][$role->id()]);
-      $block->set('visibility', $visibility);
+    /** @var $block \Drupal\block\BlockInterface */
+    $visibility = $block->getVisibility();
+    if (isset($visibility['user_role']['roles'][$role->id()])) {
+      unset($visibility['user_role']['roles'][$role->id()]);
+      $block->getPlugin()->setVisibilityConfig('user_role', $visibility['user_role']);
       $block->save();
     }
   }
@@ -421,10 +413,11 @@ function block_menu_delete(Menu $menu) {
 function block_language_entity_delete(Language $language) {
   // Remove the block visibility settings for the deleted language.
   foreach (entity_load_multiple('block') as $block) {
-    $visibility = $block->get('visibility');
+    /** @var $block \Drupal\block\BlockInterface */
+    $visibility = $block->getVisibility();
     if (isset($visibility['language']['langcodes'][$language->id()])) {
       unset($visibility['language']['langcodes'][$language->id()]);
-      $block->set('visibility', $visibility);
+      $block->getPlugin()->setVisibilityConfig('language', $visibility['language']);
       $block->save();
     }
   }

@@ -318,6 +318,9 @@ function install_begin_request(&$install_state) {
   $container
     ->register('string_translation', 'Drupal\Core\StringTranslation\TranslationManager')
     ->addArgument(new Reference('language_manager'));
+  $container
+    ->register('path.matcher', 'Drupal\Core\Path\PathMatcher')
+    ->addArgument(new Reference('config.factory'));
 
   \Drupal::setContainer($container);
 
@@ -1350,7 +1353,7 @@ function install_get_localization_release($version = \Drupal::VERSION) {
 
       // Dev release: the previous point release (e.g., 8.2-dev falls back to
       // 8.1) or any unstable release (e.g., 8.0-dev falls back to 8.0-rc1,
-      // 8.0-beta1 or 8.0-alpha2)
+      // 8.0-beta1 or 8.0-alpha12)
       case 'dev':
         if ($info['minor'] >= 1) {
           $alternatives[] = $info['major'] . '.' . ($info['minor'] - 1);
@@ -1358,7 +1361,7 @@ function install_get_localization_release($version = \Drupal::VERSION) {
         else {
           $alternatives[] = $info['major'] . '.0-rc1';
           $alternatives[] = $info['major'] . '.0-beta1';
-          $alternatives[] = $info['major'] . '.0-alpha2';
+          $alternatives[] = $info['major'] . '.0-alpha12';
         }
         break;
 
@@ -2033,12 +2036,16 @@ function install_display_requirements($install_state, $requirements) {
   // and indicating a desire to continue anyway. See drupal_requirements_url().
   if ($severity == REQUIREMENT_ERROR || ($severity == REQUIREMENT_WARNING && empty($install_state['parameters']['continue']))) {
     if ($install_state['interactive']) {
-      $build['#title'] = t('Requirements problem');
-      $build['report'] = array(
-        '#theme' => 'status_report',
-        '#requirements' => $requirements,
-        '#suffix' => t('Check the messages and <a href="!url">try again</a>.', array('!url' => check_url(drupal_requirements_url($severity)))),
-      );
+      $build['report']['#theme'] = 'status_report';
+      $build['report']['#requirements'] = $requirements;
+      if ($severity == REQUIREMENT_WARNING) {
+        $build['#title'] = t('Requirements review');
+        $build['#suffix'] = t('Check the messages and <a href="!retry">retry</a>, or you may choose to <a href="!cont">continue anyway</a>.', array('!retry' => check_url(drupal_requirements_url(REQUIREMENT_ERROR)), '!cont' => check_url(drupal_requirements_url($severity))));
+      }
+      else {
+        $build['#title'] = t('Requirements problem');
+        $build['#suffix'] = t('Check the messages and <a href="!url">try again</a>.', array('!url' => check_url(drupal_requirements_url($severity))));
+      }
       return $build;
     }
     else {

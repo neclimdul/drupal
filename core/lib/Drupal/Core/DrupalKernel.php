@@ -998,12 +998,6 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
     // from the container.
     $this->classLoaderAddMultiplePsr4($container->getParameter('container.namespaces'));
 
-    // The namespaces are marked as persistent, so objects like the annotated
-    // class discovery still has the right object. We may have updated the
-    // list of modules, so set it.
-    if ($container->initialized('container.namespaces')) {
-      $container->get('container.namespaces')->exchangeArray($container->getParameter('container.namespaces'));
-    }
     $container->set('kernel', $this);
 
     // Set the class loader which was registered as a synthetic service.
