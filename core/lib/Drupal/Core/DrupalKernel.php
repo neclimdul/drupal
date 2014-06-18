@@ -715,10 +715,10 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
     }
 
     if (!isset($this->container)) {
-      $this->container = $this->buildContainer();
+      $this->container = $this->compileContainer();
     }
 
-    $this->attachShit($this->container, $request, $request_stack, $request_scope);
+    $this->attachSynthetic($this->container, $request, $request_stack, $request_scope);
 
     \Drupal::setContainer($this->container);
     return $this->container;
@@ -970,23 +970,18 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
   }
 
   /**
-   * Build a new container.
+   * Attach synthetic values on to kernel.
+   *
+   * @param ContainerInterface $container
+   *   Container object
+   * @param Request $request
+   *   Request object.
+   * @param RequestStack $request_stack
+   *   Request stack.
+   * @param null $request_scope
+   * @return ContainerInterface
    */
-  protected function buildContainer(Request $request = NULL, $request_scope = NULL) {
-    // We are forcing a container build so it is reasonable to assume that the
-    // calling method knows something about the system has changed requiring the
-    // container to be dumped to the filesystem.
-    if ($this->allowDumping) {
-      $this->containerNeedsDumping = TRUE;
-    }
-
-    $container = $this->compileContainer();
-    $container = $this->attachShit($container, $request, $request_scope);
-
-    return $container;
-  }
-
-  protected function attachShit(ContainerInterface $container, Request $request = NULL, RequestStack $request_stack = NULL, $request_scope = NULL) {
+  protected function attachSynthetic(ContainerInterface $container, Request $request = NULL, RequestStack $request_stack = NULL, $request_scope = NULL) {
 
     $persist = array();
     if (isset($this->container)) {
@@ -1021,6 +1016,13 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
    * @return ContainerBuilder The compiled service container
    */
   protected function compileContainer() {
+    // We are forcing a container build so it is reasonable to assume that the
+    // calling method knows something about the system has changed requiring the
+    // container to be dumped to the filesystem.
+    if ($this->allowDumping) {
+      $this->containerNeedsDumping = TRUE;
+    }
+
     $this->initializeServiceProviders();
     $container = $this->getContainerBuilder();
     $container->set('kernel', $this);
