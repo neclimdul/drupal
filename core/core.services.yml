@@ -789,6 +789,13 @@ services:
   current_user:
     class: Drupal\Core\Session\AccountProxy
     arguments: ['@authentication', '@request']
+  session:
+    class: Symfony\Component\HttpFoundation\Session\Session
+    arguments: ['@session.storage', '@session.attribute_bag', '@session.flash_bag']
+  session.attribute_bag:
+    class: Symfony\Component\HttpFoundation\Session\Attribute\AttributeBag
+  session.flash_bag:
+    class: Symfony\Component\HttpFoundation\Session\Flash\FlashBag
   session.storage:
     class: Drupal\Core\Session\Storage\NativeSessionStorage
     arguments: ['@request_stack', '@database', '@session_manager.metadata_bag', '@session.helper', '@session.handler']
@@ -806,6 +813,11 @@ services:
   session_manager.metadata_bag:
     class: Drupal\Core\Session\MetadataBag
     arguments: ['@settings']
+  session_listener:
+    class: Drupal\Core\Session\SessionListener
+    arguments: ['@service_container']
+    tags:
+      - { name: event_subscriber }
   asset.css.collection_renderer:
     class: Drupal\Core\Asset\CssCollectionRenderer
     arguments: [ '@state' ]

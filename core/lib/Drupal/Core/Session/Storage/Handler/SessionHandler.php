@@ -235,14 +235,6 @@ class SessionHandler extends AbstractProxy implements \SessionHandlerInterface {
     $_SESSION = array();
     $user = new AnonymousUserSession();
 
-    // Unset the session cookies.
-    $this->deleteCookie($this->getName());
-    if ($is_https) {
-      $this->deleteCookie($this->sessionHelper->getInsecureName($this->getName()), FALSE);
-    }
-    elseif ($this->sessionHelper->isMixedMode()) {
-      $this->deleteCookie('S' . $this->getName(), TRUE);
-    }
     return TRUE;
   }
 
@@ -259,26 +251,6 @@ class SessionHandler extends AbstractProxy implements \SessionHandlerInterface {
       ->condition('timestamp', REQUEST_TIME - $lifetime, '<')
       ->execute();
     return TRUE;
-  }
-
-  /**
-   * Deletes a session cookie.
-   *
-   * @param string $name
-   *   Name of session cookie to delete.
-   * @param bool $secure
-   *   Force the secure value of the cookie.
-   */
-  protected function deleteCookie($name, $secure = NULL) {
-    $cookies = $this->requestStack->getCurrentRequest()->cookies;
-    if ($cookies->has($name) || (!$this->requestStack->getCurrentRequest()->isSecure() && $secure === TRUE)) {
-      $params = session_get_cookie_params();
-      if ($secure !== NULL) {
-        $params['secure'] = $secure;
-      }
-      setcookie($name, '', REQUEST_TIME - 3600, $params['path'], $params['domain'], $params['secure'], $params['httponly']);
-      $cookies->remove($name);
-    }
   }
 
 }

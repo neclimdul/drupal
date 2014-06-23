@@ -47,7 +47,7 @@ class Cookie implements AuthenticationProviderInterface {
   public function authenticate(Request $request) {
     // Global $user is deprecated, but the session system is still based on it.
     global $user;
-    if ($this->sessionManager->initialize()->isStarted()) {
+    if ($this->sessionManager->isStarted()) {
       return $user;
     }
     return NULL;
