@@ -10,9 +10,9 @@ namespace Drupal\Core\Session\Storage;
 use Drupal\Component\Utility\Crypt;
 use Drupal\Core\Database\Connection;
 use Drupal\Core\Session\AnonymousUserSession;
+use Drupal\Core\Session\SessionHelper;
 use Drupal\Core\Session\SessionManagerInterface;
 use Drupal\Core\Session\Storage\Handler\SessionHandler;
-use Drupal\Core\Site\Settings;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Session\Storage\Handler\WriteCheckSessionHandler;
 use Symfony\Component\HttpFoundation\Session\Storage\MetadataBag as SymfonyMetadataBag;
@@ -39,13 +39,6 @@ use Symfony\Component\HttpFoundation\Session\Storage\NativeSessionStorage as Sym
 class NativeSessionStorage extends SymfonyNativeSessionStorage implements SessionManagerInterface {
 
   /**
-   * Whether or not the session manager is operating in mixed mode SSL.
-   *
-   * @var bool
-   */
-  protected $mixedMode;
-
-  /**
    * The request stack.
    *
    * @var \Symfony\Component\HttpFoundation\RequestStack
@@ -67,17 +60,6 @@ class NativeSessionStorage extends SymfonyNativeSessionStorage implements Sessio
   protected $lazySession;
 
   /**
-   * Whether session management is enabled or temporarily disabled.
-   *
-   * PHP session ID, session, and cookie handling happens in the global scope.
-   * This value has to persist, since a potentially wrong or disallowed session
-   * would be written otherwise.
-   *
-   * @var bool
-   */
-  protected static $enabled = TRUE;
-
-  /**
    * Constructs a new session manager instance.
    *
    * @param \Symfony\Component\HttpFoundation\RequestStack $request_stack
@@ -86,17 +68,17 @@ class NativeSessionStorage extends SymfonyNativeSessionStorage implements Sessio
    *   The database connection.
    * @param \Symfony\Component\HttpFoundation\Session\Storage\MetadataBag $metadata_bag
    *   The session metadata bag.
-   * @param \Drupal\Core\Site\Settings $settings
-   *   The settings instance.
+   * @param \Drupal\Core\Session\SessionHelper $session_helper
+   *   The session helper.
    */
-  public function __construct(RequestStack $request_stack, Connection $connection, SymfonyMetadataBag $metadata_bag, Settings $settings) {
+  public function __construct(RequestStack $request_stack, Connection $connection, SymfonyMetadataBag $metadata_bag, SessionHelper $session_helper) {
     parent::__construct();
     $this->requestStack = $request_stack;
     $this->connection = $connection;
     $metadata_bag->getLastUsed();
     $this->setMetadataBag($metadata_bag);
 
-    $this->setMixedMode($settings->get('mixed_mode_sessions', FALSE));
+    $this->sessionHelper = $session_helper;
 
     // @todo When not using the Symfony Session object, the list of bags in the
     //   NativeSessionStorage will remain uninitialized. This will lead to
@@ -115,14 +97,14 @@ class NativeSessionStorage extends SymfonyNativeSessionStorage implements Sessio
 
     // Register the default session handler.
     // @todo Extract session storage from session handler into a service.
-    $save_handler = new SessionHandler($this, $this->requestStack, $this->connection);
+    $save_handler = new SessionHandler($this->sessionHelper, $this->requestStack, $this->connection);
     $write_check_handler = new WriteCheckSessionHandler($save_handler);
     $this->setSaveHandler($write_check_handler);
 
     $is_https = $this->requestStack->getCurrentRequest()->isSecure();
     $cookies = $this->requestStack->getCurrentRequest()->cookies;
-    $insecure_session_name = $this->getInsecureName();
-    if (($cookies->has($this->getName()) && ($session_name = $cookies->get($this->getName()))) || ($is_https && $this->isMixedMode() && ($cookies->has($insecure_session_name) && ($session_name = $cookies->get($insecure_session_name))))) {
+    $insecure_session_name = $this->sessionHelper->getInsecureName($this->getName());
+    if (($cookies->has($this->getName()) && ($session_name = $cookies->get($this->getName()))) || ($is_https && $this->sessionHelper->isMixedMode() && ($cookies->has($insecure_session_name) && ($session_name = $cookies->get($insecure_session_name))))) {
       // If a session cookie exists, initialize the session. Otherwise the
       // session is only started on demand in save(), making
       // anonymous users not use a session cookie unless something is stored in
@@ -140,7 +122,7 @@ class NativeSessionStorage extends SymfonyNativeSessionStorage implements Sessio
       $this->lazySession = TRUE;
       $user = new AnonymousUserSession();
       $this->setId(Crypt::randomBytesBase64());
-      if ($is_https && $this->isMixedMode()) {
+      if ($is_https && $this->sessionHelper->isMixedMode()) {
         $session_id = Crypt::randomBytesBase64();
         $cookies->set($insecure_session_name, $session_id);
       }
@@ -154,7 +136,7 @@ class NativeSessionStorage extends SymfonyNativeSessionStorage implements Sessio
    * {@inheritdoc}
    */
   public function start() {
-    if (!$this->isEnabled() || $this->isCli()) {
+    if (!$this->sessionHelper->isEnabled() || $this->isCli()) {
       return;
     }
     // Save current session data before starting it, as PHP will destroy it.
@@ -176,7 +158,7 @@ class NativeSessionStorage extends SymfonyNativeSessionStorage implements Sessio
   public function save() {
     global $user;
 
-    if (!$this->isEnabled()) {
+    if (!$this->sessionHelper->isEnabled()) {
       // We don't have anything to do if we are not allowed to save the session.
       return;
     }
@@ -193,8 +175,8 @@ class NativeSessionStorage extends SymfonyNativeSessionStorage implements Sessio
       // started.
       if (!$this->isStarted()) {
         $this->start();
-        if ($this->requestStack->getCurrentRequest()->isSecure() && $this->isMixedMode()) {
-          $insecure_session_name = $this->getInsecureName();
+        if ($this->requestStack->getCurrentRequest()->isSecure() && $this->sessionHelper->isMixedMode()) {
+          $insecure_session_name = $this->sessionHelper->getInsecureName($this->getName());
           $params = session_get_cookie_params();
           $expire = $params['lifetime'] ? REQUEST_TIME + $params['lifetime'] : 0;
           $cookie_params = $this->requestStack->getCurrentRequest()->cookies;
@@ -213,7 +195,7 @@ class NativeSessionStorage extends SymfonyNativeSessionStorage implements Sessio
     global $user;
 
     // Nothing to do if we are not allowed to change the session.
-    if (!$this->isEnabled()) {
+    if (!$this->sessionHelper->isEnabled()) {
       return;
     }
 
@@ -226,8 +208,8 @@ class NativeSessionStorage extends SymfonyNativeSessionStorage implements Sessio
     $is_https = $this->requestStack->getCurrentRequest()->isSecure();
     $cookies = $this->requestStack->getCurrentRequest()->cookies;
 
-    if ($is_https && $this->isMixedMode()) {
-      $insecure_session_name = $this->getInsecureName();
+    if ($is_https && $this->sessionHelper->isMixedMode()) {
+      $insecure_session_name = $this->sessionHelper->getInsecureName($this->getName());;
       if (!isset($this->lazySession) && $cookies->has($insecure_session_name)) {
         $old_insecure_session_id = $cookies->get($insecure_session_name);
       }
@@ -262,7 +244,7 @@ class NativeSessionStorage extends SymfonyNativeSessionStorage implements Sessio
         $fields['ssid'] = Crypt::hashBase64($this->getId());
         // If the "secure pages" setting is enabled, use the newly-created
         // insecure session identifier as the regenerated sid.
-        if ($this->isMixedMode()) {
+        if ($this->sessionHelper->isMixedMode()) {
           $fields['sid'] = Crypt::hashBase64($session_id);
         }
       }
@@ -296,56 +278,12 @@ class NativeSessionStorage extends SymfonyNativeSessionStorage implements Sessio
    */
   public function delete($uid) {
     // Nothing to do if we are not allowed to change the session.
-    if (!$this->isEnabled()) {
+    if (!$this->sessionHelper->isEnabled()) {
       return;
     }
     $this->connection->delete('sessions')
       ->condition('uid', $uid)
       ->execute();
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function isEnabled() {
-    return static::$enabled;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function disable() {
-    static::$enabled = FALSE;
-    return $this;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function enable() {
-    static::$enabled = TRUE;
-    return $this;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function isMixedMode() {
-    return $this->mixedMode;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function setMixedMode($mixed_mode) {
-    $this->mixedMode = (bool) $mixed_mode;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function getInsecureName() {
-    return substr($this->getName(), 1);
   }
 
   /**

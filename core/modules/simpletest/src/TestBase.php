@@ -1037,7 +1037,7 @@ abstract class TestBase {
     $this->originalUser = isset($user) ? clone $user : NULL;
 
     // Ensure that the current session is not changed by the new environment.
-    \Drupal::service('session.storage')->disable();
+    \Drupal::service('session.helper')->disable();
 
     // Save and clean the shutdown callbacks array because it is static cached
     // and will be changed by the test run. Otherwise it will contain callbacks
@@ -1237,7 +1237,7 @@ abstract class TestBase {
 
     // Restore original user session.
     $this->container->set('current_user', $this->originalUser);
-    \Drupal::service('session.storage')->enable();
+    \Drupal::service('session.helper')->enable();
   }
 
   /**

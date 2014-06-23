@@ -120,7 +120,7 @@ services:
     arguments: ['@typed_data_manager']
   cron:
     class: Drupal\Core\Cron
-    arguments: ['@module_handler', '@lock', '@queue', '@state', '@current_user', '@session.storage']
+    arguments: ['@module_handler', '@lock', '@queue', '@state', '@current_user', '@session.helper']
   diff.formatter:
     class: Drupal\Core\Diff\DiffFormatter
     arguments: ['@config.factory']
@@ -791,9 +791,12 @@ services:
     arguments: ['@authentication', '@request']
   session.storage:
     class: Drupal\Core\Session\Storage\NativeSessionStorage
-    arguments: ['@request_stack', '@database', '@session_manager.metadata_bag', '@settings']
+    arguments: ['@request_stack', '@database', '@session_manager.metadata_bag', '@session.helper']
     tags:
       - { name: persist }
+  session.helper:
+    class: Drupal\Core\Session\SessionHelper
+    arguments: ['@settings']
   session_manager.metadata_bag:
     class: Drupal\Core\Session\MetadataBag
     arguments: ['@settings']

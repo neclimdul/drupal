@@ -8,12 +8,12 @@
 namespace Drupal\Core;
 
 use Drupal\Core\Extension\ModuleHandlerInterface;
+use Drupal\Core\Session\SessionHelper;
 use Drupal\Core\State\StateInterface;
 use Drupal\Core\Lock\LockBackendInterface;
 use Drupal\Core\Queue\QueueFactory;
 use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\Core\Session\AnonymousUserSession;
-use Drupal\Core\Session\SessionManagerInterface;
 use Drupal\Core\Queue\SuspendQueueException;
 
 /**
@@ -57,11 +57,11 @@ class Cron implements CronInterface {
   protected $currentUser;
 
   /**
-   * The session manager.
+   * The session helper.
    *
-   * @var \Drupal\Core\Session\SessionManagerInterface
+   * @var \Drupal\Core\Session\SessionHelper
    */
-  protected $sessionManager;
+  protected $sessionHelper;
 
   /**
    * Constructs a cron object.
@@ -76,16 +76,16 @@ class Cron implements CronInterface {
    *   The state service.
    * @param \Drupal\Core\Session\AccountProxyInterface $current_user
    *    The current user.
-   * @param \Drupal\Core\Session\SessionManagerInterface $session_manager
-   *   The session manager.
+   * @param Session\SessionHelper $session_helper
+   *    The session helper.
    */
-  public function __construct(ModuleHandlerInterface $module_handler, LockBackendInterface $lock, QueueFactory $queue_factory, StateInterface $state, AccountProxyInterface $current_user, SessionManagerInterface $session_manager) {
+  public function __construct(ModuleHandlerInterface $module_handler, LockBackendInterface $lock, QueueFactory $queue_factory, StateInterface $state, AccountProxyInterface $current_user, SessionHelper $session_helper) {
     $this->moduleHandler = $module_handler;
     $this->lock = $lock;
     $this->queueFactory = $queue_factory;
     $this->state = $state;
     $this->currentUser = $current_user;
-    $this->sessionManager = $session_manager;
+    $this->sessionHelper = $session_helper;
   }
 
   /**
@@ -96,8 +96,8 @@ class Cron implements CronInterface {
     @ignore_user_abort(TRUE);
 
     // Prevent session information from being saved while cron is running.
-    $original_session_saving = $this->sessionManager->isEnabled();
-    $this->sessionManager->disable();
+    $original_session_saving = $this->sessionHelper->isEnabled();
+    $this->sessionHelper->disable();
 
     // Force the current user to anonymous to ensure consistent permissions on
     // cron runs.
@@ -131,7 +131,7 @@ class Cron implements CronInterface {
     // Restore the user.
     $this->currentUser->setAccount($original_user);
     if ($original_session_saving) {
-      $this->sessionManager->enable();
+      $this->sessionHelper->enable();
     }
 
     return $return;

@@ -32,13 +32,9 @@ class SessionTest extends WebTestBase {
   }
 
   /**
-   * Tests for \Drupal\Core\Session\SessionManager::isEnabled() and ::regenerate().
+   * Tests for \Drupal\Core\Session\SessionManager::regenerate().
    */
   function testSessionSaveRegenerate() {
-    $session_storage = $this->container->get('session.storage');
-    $this->assertFalse($session_storage->isEnabled(), 'NativeSessionStorage->isEnabled() initially returns FALSE (in testing framework).');
-    $this->assertFalse($session_storage->disable()->isEnabled(), 'NativeSessionStorage->isEnabled() returns FALSE after disabling.');
-    $this->assertTrue($session_storage->enable()->isEnabled(), 'NativeSessionStorage->isEnabled() returns TRUE after enabling.');
 
     // Test session hardening code from SA-2008-044.
     $user = $this->drupalCreateUser();

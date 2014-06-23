@@ -37,7 +37,7 @@ class ArgumentDefaultTest extends UserTestBase {
     $this->drupalLogin($account);
     global $user;
     $admin = $user;
-    $session_manager = \Drupal::service('session.storage')->disable();
+    $session_helper = \Drupal::service('session.helper')->disable();
     $user = $account;
 
     $view = Views::getView('test_plugin_argument_default_current_user');
@@ -46,7 +46,7 @@ class ArgumentDefaultTest extends UserTestBase {
     $this->assertEqual($view->argument['null']->getDefaultArgument(), $account->id(), 'Uid of the current user is used.');
     // Switch back.
     $user = $admin;
-    $session_manager->enable();
+    $session_helper->enable();
   }
 
 }

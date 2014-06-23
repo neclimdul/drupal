@@ -10,7 +10,7 @@ namespace Drupal\Core\Session\Storage\Handler;
 use Drupal\Component\Utility\Crypt;
 use Drupal\Core\Database\Connection;
 use Drupal\Core\Session\AnonymousUserSession;
-use Drupal\Core\Session\SessionManagerInterface;
+use Drupal\Core\Session\SessionHelper;
 use Drupal\Core\Session\UserSession;
 use Drupal\Core\Site\Settings;
 use Drupal\Core\Utility\Error;
@@ -23,11 +23,11 @@ use Symfony\Component\HttpFoundation\Session\Storage\Proxy\AbstractProxy;
 class SessionHandler extends AbstractProxy implements \SessionHandlerInterface {
 
   /**
-   * The session manager.
+   * The session helper.
    *
-   * @var \Drupal\Core\Session\SessionManagerInterface
+   * @var \Drupal\Core\Session\SessionHelper
    */
-  protected $sessionManager;
+  protected $sessionHelper;
 
   /**
    * The request stack.
@@ -46,15 +46,15 @@ class SessionHandler extends AbstractProxy implements \SessionHandlerInterface {
   /**
    * Constructs a new SessionHandler instance.
    *
-   * @param \Drupal\Core\Session\SessionManagerInterface $session_manager
-   *   The session manager.
+   * @param \Drupal\Core\Session\SessionHelper $session_helper
+   *   The session helper.
    * @param \Symfony\Component\HttpFoundation\RequestStack $request_stack
    *   The request stack.
    * @param \Drupal\Core\Database\Connection $connection
    *   The database connection.
    */
-  public function __construct(SessionManagerInterface $session_manager, RequestStack $request_stack, Connection $connection) {
-    $this->sessionManager = $session_manager;
+  public function __construct(SessionHelper $session_helper, RequestStack $request_stack, Connection $connection) {
+    $this->sessionHelper = $session_helper;
     $this->requestStack = $request_stack;
     $this->connection = $connection;
   }
@@ -74,7 +74,7 @@ class SessionHandler extends AbstractProxy implements \SessionHandlerInterface {
 
     // Handle the case of first time visitors and clients that don't store
     // cookies (eg. web crawlers).
-    $insecure_session_name = $this->sessionManager->getInsecureName();
+    $insecure_session_name = $this->sessionHelper->getInsecureName($this->getName());
     $cookies = $this->requestStack->getCurrentRequest()->cookies;
     if (!$cookies->has($this->getName()) && !$cookies->has($insecure_session_name)) {
       $user = new UserSession();
@@ -145,7 +145,7 @@ class SessionHandler extends AbstractProxy implements \SessionHandlerInterface {
     // The exception handler is not active at this point, so we need to do it
     // manually.
     try {
-      if (!$this->sessionManager->isEnabled()) {
+      if (!$this->sessionHelper->isEnabled()) {
         // We don't have anything to do if we are not allowed to save the
         // session.
         return TRUE;
@@ -169,14 +169,14 @@ class SessionHandler extends AbstractProxy implements \SessionHandlerInterface {
         // secure and insecure session cookies. If enabled and both cookies
         // are presented then use both keys. The session ID from the cookie is
         // hashed before being stored in the database as a security measure.
-        if ($this->sessionManager->isMixedMode()) {
-          $insecure_session_name = $this->sessionManager->getInsecureName();
+        if ($this->sessionHelper->isMixedMode()) {
+          $insecure_session_name = $this->sessionHelper->getInsecureName($this->getName());
           if ($cookies->has($insecure_session_name)) {
             $key['sid'] = Crypt::hashBase64($cookies->get($insecure_session_name));
           }
         }
       }
-      elseif ($this->sessionManager->isMixedMode()) {
+      elseif ($this->sessionHelper->isMixedMode()) {
         unset($key['ssid']);
       }
       $this->connection->merge('sessions')
@@ -221,7 +221,7 @@ class SessionHandler extends AbstractProxy implements \SessionHandlerInterface {
     global $user;
 
     // Nothing to do if we are not allowed to change the session.
-    if (!$this->sessionManager->isEnabled()) {
+    if (!$this->sessionHelper->isEnabled()) {
       return TRUE;
     }
     $is_https = $this->requestStack->getCurrentRequest()->isSecure();
@@ -238,9 +238,9 @@ class SessionHandler extends AbstractProxy implements \SessionHandlerInterface {
     // Unset the session cookies.
     $this->deleteCookie($this->getName());
     if ($is_https) {
-      $this->deleteCookie($this->sessionManager->getInsecureName(), FALSE);
+      $this->deleteCookie($this->sessionHelper->getInsecureName($this->getName()), FALSE);
     }
-    elseif ($this->sessionManager->isMixedMode()) {
+    elseif ($this->sessionHelper->isMixedMode()) {
       $this->deleteCookie('S' . $this->getName(), TRUE);
     }
     return TRUE;
