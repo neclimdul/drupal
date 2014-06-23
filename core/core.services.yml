@@ -791,9 +791,15 @@ services:
     arguments: ['@authentication', '@request']
   session.storage:
     class: Drupal\Core\Session\Storage\NativeSessionStorage
-    arguments: ['@request_stack', '@database', '@session_manager.metadata_bag', '@session.helper']
+    arguments: ['@request_stack', '@database', '@session_manager.metadata_bag', '@session.helper', '@session.handler']
     tags:
       - { name: persist }
+  session.handler:
+    class: Symfony\Component\HttpFoundation\Session\Storage\Handler\WriteCheckSessionHandler
+    arguments: ['@session.handler.database']
+  session.handler.database:
+    class: Drupal\Core\Session\Storage\Handler\SessionHandler
+    arguments: ['@session.helper', '@request_stack', '@database']
   session.helper:
     class: Drupal\Core\Session\SessionHelper
     arguments: ['@settings']

@@ -12,9 +12,7 @@ use Drupal\Core\Database\Connection;
 use Drupal\Core\Session\AnonymousUserSession;
 use Drupal\Core\Session\SessionHelper;
 use Drupal\Core\Session\SessionManagerInterface;
-use Drupal\Core\Session\Storage\Handler\SessionHandler;
 use Symfony\Component\HttpFoundation\RequestStack;
-use Symfony\Component\HttpFoundation\Session\Storage\Handler\WriteCheckSessionHandler;
 use Symfony\Component\HttpFoundation\Session\Storage\MetadataBag as SymfonyMetadataBag;
 use Symfony\Component\HttpFoundation\Session\Storage\NativeSessionStorage as SymfonyNativeSessionStorage;
 
@@ -70,8 +68,10 @@ class NativeSessionStorage extends SymfonyNativeSessionStorage implements Sessio
    *   The session metadata bag.
    * @param \Drupal\Core\Session\SessionHelper $session_helper
    *   The session helper.
+   * @param \SessionHandlerInterface $session_handler
+   *   The session handler.
    */
-  public function __construct(RequestStack $request_stack, Connection $connection, SymfonyMetadataBag $metadata_bag, SessionHelper $session_helper) {
+  public function __construct(RequestStack $request_stack, Connection $connection, SymfonyMetadataBag $metadata_bag, SessionHelper $session_helper, \SessionHandlerInterface $session_handler) {
     parent::__construct();
     $this->requestStack = $request_stack;
     $this->connection = $connection;
@@ -87,6 +87,9 @@ class NativeSessionStorage extends SymfonyNativeSessionStorage implements Sessio
     //   session object (which registers an attribute bag with the
     //   manager upon instantiation).
     $this->bags = array();
+
+    // Register the default session handler.
+    $this->setSaveHandler($session_handler);
   }
 
   /**
@@ -94,12 +97,6 @@ class NativeSessionStorage extends SymfonyNativeSessionStorage implements Sessio
    */
   public function initialize() {
     global $user;
-
-    // Register the default session handler.
-    // @todo Extract session storage from session handler into a service.
-    $save_handler = new SessionHandler($this->sessionHelper, $this->requestStack, $this->connection);
-    $write_check_handler = new WriteCheckSessionHandler($save_handler);
-    $this->setSaveHandler($write_check_handler);
 
     $is_https = $this->requestStack->getCurrentRequest()->isSecure();
     $cookies = $this->requestStack->getCurrentRequest()->cookies;
