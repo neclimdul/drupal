@@ -41,6 +41,7 @@
  *
  * @section other_essentials Other essential APIs
  *
+ * - @link plugin_api Plugins @endlink
  * - @link i18n Internationalization @endlink
  * - @link cache Caching @endlink
  * - @link utility Utility classes and functions @endlink
@@ -187,7 +188,8 @@
  * structure of the configuration, its data types, and which of its values need
  * to be translatable. Each module needs to define its configuration schema in
  * files in the config/schema directory under the top-level module directory, so
- * look there in most Core modules for examples.
+ * look there in most Core modules for examples. Note that data types label,
+ * text, and data_format are translatable; string is non-translatable text.
  *
  * @section sec_simple Simple configuration
  * The simple configuration API should be used for information that will always
@@ -260,6 +262,9 @@
  *   overriding the
  *   \Drupal\Core\Config\Entity\ConfigEntityInterface::calculateDependencies()
  *   method.
+ *
+ * @see i18n
+ *
  * @}
  */
 
@@ -287,7 +292,7 @@
  *
  * @section define Defining an entity type
  * Entity types are defined by modules, using Drupal's Plugin API (see the
- * @link plugins Plugin API topic @endlink for more information about plugins
+ * @link plugin_api Plugin API topic @endlink for more information about plugins
  * in general). Here are the steps to follow to define a new entity type:
  * - Choose a unique machine name, or ID, for your entity type. This normally
  *   starts with (or is the same as) your module's machine name. It should be
@@ -364,21 +369,56 @@
  *   \Drupal\Core\Entity\EntityType.
  *
  * @section load_query Loading and querying entities
- * To load entities, use the entity storage manager, which is a class
+ * To load entities, use the entity storage manager, which is an object
  * implementing \Drupal\Core\Entity\EntityStorageInterface that you can
  * retrieve with:
  * @code
  * $storage = \Drupal::entityManager()->getStorage('your_entity_type');
+ * // Or if you have a $container variable:
+ * $storage = $container->get('entity.manager')->getStorage('your_entity_type');
  * @endcode
  * Here, 'your_entity_type' is the machine name of your entity type ('id'
- * annotation on the entity class).
+ * annotation on the entity class), and note that you should use dependency
+ * injection to retrieve this object if possible. See the
+ * @link container Services and Dependency Injection topic @endlink for more
+ * about how to properly retrieve services.
  *
- * To query to find entities to load, use an entity query, which is a class
+ * To query to find entities to load, use an entity query, which is a object
  * implementing \Drupal\Core\Entity\Query\QueryInterface that you can retrieve
  * with:
  * @code
- * $storage = \Drupal::entityQuery('your_entity_type');
+ * // Simple query:
+ * $query = \Drupal::entityQuery('your_entity_type');
+ * // Or, if you have a $container variable:
+ * $query_service = $container->get('entity.query');
+ * $query = $query_service->get('your_entity_type');
  * @endcode
+ * If you need aggregation, there is an aggregate query avaialable, which
+ * implements \Drupal\Core\Entity\Query\QueryAggregateInterface:
+ * @code
+ * $query \Drupal::entityQueryAggregate('your_entity_type');
+ * // Or:
+ * $query = $query_service->getAggregate('your_entity_type');
+ * Also, you should use dependency injection to get this object if
+ * possible; the service you need is entity.query, and its methods getQuery()
+ * or getAggregateQuery() will get the query object.
+ *
+ * In either case, you can then add conditions to your query, using methods
+ * like condition(), exists(), etc. on $query; add sorting, pager, and range
+ * if needed, and execute the query to return a list of entity IDs that match
+ * the query.
+ *
+ * Here is an example, using the core File entity:
+ * @code
+ * $fids = Drupal::entityQuery('file')
+ *   ->condition('status', FILE_STATUS_PERMANENT, '<>')
+ *   ->condition('changed', REQUEST_TIME - $age, '<')
+ *   ->range(0, 100)
+ *   ->execute();
+ * $files = $storage->loadMultiple($fids);
+ * @endcode
+ *
+ * @see i18n
  * @}
  */
 
@@ -422,12 +462,77 @@
  * @{
  * Internationalization and translation
  *
- * @todo write this
+ * The principle of internationalization is that it should be possible to make a
+ * Drupal site in any language (or a multi-lingual site), where only content in
+ * the desired language is displayed for any particular page request. In order
+ * to make this happen, developers of modules, themes, and installation profiles
+ * need to make sure that all of the displayable content and user interface (UI)
+ * text that their project deals with is internationalized properly, so that it
+ * can be translated using the standard Drupal translation mechanisms.
  *
- * Additional documentation paragraphs need to be written, and functions,
- * classes, and interfaces need to be added to this topic.
+ * @section internationalization Internationalization
+ * Different @link info_types types of information in Drupal @endlink have
+ * different methods for internationalization, and different portions of the
+ * UI also have different methods for internationalization. Here is a list of
+ * the different mechanisms for internationalization, and some notes:
+ * - UI text is always put into code and related files in English.
+ * - Any time UI text is displayed using PHP code, it should be passed through
+ *   either the global t() function or a t() method on the class. If it
+ *   involves plurals, it should be passed through either the global
+ *   formatPlural() function or a formatPlural() method on the class. Use
+ *   \Drupal\Core\StringTranslation\StringTranslationTrait to get these methods
+ *   into a class.
+ * - Dates displayed in the UI should be passed through the 'date' service
+ *   class's format() method. Again see the Services topic; the method to
+ *   call is \Drupal\Core\Datetime\Date::format().
+ * - Some YML files contain UI text that is automatically translatable:
+ *   - *.routing.yml files: route titles. This also applies to
+ *     *.local_tasks.yml, *.local_actions, and *.contextual_links.yml files.
+ *   - *.info.yml files: module names and descriptions.
+ * - For configuration, make sure any configuration that is displayable to
+ *   users is marked as translatable in the configuration schema. Configuration
+ *   types label, text, and date_format are translatable; string is
+ *   non-translatable text. See the @link config_api Config API topic @endlink
+ *   for more information.
+ * - For annotation, make sure that any text that is displayable in the UI
+ *   is wrapped in \@Translation(). See the
+ *   @link plugin_translatable Plugin translatables topic @endlink for more
+ *   information.
+ * - Content entities are translatable if they have
+ *   @code
+ *   translatable = TRUE,
+ *   @endcode
+ *   in their annotation. The use of entities to store user-editable content to
+ *   be displayed in the site is highly recommended over creating your own
+ *   method for storing, retrieving, displaying, and internationalizing content.
+ * - For Twig templates, use 't' or 'trans' filters to indicate translatable
+ *   text. See https://www.drupal.org/node/2133321 for more information.
+ * - In JavaScript code, use the Drupal.t() and Drupal.formatPlural() functions
+ *   (defined in core/misc/drupal.js) to translate UI text.
+ * - If you are using a custom module, theme, etc. that is not hosted on
+ *   Drupal.org, see
+ *   @link interface_translation_properties Interface translation properties topic @endlink
+ *   for information on how to make sure your UI text is translatable.
  *
- * See https://drupal.org/node/2133321 and https://drupal.org/node/303984
+ * @section translation Translation
+ * Once your data and user interface are internationalized, the following Core
+ * modules are used to translate it into different languages (machine names of
+ * modules in parentheses):
+ * - Language (language): Define which languages are active on the site.
+ * - Interface Translation (locale): Translate UI text.
+ * - Content Translation (content_translation): Translate content entities.
+ * - Configuration Translation (config_translation): Translate configuration.
+ *
+ * The Interface Translation module deserves special mention, because besides
+ * providing a UI for translating UI text, it also imports community
+ * translations from the
+ * @link https://localize.drupal.org Drupal translation server. @endlink If
+ * UI text in Drupal Core and contributed modules, themes, and installation
+ * profiles is properly internationalized (as described above), the text is
+ * automatically added to the translation server for community members to
+ * translate.
+ *
+ * @see transliteration
  * @}
  */
 
@@ -953,7 +1058,7 @@
  *   See the @link hooks Hooks topic @endlink for more information.
  * - Plugins: Classes that a module defines, which are discovered and
  *   instantiated at specific times to add functionality. See the
- *   @link plugins Plugin API topic @endlink for more information.
+ *   @link plugin_api Plugin API topic @endlink for more information.
  * - Entities: Special plugins that define entity types for storing new types
  *   of content or configuration in Drupal. See the
  *   @link entity_api Entity API topic @endlink for more information.
@@ -968,17 +1073,189 @@
  */
 
 /**
- * @defgroup plugins Plugin API
+ * @defgroup plugin_api Plugin API
  * @{
- * Overview of the Plugin API
+ * Using the Plugin API
  *
- * @todo write this
+ * @section sec_overview Overview and terminology
+
+ * The basic idea of plugins is to allow a particular module or subsystem of
+ * Drupal to provide functionality in an extensible, object-oriented way. The
+ * controlling module or subsystem defines the basic framework (interface) for
+ * the functionality, and other modules can create plugins (implementing the
+ * interface) with particular behaviors. The controlling module instantiates
+ * existing plugins as needed, and calls methods to invoke their functionality.
+ * Examples of functionality in Drupal Core that use plugins include: the block
+ * system (block types are plugins), the entity/field system (entity types,
+ * field types, field formatters, and field widgets are plugins), the image
+ * manipulation system (image effects and image toolkits are plugins), and the
+ * search system (search page types are plugins).
  *
- * Additional documentation paragraphs need to be written, and functions,
- * classes, and interfaces need to be added to this topic.
+ * Plugins are grouped into plugin types, each generally defined by an
+ * interface. Each plugin type is managed by a plugin manager service, which
+ * uses a plugin discovery method to discover provided plugins of that type and
+ * instantiate them using a plugin factory.
  *
- * See https://drupal.org/developing/api/8/plugins and links therein for
- * references. This should be an overview and link to details.
+ * Some plugin types make use of the following concepts or components:
+ * - Plugin derivatives: Allows a single plugin class to present itself as
+ *   multiple plugins. Example: the Menu module provides a block for each
+ *   defined menu via a block plugin derivative.
+ * - Plugin mapping: Allows a plugin class to map a configuration string to an
+ *   instance, and have the plugin automatically instantiated without writing
+ *   additional code.
+ * - Plugin bags: Provide a way to lazily instantiate a set of plugin
+ *   instances from a single plugin definition.
+ *
+ * There are several things a module developer may need to do with plugins:
+ * - Define a completely new plugin type: see @ref sec_define below.
+ * - Create a plugin of an existing plugin type: see @ref sec_create below.
+ * - Perform tasks that involve plugins: see @ref sec_use below.
+ *
+ * See https://drupal.org/developing/api/8/plugins for more detailed
+ * documentation on the plugin system. There are also topics for a few
+ * of the many existing types of plugins:
+ * - @link block_api Block API @endlink
+ * - @link entity_api Entity API @endlink
+ * - @link field Various types of field-related plugins @endlink
+ * - @link views_plugins Views plugins @endlink (has links to topics covering
+ *   various specific types of Views plugins).
+ * - @link search Search page plugins @endlink
+ *
+ * @section sec_define Defining a new plugin type
+ * To define a new plugin type:
+ * - Define an interface for the plugin. This describes the common set of
+ *   behavior, and the methods you will call on each plugin class that is
+ *   instantiated. Usually this interface will extend one or more of the
+ *   following interfaces:
+ *   - \Drupal\Component\Plugin\PluginInspectionInterface
+ *   - \Drupal\Component\Plugin\ConfigurablePluginInterface
+ *   - \Drupal\Component\Plugin\ContextAwarePluginInterface
+ *   - \Drupal\Core\Plugin\PluginFormInterface
+ *   - \Drupal\Core\Executable\ExecutableInterface
+ * - (optional) Create a base class that provides a partial implementation of
+ *   the interface, for the convenience of developers wishing to create plugins
+ *   of your type. The base class usually extends
+ *   \Drupal\Core\Plugin\PluginBase, or one of the base classes that extends
+ *   this class.
+ * - Choose a method for plugin discovery, and define classes as necessary.
+ *   See @ref sub_discovery below.
+ * - Create a plugin manager/factory class and service, which will discover and
+ *   instantiate plugins. See @ref sub_manager below.
+ * - Use the plugin manager to instantiate plugins. Call methods on your plugin
+ *   interface to perform the tasks of your plugin type.
+ * - (optional) If appropriate, define a plugin bag. See @ref sub_bag below
+ *   for more information.
+ *
+ * @subsection sub_discovery Plugin discovery
+ * Plugin discovery is the process your plugin manager uses to discover the
+ * individual plugins of your type that have been defined by your module and
+ * other modules. Plugin discovery methods are classes that implement
+ * \Drupal\Component\Plugin\Discovery\DiscoveryInterface. Most plugin types use
+ * one of the following discovery mechanisms:
+ * - Annotation: Plugin classes are annotated and placed in a defined namespace
+ *   subdirectory. Most Drupal Core plugins use this method of discovery.
+ * - Hook: Plugin modules need to implement a hook to tell the manager about
+ *   their plugins.
+ * - YAML: Plugins are listd in YAML files. Drupal Core uses this method for
+ *   discovering local tasks and local actions. This is mainly useful if all
+ *   plugins use the same class, so it is kind of like a global derivative.
+ * - Static: Plugin classes are registered within the plugin manager class
+ *   itself. Static discovery is only useful if modules cannot define new
+ *   plugins of this type (if the list of available plugins is static).
+ *
+ * It is also possible to define your own custom discovery mechanism or mix
+ * methods together. And there are many more details, such as annotation
+ * decorators, that apply to some of the discovery methods. See
+ * https://drupal.org/developing/api/8/plugins for more details.
+ *
+ * The remainder of this documentation will assume Annotation-based discovery,
+ * since this is the most common method.
+ *
+ * @subsection sub_manager Defining a plugin manager class and service
+ * To define an annotation-based plugin manager:
+ * - Choose a namespace subdirectory for your plugin. For example, search page
+ *   plugins go in directory Plugin/Search under the module namespace.
+ * - Define an annotation class for your plugin type. This class should extend
+ *   \Drupal\Component\Annotation\Plugin, and for most plugin types, it should
+ *   contain member variables corresponding to the annotations plugins will
+ *   need to provide. All plugins have at least $id: a unique string
+ *   identifier.
+ * - Define an alter hook for altering the discovered plugin definitions. You
+ *   should document the hook in a *.api.php file.
+ * - Define a plugin manager class. This class should implement
+ *   \Drupal\Component\Plugin\PluginManagerInterface; most plugin managers do
+ *   this by extending \Drupal\Core\Plugin\DefaultPluginManager. If you do
+ *   extend the default plugin manager, the only method you will probably need
+ *   to define is the class constructor, which will need to call the parent
+ *   constructor to provide information about the annotation class and plugin
+ *   namespace for discovery, set up the alter hook, and possibly set up
+ *   caching. See classes that extend DefaultPluginManager for examples.
+ * - Define a service for your plugin manager. See the
+ *   @link container Services topic for more information. @endlink Your service
+ *   definition should look something like this, referencing your manager
+ *   class and the parent (default) plugin manager service to inherit
+ *   constructor arguments:
+ *   @code
+ *   plugin.manager.mymodule:
+ *     class: Drupal\mymodule\MyPluginManager
+ *     parent: default_plugin_manager
+ *   @endcode
+ * - If your plugin is configurable, you will also need to define the
+ *   configuration schema and possibly a configuration entity type. See the
+ *   @link config_api Configuration API topic @endlink for more information.
+ *
+ * @subsection sub_bag Defining a plugin bag
+ * Some configurable plugin types allow administrators to create zero or more
+ * instances of each plugin, each with its own configuration. For example,
+ * a single block plugin can be configured several times, to display in
+ * different regions of a theme, with different visibility settings, a
+ * different title, or other plugin-specific settings. To make this possible,
+ * a plugin type can make use of what's known as a plugin bag.
+ *
+ * A plugin bag is a class that extends \Drupal\Component\Plugin\PluginBag or
+ * one of its subclasses; there are several examples in Drupal Core. If your
+ * plugin type uses a plugin bag, it will usually also have a configuration
+ * entity, and the entity class should implement
+ * \Drupal\Core\Entity\EntityWithPluginBagsInterface. Again,
+ * there are several examples in Drupal Core; see also the
+ * @link config_api Configuration API topic @endlink for more information about
+ * configuration entities.
+ *
+ * @section sec_create Creating a plugin of an existing type
+ * Assuming the plugin type uses annotation-based discovery, in order to create
+ * a plugin of an existing type, you will be creating a class. This class must:
+ * - Implement the plugin interface, so that it has the required methods
+ *   defined. Usually, you'll want to extend the plugin base class, if one has
+ *   been provided.
+ * - Have the right annotation in its documentation header. See the
+ *   @link annotation Annotation topic @endlink for more information about
+ *   annotation.
+ * - Be in the right plugin namespace, in order to be discovered.
+ * Often, the easiest way to make sure this happens is to find an existing
+ * example of a working plugin class of the desired type, and copy it into your
+ * module as a starting point.
+ *
+ * You can also create a plugin derivative, which allows your plugin class
+ * to present itself to the user interface as multiple plugins. To do this,
+ * in addition to the plugin class, you'll need to create a separate plugin
+ * derivative class implementing
+ * \Drupal\Component\Plugin\Derivative\DerivativeInterface. The classes
+ * \Drupal\system\Plugin\Block\SystemMenuBlock (plugin class) and
+ * \Drupal\system\Plugin\Derivative\SystemMenuBlock (derivative class) are a
+ * good example to look at.
+ *
+ * @sec sec_use Performing tasks involving plugins
+ * Here are the steps to follow to perform a task that involves plugins:
+ * - Locate the machine name of the plugin manager service, and instantiate the
+ *   service. See the @link container Services topic @endlink for more
+ *   information on how to do this.
+ * - On the plugin manager class, use methods like getDefinition(),
+ *   getDefinitions(), or other methods specific to particular plugin managers
+ *   to retrieve information about either specific plugins or the entire list of
+ *   defined plugins.
+ * - Call the createInstance() method on the plugin manager to instantiate
+ *   individual plugin objects.
+ * - Call methods on the plugin objects to perform the desired tasks.
  *
  * @see annotation
  * @}
