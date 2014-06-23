@@ -35,11 +35,11 @@ class SessionTestController extends ControllerBase {
    *   A notification message with session ID.
    */
   public function getId() {
-    // Set a value in $_SESSION, so that SessionManager::save() will start
+    // Set a value in $_SESSION, so that NativeSessionStorage::save() will start
     // a session.
     $_SESSION['test'] = 'test';
 
-    \Drupal::service('session_manager')->save();
+    \Drupal::service('session.storage')->save();
 
     return 'session_id:' . session_id() . "\n";
   }
@@ -83,7 +83,7 @@ class SessionTestController extends ControllerBase {
    *   A notification message.
    */
   public function noSet($test_value) {
-    \Drupal::service('session_manager')->disable();
+    \Drupal::service('session.storage')->disable();
     $this->set($test_value);
     return $this->t('session saving was disabled, and then %val was set', array('%val' => $test_value));
   }
@@ -109,7 +109,7 @@ class SessionTestController extends ControllerBase {
    *   A notification message.
    */
   public function setMessageButDontSave() {
-    \Drupal::service('session_manager')->disable();
+    \Drupal::service('session.storage')->disable();
     $this->setMessage();
   }
 

@@ -53,7 +53,7 @@ class CsrfTokenGenerator {
    *   'drupal_private_key' configuration variable.
    *
    * @see drupal_get_hash_salt()
-   * @see \Drupal\Core\Session\SessionManager::start()
+   * @see \Drupal\Core\Session\Storage\NativeSessionStorage::start()
    */
   public function get($value = '') {
     if (empty($_SESSION['csrf_token_seed'])) {

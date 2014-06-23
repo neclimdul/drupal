@@ -118,7 +118,7 @@ class User extends ContentEntityBase implements UserInterface {
     parent::postSave($storage, $update);
 
     if ($update) {
-      $session_manager = \Drupal::service('session_manager');
+      $session_manager = \Drupal::service('session.storage');
       // If the password has been changed, delete all open sessions for the
       // user and recreate the current one.
       if ($this->pass->value != $this->original->pass->value) {

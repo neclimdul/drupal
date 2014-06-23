@@ -548,7 +548,7 @@ function install_run_task($task, &$install_state) {
       $response = batch_process(install_redirect_url($install_state), install_full_redirect_url($install_state));
       if ($response instanceof Response) {
         // Save $_SESSION data from batch.
-        \Drupal::service('session_manager')->save();
+        \Drupal::service('session.storage')->save();
         // Send the response.
         $response->send();
         exit;
@@ -1459,7 +1459,7 @@ function install_load_profile(&$install_state) {
  */
 function install_bootstrap_full() {
   drupal_bootstrap(DRUPAL_BOOTSTRAP_FULL);
-  \Drupal::service('session_manager')->initialize();
+  \Drupal::service('session.storage')->initialize();
 }
 
 /**

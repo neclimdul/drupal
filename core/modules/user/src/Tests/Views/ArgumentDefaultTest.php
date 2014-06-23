@@ -37,7 +37,7 @@ class ArgumentDefaultTest extends UserTestBase {
     $this->drupalLogin($account);
     global $user;
     $admin = $user;
-    $session_manager = \Drupal::service('session_manager')->disable();
+    $session_manager = \Drupal::service('session.storage')->disable();
     $user = $account;
 
     $view = Views::getView('test_plugin_argument_default_current_user');

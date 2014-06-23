@@ -5,10 +5,13 @@
  * Contains \Drupal\Core\Session\SessionHandler.
  */
 
-namespace Drupal\Core\Session;
+namespace Drupal\Core\Session\Storage\Handler;
 
 use Drupal\Component\Utility\Crypt;
 use Drupal\Core\Database\Connection;
+use Drupal\Core\Session\AnonymousUserSession;
+use Drupal\Core\Session\SessionManagerInterface;
+use Drupal\Core\Session\UserSession;
 use Drupal\Core\Site\Settings;
 use Drupal\Core\Utility\Error;
 use Symfony\Component\HttpFoundation\RequestStack;

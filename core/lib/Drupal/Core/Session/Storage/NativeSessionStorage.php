@@ -2,20 +2,21 @@
 
 /**
  * @file
- * Contains \Drupal\Core\Session\SessionManager.
+ * Contains \Drupal\Core\Session\Storage\NativeSessionStorage.
  */
 
-namespace Drupal\Core\Session;
+namespace Drupal\Core\Session\Storage;
 
 use Drupal\Component\Utility\Crypt;
 use Drupal\Core\Database\Connection;
 use Drupal\Core\Session\AnonymousUserSession;
-use Drupal\Core\Session\SessionHandler;
+use Drupal\Core\Session\SessionManagerInterface;
+use Drupal\Core\Session\Storage\Handler\SessionHandler;
 use Drupal\Core\Site\Settings;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Session\Storage\Handler\WriteCheckSessionHandler;
 use Symfony\Component\HttpFoundation\Session\Storage\MetadataBag as SymfonyMetadataBag;
-use Symfony\Component\HttpFoundation\Session\Storage\NativeSessionStorage;
+use Symfony\Component\HttpFoundation\Session\Storage\NativeSessionStorage as SymfonyNativeSessionStorage;
 
 /**
  * Manages user sessions.
@@ -35,7 +36,7 @@ use Symfony\Component\HttpFoundation\Session\Storage\NativeSessionStorage;
  *   (e.g. mixed mode SSL, sid-hashing) or relocated to the authentication
  *   subsystem.
  */
-class SessionManager extends NativeSessionStorage implements SessionManagerInterface {
+class NativeSessionStorage extends SymfonyNativeSessionStorage implements SessionManagerInterface {
 
   /**
    * Whether or not the session manager is operating in mixed mode SSL.
@@ -92,13 +93,14 @@ class SessionManager extends NativeSessionStorage implements SessionManagerInter
     parent::__construct();
     $this->requestStack = $request_stack;
     $this->connection = $connection;
+    $metadata_bag->getLastUsed();
     $this->setMetadataBag($metadata_bag);
 
     $this->setMixedMode($settings->get('mixed_mode_sessions', FALSE));
 
     // @todo When not using the Symfony Session object, the list of bags in the
     //   NativeSessionStorage will remain uninitialized. This will lead to
-    //   errors in NativeSessionHandler::loadSession. Remove this after
+    //   errors in NativeSessionStorage::loadSession. Remove this after
     //   https://drupal.org/node/2229145, when we will be using the Symfony
     //   session object (which registers an attribute bag with the
     //   manager upon instantiation).
@@ -218,7 +220,7 @@ class SessionManager extends NativeSessionStorage implements SessionManagerInter
     // We do not support the optional $destroy and $lifetime parameters as long
     // as #2238561 remains open.
     if ($destroy || isset($lifetime)) {
-      throw new \InvalidArgumentException('The optional parameters $destroy and $lifetime of SessionManager::regenerate() are not supported currently');
+      throw new \InvalidArgumentException('The optional parameters $destroy and $lifetime of NativeSessionStorage::regenerate() are not supported currently');
     }
 
     $is_https = $this->requestStack->getCurrentRequest()->isSecure();
@@ -281,7 +283,7 @@ class SessionManager extends NativeSessionStorage implements SessionManagerInter
     else {
       // Start the session when it doesn't exist yet.
       // Preserve the logged in user, as it will be reset to anonymous
-      // by \Drupal\Core\Session\SessionHandler::read().
+      // by \Drupal\Core\Session\Storage\Handler\SessionHandler::read().
       $account = $user;
       $this->start();
       $user = $account;
