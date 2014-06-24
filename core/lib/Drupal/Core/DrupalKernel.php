@@ -695,7 +695,6 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
         $request_stack = $this->container->get('request_stack');
       }
     }
-    $this->container = NULL;
 
     // If the module list hasn't already been set in updateModules and we are
     // not forcing a rebuild, the try and load the container from the disk.
@@ -710,16 +709,17 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
       // If the load succeeded or the class already existed, use it.
       if (class_exists($class, FALSE)) {
         $fully_qualified_class_name = '\\' . $class;
-        $this->container = new $fully_qualified_class_name;
+        $container = new $fully_qualified_class_name;
       }
     }
 
-    if (!isset($this->container)) {
-      $this->container = $this->compileContainer();
+    if (!isset($container)) {
+      $container = $this->compileContainer();
     }
 
-    $this->attachSynthetic($this->container, $request, $request_stack, $request_scope);
+    $this->attachSynthetic($container, $request, $request_stack, $request_scope);
 
+    $this->container = $container;
     \Drupal::setContainer($this->container);
     return $this->container;
   }
