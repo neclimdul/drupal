@@ -7,6 +7,7 @@
 
 namespace Drupal\Core\EventSubscriber;
 
+use Drupal\Core\Routing\RouteMatch;
 use Symfony\Component\HttpKernel\HttpKernelInterface;
 use Symfony\Component\HttpKernel\KernelEvents;
 use Symfony\Component\HttpKernel\Event\GetResponseEvent;
@@ -28,7 +29,7 @@ class ThemeNegotiatorRequestSubscriber implements EventSubscriberInterface {
       if (!defined('MAINTENANCE_MODE') || MAINTENANCE_MODE != 'update') {
         // @todo Refactor drupal_theme_initialize() into a request subscriber.
         // @see https://drupal.org/node/2228093
-        drupal_theme_initialize($event->getRequest());
+        drupal_theme_initialize(RouteMatch::createFromRequest($event->getRequest()));
       }
     }
   }

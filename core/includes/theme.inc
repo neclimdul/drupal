@@ -18,6 +18,7 @@ use Drupal\Core\Extension\ExtensionNameLengthException;
 use Drupal\Core\Page\FeedLinkElement;
 use Drupal\Core\Page\LinkElement;
 use Drupal\Core\Page\MetaElement;
+use Drupal\Core\Routing\RouteMatch;
 use Drupal\Core\Template\Attribute;
 use Drupal\Core\Template\RenderWrapper;
 use Drupal\Core\Theme\ThemeSettings;
@@ -92,10 +93,11 @@ function drupal_theme_access($theme) {
 /**
  * Initializes the theme system by loading the theme.
  *
- * @param \Symfony\Component\HttpFoundation\Request $request
- *   The request for which to initialize the theme.
+ * @param RouteMatch $route_match
+ *   The route match to use for theme initialization.
+// @todo Force calling methods to provide as RouteMatch.
  */
-function drupal_theme_initialize(Request $request = NULL) {
+function drupal_theme_initialize(RouteMatch $route_match = NULL) {
   global $theme, $theme_key;
 
   // If $theme is already set, assume the others are set, too, and do nothing
@@ -105,13 +107,12 @@ function drupal_theme_initialize(Request $request = NULL) {
 
   $themes = list_themes();
 
-  // @todo Let the theme.negotiator listen to the kernel request event.
   // Determine the active theme for the theme negotiator service. This includes
   // the default theme as well as really specific ones like the ajax base theme.
-  if (!$request) {
-    $request = \Drupal::request();
+  if (!$route_match) {
+    $route_match = \Drupal::routeMatch();
   }
-  $theme = \Drupal::service('theme.negotiator')->determineActiveTheme($request);
+  $theme = \Drupal::service('theme.negotiator')->determineActiveTheme($route_match);
 
   // If no theme could be negotiated, or if the negotiated theme is not within
   // the list of enabled themes, fall back to the default theme output of core
@@ -2139,7 +2140,7 @@ function template_preprocess_page(&$variables) {
     );
   }
 
-  if ($node = \Drupal::request()->attributes->get('node')) {
+  if ($node = \Drupal::routeMatch()->getParameter('node')) {
     $variables['node'] = $node;
   }
 
