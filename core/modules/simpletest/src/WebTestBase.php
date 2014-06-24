@@ -1107,7 +1107,7 @@ abstract class WebTestBase extends TestBase {
    * @see TestBase::prepareEnvironment()
    * @see TestBase::restoreEnvironment()
    *
-   * @todo Fix http://drupal.org/node/1708692 so that module enable/disable
+   * @todo Fix https://www.drupal.org/node/2021959 so that module enable/disable
    *   changes are immediately reflected in \Drupal::getContainer(). Until then,
    *   tests can invoke this workaround when requiring services from newly
    *   enabled modules to be immediately available in the same request.
@@ -1115,8 +1115,10 @@ abstract class WebTestBase extends TestBase {
   protected function rebuildContainer() {
     // Maintain the current global request object.
     $request = \Drupal::request();
+    // Kernel doesn't update module list during rebuild so force a rebuild.
+    $this->kernel->updateModules(\Drupal::moduleHandler()->getModuleList());
     // Rebuild the kernel and bring it back to a fully bootstrapped state.
-    $this->container = $this->kernel->rebuildContainer();
+    $this->container = $this->kernel->getContainer();
     $this->container->get('current_user')->setAccount(\Drupal::currentUser());
 
     // The request context is normally set by the router_listener from within
