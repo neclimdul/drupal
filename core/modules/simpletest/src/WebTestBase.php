@@ -852,12 +852,32 @@ abstract class WebTestBase extends TestBase {
       'required' => TRUE,
     );
     $this->writeSettings($settings);
+    // Allow for test-specific overrides.
+    $settings_testing_file = DRUPAL_ROOT . '/' . $this->originalSite . '/settings.testing.php';
+    if (file_exists($settings_testing_file)) {
+      // Copy the testing-specific settings.php overrides in place.
+      copy($settings_testing_file, $directory . '/settings.testing.php');
+      // Add the name of the testing class to settings.php and include the
+      // testing specific overrides
+      file_put_contents($directory . '/settings.php', "\n\$test_class = '" . get_class($this) ."';\n" . 'include DRUPAL_ROOT . \'/\' . $site_path . \'/settings.testing.php\';' ."\n", FILE_APPEND);
+    }
+    $settings_services_file = DRUPAL_ROOT . '/' . $this->originalSite . '/testing.services.yml';
+    if (file_exists($settings_services_file)) {
+      // Copy the testing-specific service overrides in place.
+      copy($settings_services_file, $directory . '/services.yml');
+    }
+
+    // Since Drupal is bootstrapped already, install_begin_request() will not
+    // bootstrap into DRUPAL_BOOTSTRAP_CONFIGURATION (again). Hence, we have to
+    // reload the newly written custom settings.php manually.
+    Settings::initialize($directory);
 
     // Execute the non-interactive installer.
     require_once DRUPAL_ROOT . '/core/includes/install.core.inc';
     install_drupal($parameters);
 
     // Import new settings.php written by the installer.
+    Settings::initialize($directory);
     foreach ($GLOBALS['config_directories'] as $type => $path) {
       $this->configDirectories[$type] = $path;
     }
