@@ -697,12 +697,12 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
     }
 
     // If the module list hasn't already been set in updateModules and we are
-    // not forcing a rebuild, the try and load the container from the disk.
+    // not forcing a rebuild, then try and load the container from the disk.
     if (empty($this->moduleList) && !$rebuild) {
       $class = $this->getClassName();
       $cache_file = $class . '.php';
 
-      // First, try to load.
+      // First, try to load from storage.
       if (!class_exists($class, FALSE)) {
         $this->storage()->load($cache_file);
       }
@@ -966,6 +966,9 @@ class DrupalKernel implements DrupalKernelInterface, TerminableInterface {
    * @return \Symfony\Component\DependencyInjection\ContainerInterface
    */
   public function rebuildContainer() {
+    // Empty module properties and for them to be reloaded from scratch.
+    $this->moduleList = NULL;
+    $this->moduleData = array();
     return $this->initializeContainer(TRUE);
   }
 

@@ -34,7 +34,7 @@ class PreviewTest extends UITestBase {
    */
   protected function testPreviewContextual() {
     \Drupal::moduleHandler()->install(array('contextual'));
-    $this->rebuildContainer();
+    $this->resetAll();
 
     $this->drupalGet('admin/structure/views/view/test_preview/edit');
     $this->assertResponse(200);

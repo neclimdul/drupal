@@ -1115,10 +1115,8 @@ abstract class WebTestBase extends TestBase {
   protected function rebuildContainer() {
     // Maintain the current global request object.
     $request = \Drupal::request();
-    // Kernel doesn't update module list during rebuild so force a rebuild.
-    $this->kernel->updateModules(\Drupal::moduleHandler()->getModuleList());
     // Rebuild the kernel and bring it back to a fully bootstrapped state.
-    $this->container = $this->kernel->getContainer();
+    $this->container = $this->kernel->rebuildContainer();
     $this->container->get('current_user')->setAccount(\Drupal::currentUser());
 
     // The request context is normally set by the router_listener from within
