@@ -30,11 +30,18 @@ abstract class MigrateDrupalTestBase extends MigrateTestBase {
    */
   protected function setUp() {
     parent::setUp();
-    $tables = file_scan_directory($this->getDumpDirectory(), '/.php$/', array('recurse' => FALSE));
-    $this->loadDumps(array_keys($tables));
+
+    $this->loadDump(__DIR__ . '/../../tests/fixtures/drupal-6.standard.php');
 
     $this->installEntitySchema('user');
     $this->installConfig(['migrate_drupal', 'system']);
+  }
+
+  protected function loadDump($file) {
+    if (substr($file, -3) == '.gz') {
+      $file = "compress.zlib://$file";
+    }
+    require $file;
   }
 
   /**

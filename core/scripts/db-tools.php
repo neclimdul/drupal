@@ -1,8 +1,7 @@
 #!/usr/bin/env php
 <?php
 
-use Drupal\Core\Command\DbImportApplication;
-use Drupal\Core\Database\Database;
+use Drupal\Core\Command\DbToolsApplication;
 use Drupal\Core\DrupalKernel;
 use Drupal\Core\Site\Settings;
 use Symfony\Component\HttpFoundation\Request;
@@ -19,5 +18,5 @@ Settings::initialize(dirname(dirname(__DIR__)), DrupalKernel::findSitePath($requ
 $kernel = DrupalKernel::createFromRequest($request, $autoloader, 'prod')->boot();
 
 // Run the database dump command.
-$application = new DbImportApplication(Database::getConnection(), \Drupal::moduleHandler());
+$application = new DbToolsApplication();
 $application->run();

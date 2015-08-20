@@ -27,38 +27,10 @@ use Symfony\Component\Console\Output\OutputInterface;
 class DbImportCommand extends Command {
 
   /**
-   * The database connection.
-   *
-   * @var \Drupal\Core\Database\Connection $connection
-   */
-  protected $connection;
-
-  /**
-   * The module handler.
-   *
-   * @var \Drupal\Core\Extension\ModuleHandlerInterface
-   */
-  protected $moduleHandler;
-
-  /**
-   * Construct the database dump command.
-   *
-   * @param \Drupal\Core\Database\Connection $connection
-   *   The database connection to use.
-   * @param \Drupal\Core\Extension\ModuleHandlerInterface $module_handler
-   *   The module handler to use.
-   */
-  function __construct(Connection $connection, ModuleHandlerInterface $module_handler) {
-    $this->connection = $connection;
-    $this->moduleHandler = $module_handler;
-    parent::__construct();
-  }
-
-  /**
    * {@inheritdoc}
    */
   protected function configure() {
-    $this->setName('import-database')
+    $this->setName('import')
       ->setDescription('Import database from a generation script.')
       ->addArgument('script', InputOption::VALUE_REQUIRED, 'Import script');
   }
