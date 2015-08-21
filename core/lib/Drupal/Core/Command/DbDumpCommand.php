@@ -70,8 +70,6 @@ class DbDumpCommand extends Command {
 
     $connection = Database::getConnection('default', $input->getOption('database'));
     $output->writeln($this->generateScript($connection));
-//    $original_database = Database::setActiveConnection($input->getOption('database'));
-//    Database::setActiveConnection($original_database);
   }
 
   /**
