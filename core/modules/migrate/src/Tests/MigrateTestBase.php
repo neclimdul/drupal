@@ -27,7 +27,6 @@ abstract class MigrateTestBase extends KernelTestBase implements MigrateMessageI
    */
   public $databaseDumpFiles = array();
 
-
   /**
    * TRUE to collect messages instead of displaying them.
    *
@@ -68,7 +67,6 @@ abstract class MigrateTestBase extends KernelTestBase implements MigrateMessageI
   protected function tearDown() {
     $this->cleanupMigrateConnection();
     parent::tearDown();
-    $this->databaseDumpFiles = [];
     $this->collectMessages = FALSE;
     unset($this->migration, $this->migrateMessages);
   }
@@ -122,21 +120,29 @@ abstract class MigrateTestBase extends KernelTestBase implements MigrateMessageI
    *
    * @param array $files
    *   An array of files.
-   * @param string $method
-   *   The name of the method in the dump class to use. Defaults to load.
    */
-  protected function loadDumps(array $files, $method = 'load') {
+  protected function loadDumps(array $files) {
+    $original_connection = Database::setActiveConnection('migrate');
     // Load the database from the portable PHP dump.
     // The files may be gzipped.
     foreach ($files as $file) {
-      if (substr($file, -3) == '.gz') {
-        $file = "compress.zlib://$file";
-        require $file;
-      }
-      preg_match('/^namespace (.*);$/m', file_get_contents($file), $matches);
-      $class = $matches[1] . '\\' . basename($file, '.php');
-      (new $class(Database::getConnection('default', 'migrate')))->$method();
+      $this->loadDump(realpath($file));
     }
+    Database::setActiveConnection($original_connection);
+  }
+
+
+  /**
+   * Load a drupal dump from a location into the migrate connection.
+   *
+   * @param string $file
+   */
+  protected function loadDump($file) {
+    if (substr($file, -3) == '.gz') {
+      $file = "compress.zlib://$file";
+    }
+    require $file;
+    $this->pass("Loaded dump . " . $file);
   }
 
   /**

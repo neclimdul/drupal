@@ -19,6 +19,10 @@ class MigrateDrupal6Test extends MigrateFullDrupalTestBase {
 
   const BASE_TEST_CLASS = 'Drupal\migrate_drupal\Tests\d6\MigrateDrupal6TestBase';
 
+  public $databaseDumpFiles = [
+    __DIR__ . '/../../../tests/fixtures/drupal-6.standard.php',
+  ];
+
   protected static $blacklist = array(
     'Drupal\migrate_drupal\Tests\dependencies\MigrateDependenciesTest',
   );
@@ -205,7 +209,6 @@ class MigrateDrupal6Test extends MigrateFullDrupalTestBase {
       'status' => 1,
     ])->enforceIsNew(TRUE)->save();
 
-    $this->loadDump(__DIR__ . '/../../../tests/fixtures/drupal-6.standard.php');
     $this->installMigrations('Drupal 6');
   }
 

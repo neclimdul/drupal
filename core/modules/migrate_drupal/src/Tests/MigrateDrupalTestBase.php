@@ -7,7 +7,6 @@
 
 namespace Drupal\migrate_drupal\Tests;
 
-use Drupal\Core\Database\Database;
 use Drupal\migrate\Tests\MigrateTestBase;
 use Drupal\migrate\Entity\Migration;
 use Drupal\Component\Plugin\Exception\PluginNotFoundException;
@@ -31,32 +30,10 @@ abstract class MigrateDrupalTestBase extends MigrateTestBase {
    */
   protected function setUp() {
     parent::setUp();
+    $this->loadDumps($this->databaseDumpFiles);
+
     $this->installEntitySchema('user');
     $this->installConfig(['migrate_drupal', 'system']);
-  }
-
-  /**
-   * Load a drupal dump from a location into the migrate connection.
-   *
-   * @param string $file
-   */
-  protected function loadDump($file) {
-    $original_connection = Database::setActiveConnection('migrate');
-    if (substr($file, -3) == '.gz') {
-      $file = "compress.zlib://$file";
-    }
-    require $file;
-    Database::setActiveConnection($original_connection);
-  }
-
-  /**
-   * Returns the path to the dump directory.
-   *
-   * @return string
-   *   A string that represents the dump directory path.
-   */
-  protected function getDumpDirectory() {
-    return __DIR__ . '/Table';
   }
 
   /**

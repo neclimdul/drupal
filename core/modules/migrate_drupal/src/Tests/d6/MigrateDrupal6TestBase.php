@@ -14,12 +14,16 @@ use Drupal\migrate_drupal\Tests\MigrateDrupalTestBase;
  */
 abstract class MigrateDrupal6TestBase extends MigrateDrupalTestBase {
 
+  public $databaseDumpFiles = [
+    __DIR__ . '/../../../tests/fixtures/drupal-6.standard.php',
+  ];
+
   /**
    * {@inheritdoc}
    */
   protected function setUp() {
     parent::setUp();
-      $this->loadDump(__DIR__ . '/../../../tests/fixtures/drupal-6.standard.php');
     $this->installMigrations('Drupal 6');
   }
+
 }
