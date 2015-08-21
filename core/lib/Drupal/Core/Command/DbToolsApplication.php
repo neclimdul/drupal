@@ -17,6 +17,10 @@ use Symfony\Component\Console\Input\InputInterface;
  */
 class DbToolsApplication extends Application {
 
+  public function __construct() {
+    parent::__construct('Database Tools', '8.0.x');
+  }
+
   /**
    * {@inheritdoc}
    */
