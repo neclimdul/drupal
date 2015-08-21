@@ -7,10 +7,7 @@
 
 namespace Drupal\Core\Command;
 
-use Drupal\Core\Database\Connection;
-use Drupal\Core\Extension\ModuleHandlerInterface;
 use Symfony\Component\Console\Application;
-use Symfony\Component\Console\Input\InputInterface;
 
 /**
  * Provides a command to import a database generation script.

@@ -10,10 +10,7 @@ namespace Drupal\Core\Command;
 use Drupal\Component\Utility\Variable;
 use Drupal\Core\Database\Connection;
 use Drupal\Core\Database\Database;
-use Drupal\Core\Extension\ModuleHandlerInterface;
-use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
-use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
 /**
@@ -32,7 +29,7 @@ use Symfony\Component\Console\Output\OutputInterface;
  *
  * @see \Drupal\Core\Command\DbDumpApplication
  */
-class DbDumpCommand extends Command {
+class DbDumpCommand extends DBCommandBase {
 
   /**
    * An array of table patterns to exclude completely.
@@ -54,9 +51,9 @@ class DbDumpCommand extends Command {
    * {@inheritdoc}
    */
   protected function configure() {
+    parent::configure();
     $this->setName('dump')
-      ->setDescription('Dump the current database to a generation script')
-      ->addOption('database', 'default', InputOption::VALUE_OPTIONAL, 'The database connection name to use.');
+      ->setDescription('Dump the current database to a generation script');
   }
 
   /**
@@ -68,6 +65,7 @@ class DbDumpCommand extends Command {
       $output->setDecorated(FALSE);
     }
 
+    if ()
     $connection = Database::getConnection('default', $input->getOption('database'));
     $output->writeln($this->generateScript($connection));
   }

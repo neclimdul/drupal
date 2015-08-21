@@ -7,11 +7,7 @@
 
 namespace Drupal\Core\Command;
 
-use Drupal\Component\Utility\Variable;
-use Drupal\Core\Database\Connection;
 use Drupal\Core\Database\SchemaObjectExistsException;
-use Drupal\Core\Extension\ModuleHandlerInterface;
-use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -24,7 +20,7 @@ use Symfony\Component\Console\Output\OutputInterface;
  *
  * @see \Drupal\Core\Command\DbImportApplication
  */
-class DbImportCommand extends Command {
+class DbImportCommand extends DBCommandBase {
 
   /**
    * {@inheritdoc}
