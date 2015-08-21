@@ -31,13 +31,15 @@ abstract class MigrateDrupalTestBase extends MigrateTestBase {
    */
   protected function setUp() {
     parent::setUp();
-
-    $this->loadDump(__DIR__ . '/../../tests/fixtures/drupal-6.standard.php');
-
     $this->installEntitySchema('user');
     $this->installConfig(['migrate_drupal', 'system']);
   }
 
+  /**
+   * Load a drupal dump from a location into the migrate connection.
+   *
+   * @param string $file
+   */
   protected function loadDump($file) {
     $original_connection = Database::setActiveConnection('migrate');
     if (substr($file, -3) == '.gz') {

@@ -205,17 +205,8 @@ class MigrateDrupal6Test extends MigrateFullDrupalTestBase {
       'status' => 1,
     ])->enforceIsNew(TRUE)->save();
 
+    $this->loadDump(__DIR__ . '/../../../tests/fixtures/drupal-6.standard.php');
     $this->installMigrations('Drupal 6');
-  }
-
-  /**
-   * Returns the path to the dump directory.
-   *
-   * @return string
-   *   A string that represents the dump directory path.
-   */
-  protected function getDumpDirectory() {
-    return dirname(__DIR__) . '/Table/d6';
   }
 
 }

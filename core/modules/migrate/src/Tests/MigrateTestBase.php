@@ -189,7 +189,10 @@ abstract class MigrateTestBase extends KernelTestBase implements MigrateMessageI
    * {@inheritdoc}
    */
   public function display($message, $type = 'status') {
-    if ($this->collectMessages) {
+    if (strpos($message, 'reclaiming memory.')) {
+      $this->migrateMessages[$type][] = $message;
+    }
+    elseif ($this->collectMessages) {
       $this->migrateMessages[$type][] = $message;
     }
     else {

@@ -19,14 +19,7 @@ abstract class MigrateDrupal7TestBase extends MigrateDrupalTestBase {
    */
   protected function setUp() {
     parent::setUp();
+    $this->loadDump(__DIR__ . '/../../../tests/fixtures/drupal-7.standard.php');
     $this->installMigrations('Drupal 7');
   }
-
-  /**
-   * {@inheritdoc}
-   */
-  protected function getDumpDirectory() {
-    return parent::getDumpDirectory() . '/d7';
-  }
-
 }
