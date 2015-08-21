@@ -11,6 +11,7 @@ use Drupal\Component\Utility\Variable;
 use Drupal\Core\Database\Connection;
 use Drupal\Core\Database\Database;
 use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
 /**
@@ -53,7 +54,8 @@ class DbDumpCommand extends DBCommandBase {
   protected function configure() {
     parent::configure();
     $this->setName('dump')
-      ->setDescription('Dump the current database to a generation script');
+      ->setDescription('Dump the current database to a generation script')
+      ->addOption('table', NULL, InputOption::VALUE_IS_ARRAY | InputOption::VALUE_OPTIONAL, 'Table to dump');
   }
 
   /**
@@ -65,9 +67,14 @@ class DbDumpCommand extends DBCommandBase {
       $output->setDecorated(FALSE);
     }
 
-    if ()
     $connection = Database::getConnection('default', $input->getOption('database'));
-    $output->writeln($this->generateScript($connection));
+
+    $tables = $input->getOption('table');
+    if (empty($tables)) {
+      $tables = $this->getTables($connection);
+    }
+
+    $output->writeln($this->generateScript($connection, $tables));
   }
 
   /**
@@ -75,20 +82,22 @@ class DbDumpCommand extends DBCommandBase {
    *
    * @param \Drupal\Core\Database\Connection $connection
    *   The database connection.
+   * @param string[] $tables
+   *   A list of tables to dump from the database.
    * @return string The PHP script.
    *   The PHP script.
    */
-  protected function generateScript(Connection $connection) {
-    $tables = '';
+  protected function generateScript(Connection $connection, array $tables) {
+    $table_script = '';
 
-    foreach ($this->getTables($connection) as $table) {
+    foreach ($tables as $table) {
       $schema = $this->getTableSchema($connection, $table);
       $data = $this->getTableData($connection, $table);
-      $tables .= $this->getTableScript($table, $schema, $data);
+      $table_script .= $this->getTableScript($table, $schema, $data);
     }
     $script = $this->getTemplate();
     // Substitute in the tables.
-    $script = str_replace('{{TABLES}}', trim($tables), $script);
+    $script = str_replace('{{TABLES}}', trim($table_script), $script);
     return trim($script);
   }
 
