@@ -27,6 +27,7 @@ class DbImportCommand extends DBCommandBase {
    * {@inheritdoc}
    */
   protected function configure() {
+    parent::configure();
     $this->setName('import')
       ->setDescription('Import database from a generation script.')
       ->addArgument('script', InputOption::VALUE_REQUIRED, 'Import script');
