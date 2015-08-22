@@ -7,6 +7,7 @@
 
 namespace Drupal\Core\Command;
 
+use Drupal\Core\Database\Database;
 use Drupal\Core\Database\SchemaObjectExistsException;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -45,7 +46,9 @@ class DbImportCommand extends DBCommandBase {
       return;
     }
 
+    $old_connection = Database::setActiveConnection($this->getDatabaseConnection($input));
     $this->runScript($script);
+    Database::setActiveConnection($old_connection);
     $output->writeln('Import completed successfully.');
   }
 

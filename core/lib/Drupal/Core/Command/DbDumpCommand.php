@@ -67,7 +67,7 @@ class DbDumpCommand extends DBCommandBase {
       $output->setDecorated(FALSE);
     }
 
-    $connection = Database::getConnection('default', $input->getOption('database'));
+    $connection = Database::getConnection('default', $this->getDatabaseConnection($input));
 
     $tables = $input->getOption('table');
     if (empty($tables)) {
