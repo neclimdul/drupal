@@ -61,7 +61,7 @@ class Schema extends DatabaseSchema {
       $info['table'] = substr($table, ++$pos);
     }
     else {
-      $db_info = Database::getConnectionInfo();
+      $db_info = Database::getConnectionInfo($this->connection->getKey());
       $info['database'] = $db_info[$this->connection->getTarget()]['database'];
       $info['table'] = $table;
     }

@@ -27,7 +27,6 @@ abstract class MigrateTestBase extends KernelTestBase implements MigrateMessageI
    */
   public $databaseDumpFiles = array();
 
-
   /**
    * TRUE to collect messages instead of displaying them.
    *
@@ -59,7 +58,38 @@ abstract class MigrateTestBase extends KernelTestBase implements MigrateMessageI
    */
   protected function setUp() {
     parent::setUp();
+    $this->createMigrationConnection();
+  }
 
+  /**
+   * {@inheritdoc}
+   */
+  protected function tearDown() {
+    $this->cleanupMigrateConnection();
+    parent::tearDown();
+    $this->collectMessages = FALSE;
+    unset($this->migration, $this->migrateMessages);
+  }
+
+  /**
+   * Changes the database connection to the prefixed one.
+   */
+  private function createMigrationConnection() {
+
+    // If the backup already exists, something went terribly wrong.
+    // This case is possible, because database connection info is a static
+    // global state construct on the Database class, which at least persists
+    // for all test methods executed in one PHP process.
+    if (Database::getConnectionInfo('simpletest_original_migrate')) {
+      throw new \RuntimeException("Bad Database connection state: 'simpletest_original_migrate' connection key already exists. Broken test?");
+    }
+
+    // Store original migrate connection if it exists.
+    $connection_info = Database::getConnectionInfo('migrate');
+    if ($connection_info) {
+      Database::renameConnection('migrate', 'simpletest_original_migrate');
+    }
+    // Clone the current connection and replace the current prefix.
     $connection_info = Database::getConnectionInfo('default');
     foreach ($connection_info as $target => $value) {
       $prefix = is_array($value['prefix']) ? $value['prefix']['default'] : $value['prefix'];
@@ -68,21 +98,21 @@ abstract class MigrateTestBase extends KernelTestBase implements MigrateMessageI
       $connection_info[$target]['prefix']['default'] = $prefix . '0';
 
       // Add the original simpletest prefix so SQLite can attach its database.
-      // @see \Drupal\Core\Database\Driver\sqlite\Connection::init()
+      // @see \Drupal\Core\Database\Driver\sqlite\Connection::__construct()
       $connection_info[$target]['prefix'][$value['prefix']['default']] = $value['prefix']['default'];
     }
     Database::addConnectionInfo('migrate', 'default', $connection_info['default']);
   }
 
   /**
-   * {@inheritdoc}
+   * Cleans up the test migrate connection.
    */
-  protected function tearDown() {
+  private function cleanupMigrateConnection() {
     Database::removeConnection('migrate');
-    parent::tearDown();
-    $this->databaseDumpFiles = [];
-    $this->collectMessages = FALSE;
-    unset($this->migration, $this->migrateMessages);
+    $original_connection_info = Database::getConnectionInfo('simpletest_original_migrate');
+    if ($original_connection_info) {
+      Database::renameConnection('simpletest_original_migrate', 'migrate');
+    }
   }
 
   /**
@@ -90,21 +120,29 @@ abstract class MigrateTestBase extends KernelTestBase implements MigrateMessageI
    *
    * @param array $files
    *   An array of files.
-   * @param string $method
-   *   The name of the method in the dump class to use. Defaults to load.
    */
-  protected function loadDumps(array $files, $method = 'load') {
+  protected function loadDumps(array $files) {
+    $original_connection = Database::setActiveConnection('migrate');
     // Load the database from the portable PHP dump.
     // The files may be gzipped.
     foreach ($files as $file) {
-      if (substr($file, -3) == '.gz') {
-        $file = "compress.zlib://$file";
-        require $file;
-      }
-      preg_match('/^namespace (.*);$/m', file_get_contents($file), $matches);
-      $class = $matches[1] . '\\' . basename($file, '.php');
-      (new $class(Database::getConnection('default', 'migrate')))->$method();
+      $this->loadDump(realpath($file));
     }
+    Database::setActiveConnection($original_connection);
+  }
+
+
+  /**
+   * Load a drupal dump from a location into the migrate connection.
+   *
+   * @param string $file
+   */
+  protected function loadDump($file) {
+    if (substr($file, -3) == '.gz') {
+      $file = "compress.zlib://$file";
+    }
+    require $file;
+    $this->pass("Loaded dump . " . $file);
   }
 
   /**
@@ -157,7 +195,10 @@ abstract class MigrateTestBase extends KernelTestBase implements MigrateMessageI
    * {@inheritdoc}
    */
   public function display($message, $type = 'status') {
-    if ($this->collectMessages) {
+    if (strpos($message, 'reclaiming memory.')) {
+      $this->migrateMessages[$type][] = $message;
+    }
+    elseif ($this->collectMessages) {
       $this->migrateMessages[$type][] = $message;
     }
     else {
