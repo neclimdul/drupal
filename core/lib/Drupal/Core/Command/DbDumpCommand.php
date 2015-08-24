@@ -9,6 +9,7 @@ namespace Drupal\Core\Command;
 
 use Drupal\Component\Utility\Variable;
 use Drupal\Core\Database\Connection;
+use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
@@ -28,7 +29,14 @@ use Symfony\Component\Console\Output\OutputInterface;
  *
  * @see \Drupal\Core\Command\DbDumpApplication
  */
-class DbDumpCommand extends DbCommandBase {
+class DbDumpCommand extends Command {
+
+  /**
+   * The database connection.
+   *
+   * @var \Drupal\Core\Database\Connection $connection
+   */
+  protected $connection;
 
   /**
    * An array of table patterns to exclude completely.
@@ -45,6 +53,22 @@ class DbDumpCommand extends DbCommandBase {
    * @var array
    */
   protected $schemaOnly = ['cache.*', 'sessions', 'watchdog'];
+
+  /**
+   * Construct the database dump command.
+   *
+   * @param \Drupal\Core\Database\Connection $connection
+   *   The database connection to use.
+   */
+  function __construct(Connection $connection) {
+    // Check this is MySQL.
+    if ($connection->databaseType() !== 'mysql') {
+      throw new \RuntimeException('This script can only be used with MySQL database backends.');
+    }
+
+    $this->connection = $connection;
+    parent::__construct();
+  }
 
   /**
    * {@inheritdoc}
