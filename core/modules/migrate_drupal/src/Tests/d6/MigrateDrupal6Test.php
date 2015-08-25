@@ -19,6 +19,13 @@ class MigrateDrupal6Test extends MigrateFullDrupalTestBase {
 
   const BASE_TEST_CLASS = 'Drupal\migrate_drupal\Tests\d6\MigrateDrupal6TestBase';
 
+  /**
+   * {@inheritdoc}
+   */
+  public $databaseDumpFiles = [
+    __DIR__ . '/../../../tests/fixtures/drupal-6.standard.php',
+  ];
+
   protected static $blacklist = array(
     'Drupal\migrate_drupal\Tests\dependencies\MigrateDependenciesTest',
   );
@@ -206,16 +213,6 @@ class MigrateDrupal6Test extends MigrateFullDrupalTestBase {
     ])->enforceIsNew(TRUE)->save();
 
     $this->installMigrations('Drupal 6');
-  }
-
-  /**
-   * Returns the path to the dump directory.
-   *
-   * @return string
-   *   A string that represents the dump directory path.
-   */
-  protected function getDumpDirectory() {
-    return dirname(__DIR__) . '/Table/d6';
   }
 
 }
