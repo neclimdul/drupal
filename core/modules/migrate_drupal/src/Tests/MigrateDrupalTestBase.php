@@ -30,21 +30,10 @@ abstract class MigrateDrupalTestBase extends MigrateTestBase {
    */
   protected function setUp() {
     parent::setUp();
-    $tables = file_scan_directory($this->getDumpDirectory(), '/.php$/', array('recurse' => FALSE));
-    $this->loadDumps(array_keys($tables));
+    $this->loadDumps($this->databaseDumpFiles);
 
     $this->installEntitySchema('user');
     $this->installConfig(['migrate_drupal', 'system']);
-  }
-
-  /**
-   * Returns the path to the dump directory.
-   *
-   * @return string
-   *   A string that represents the dump directory path.
-   */
-  protected function getDumpDirectory() {
-    return __DIR__ . '/Table';
   }
 
   /**
