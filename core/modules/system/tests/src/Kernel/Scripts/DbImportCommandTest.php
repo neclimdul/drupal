@@ -18,6 +18,8 @@ use Symfony\Component\Console\Tester\CommandTester;
  *
  * The way console application's run it is impossible to test. For now we only
  * test that we are registering the correct commands.
+ *
+ * @group console
  */
 class DbImportCommandTest extends KernelTestBase {
 
